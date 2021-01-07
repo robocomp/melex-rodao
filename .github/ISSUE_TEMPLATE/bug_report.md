@@ -14,8 +14,9 @@ A clear and concise description of what the bug is.
  - Ubuntu/Linux version: [e.g. Ubuntu 20.04]
  - Python / GCC Version: [e.g. Python 3.8]
    
-These are not mandatory steps but would help us to understand your installation:  
- - _Remove this hint: these checkboxes can be checked like this: [x]_
+These are not mandatory steps but would help us to understand your installation: 
+<!-- Remove this hint: these checkboxes can be checked like this: [x]. -->
+ 
  - [ ] Robocomp is compiled with FCL support.
  - [ ] DSR dependences have been installed.  
 
@@ -36,9 +37,8 @@ If applicable, add screenshots to help explain your problem.
 ### Additional context
 Add any other context about the problem here.
 
-
 ### Please provide a unit test that demonstrates the bug
-If you can it's really usefull to understand what's happening
+If you can provide, it's really useful to understand what's happening.
 
 ### #### Files
 Can you link to the file (on github) that you think that have the bug?
