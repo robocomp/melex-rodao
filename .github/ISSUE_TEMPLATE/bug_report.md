@@ -18,7 +18,7 @@ These are not mandatory steps but would help us to understand your installation:
 <!-- Remove this hint: these checkboxes can be checked like this: [x]. -->
  
  - [ ] Robocomp is compiled with FCL support.
- - [ ] DSR dependences have been installed.  
+ - [ ] DSR dependencies have been installed.  
 
 
 ### To Reproduce
