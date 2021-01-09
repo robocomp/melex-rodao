@@ -61,7 +61,7 @@ We use the [Calendar Versioning](https://calver.org/) scheme.
 
 References
 ----------
-Adapted from several CONTRIBUTING files of other projects:
-· https://github.com/ooda/cloudly/blob/master/CONTRIBUTING.md
-· https://github.com/KAIST-MACLab/PyTSMod/blob/main/CONTRIBUTING.md
+Adapted from several CONTRIBUTING files of other projects:  
+· https://github.com/ooda/cloudly/blob/master/CONTRIBUTING.md  
+· https://github.com/KAIST-MACLab/PyTSMod/blob/main/CONTRIBUTING.md  
 
