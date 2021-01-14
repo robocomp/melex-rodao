@@ -1,0 +1,10 @@
+Component carlaSensorsBridge
+{
+    Communications
+    {
+
+    };
+    language python;
+    statemachine "statemachine.smdsl";
+};
+
