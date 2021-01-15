@@ -47,8 +47,10 @@ except IndexError:
 import carla
 
 client = carla.Client('localhost', 2000)
-client.set_timeout(5.0)
-world = client.load_world('CampusAvanz')
+client.set_timeout(10.0)
+# world = client.load_world('CampusAvanz')
+# world = client.load_world('CampusVersionDos')
+world = client.get_world()
 carla_map = world.get_map()
 blueprint_library = world.get_blueprint_library()
 
@@ -154,7 +156,17 @@ class CameraManager(object):
         self.cm_queue = Queue()
         world = self._parent.get_world()
         weak_self = weakref.ref(self)
+        self.lidar_range = 50
+        self._cc = {'DepthRaw': cc.Raw,
+                    'Depth': cc.Depth,
+                    'DepthLogarithmic': cc.LogarithmicDepth,
+                    'camera RGB 01': cc.Raw,
+                    'camera RGB 02': cc.Raw,
+                    'camera RGB 03': cc.Raw,
+                    'camera RGB 04': cc.Raw,
+                    'lidar': None,
 
+                    }
         cam_bp = self.blueprint_library.find('sensor.camera.rgb')
         cam_bp.set_attribute('image_size_x', f'{self.img_width}')
         cam_bp.set_attribute('image_size_y', f'{self.img_height}')
@@ -164,52 +176,63 @@ class CameraManager(object):
         lmanager = world.get_lightmanager()
         mylights = lmanager.get_all_lights()
 
-        spawn_point_16 = carla.Transform(
-            carla.Location(x=mylights[16].location.x, z=mylights[16].location.z + 5, y=mylights[16].location.y),
-            carla.Rotation(pitch=-15, yaw=-90))
-        cam01 = world.spawn_actor(cam_bp, spawn_point_16, attach_to=None)
-        cam01.listen(lambda data: self.sensor_callback(weak_self, data, "camera RGB 01"))
-        self.sensor_list.append(cam01)
-
-        spawn_point_21 = carla.Transform(
-            carla.Location(x=mylights[21].location.x, z=mylights[21].location.z + 5, y=mylights[21].location.y),
-            carla.Rotation(pitch=-15, yaw=90))
-        cam02 = world.spawn_actor(cam_bp, spawn_point_21, attach_to=None)
-        cam02.listen(lambda data: self.sensor_callback(weak_self, data, "camera RGB 02"))
-        self.sensor_list.append(cam02)
-
-        spawn_point_5 = carla.Transform(
-            carla.Location(x=mylights[5].location.x, z=mylights[5].location.z + 5, y=mylights[5].location.y),
-            carla.Rotation(pitch=-15, yaw=-90))
-        cam03 = world.spawn_actor(cam_bp, spawn_point_5, attach_to=None)
-        cam03.listen(lambda data: self.sensor_callback(weak_self, data, "camera RGB 03"))
-        self.sensor_list.append(cam03)
+        # spawn_point_16 = carla.Transform(
+        #     carla.Location(x=mylights[16].location.x, z=mylights[16].location.z + 5, y=mylights[16].location.y),
+        #     carla.Rotation(pitch=-15, yaw=-90))
+        # cam01 = world.spawn_actor(cam_bp, spawn_point_16, attach_to=None)
+        #
+        # spawn_point_21 = carla.Transform(
+        #     carla.Location(x=mylights[21].location.x, z=mylights[21].location.z + 5, y=mylights[21].location.y),
+        #     carla.Rotation(pitch=-15, yaw=90))
+        # cam02 = world.spawn_actor(cam_bp, spawn_point_21, attach_to=None)
+        #
+        # spawn_point_5 = carla.Transform(
+        #     carla.Location(x=mylights[5].location.x, z=mylights[5].location.z + 5, y=mylights[5].location.y),
+        #     carla.Rotation(pitch=-15, yaw=-90))
+        # cam03 = world.spawn_actor(cam_bp, spawn_point_5, attach_to=None)
 
         spawn_point_car = carla.Transform(carla.Location(x=2.5, z=0.7))
         cam04 = world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
-        cam04.listen(lambda data: self.sensor_callback(weak_self, data, "camera RGB 04"))
-        self.sensor_list.append(cam04)
 
         depth_bp = self.blueprint_library.find('sensor.camera.depth')
         depth_bp.set_attribute('image_size_x', f'{self.img_width}')
         depth_bp.set_attribute('image_size_y', f'{self.img_height}')
 
         cam05 = world.spawn_actor(depth_bp, spawn_point_car, attach_to=parent_actor)
-        cam05.listen(lambda data: self.sensor_callback(weak_self, data, "camera Depth Raw"))
-        self.sensor_list.append(cam05)
 
         cam06 = world.spawn_actor(depth_bp, spawn_point_car, attach_to=parent_actor)
-        cam06.listen(lambda data: self.sensor_callback(weak_self, data, "camera Depth"))
-        self.sensor_list.append(cam06)
 
         cam07 = world.spawn_actor(depth_bp, spawn_point_car, attach_to=parent_actor)
-        cam07.listen(lambda data: self.sensor_callback(weak_self, data, "camera  Depth Logarithmic"))
+
+        lidar_bp = self.blueprint_library.find('sensor.lidar.ray_cast')
+        lidar_bp.set_attribute('range', f'{self.lidar_range}')
+        lidar01 = world.spawn_actor(lidar_bp, spawn_point_car, attach_to=parent_actor)
+
+        # cam01.listen(lambda data: self.sensor_callback(weak_self, data, 'camera RGB 01'))
+        # self.sensor_list.append(cam01)
+        #
+        # cam02.listen(lambda data: self.sensor_callback(weak_self, data, 'camera RGB 02'))
+        # self.sensor_list.append(cam02)
+        #
+        # cam03.listen(lambda data: self.sensor_callback(weak_self, data, 'camera RGB 03'))
+        # self.sensor_list.append(cam03)
+        #
+        cam04.listen(lambda data: self.sensor_callback(weak_self, data, 'camera RGB 04'))
+        self.sensor_list.append(cam04)
+
+        cam05.listen(lambda data: self.sensor_callback(weak_self, data, 'DepthRaw'))
+        self.sensor_list.append(cam05)
+
+        cam06.listen(lambda data: self.sensor_callback(weak_self, data, 'Depth'))
+        self.sensor_list.append(cam06)
+
+        cam07.listen(lambda data: self.sensor_callback(weak_self, data, 'DepthLogarithmic'))
         self.sensor_list.append(cam07)
 
-        self.depth_cc = {'camera Depth Raw': cc.Raw,
-                         'camera Depth': cc.Depth,
-                         'camera  Depth Logarithmic': cc.LogarithmicDepth,
-                         }
+        lidar01.listen(lambda data: self.sensor_callback(weak_self, data, 'lidar'))
+        self.sensor_list.append(lidar01)
+
+
 
     @staticmethod
     def sensor_callback(weak_self, img, sensor_name):
@@ -223,22 +246,19 @@ class CameraManager(object):
             points = np.frombuffer(img.raw_data, dtype=np.dtype('f4'))
             points = np.reshape(points, (int(points.shape[0] / 4), 4))
             lidar_data = np.array(points[:, :2])
-            lidar_data *= min(self.width, self.height) / (2.0 * self.lidar_range)
-            lidar_data += (0.5 * self.width, 0.5 * self.height)
+            lidar_data *= min(self.img_width, self.img_height) / (2.0 * self.lidar_range)
+            lidar_data += (0.5 * self.img_width, 0.5 * self.img_height)
             lidar_data = np.fabs(lidar_data)  # pylint: disable=E1111
             lidar_data = lidar_data.astype(np.int32)
             lidar_data = np.reshape(lidar_data, (-1, 2))
-            lidar_img_size = (self.hud.dim[0], self.hud.dim[1], 3)
+            lidar_img_size = (self.img_width, self.img_height, 3)
             lidar_img = np.zeros((lidar_img_size), dtype=np.uint8)
             lidar_img[tuple(lidar_data.T)] = (255, 255, 255)
 
-            self.cm_queue.put((img.frame, sensor_name, lidar_img))
+            self.cm_queue.put((self.timestamp, img.frame, sensor_name, lidar_img))
 
         else:
-            if 'Depth' in sensor_name:
-                img.convert(self.depth_cc[sensor_name])
-            else:
-                img.convert(cc.Raw)
+            img.convert(self._cc[sensor_name])
             array = np.frombuffer(img.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (img.height, img.width, 4))
             array = array[:, :, :3]
@@ -255,7 +275,7 @@ class SpecificWorker(GenericWorker):
         super(SpecificWorker, self).__init__(proxy_map)
         global world, carla_map, blueprint_library, vehicle
 
-        self.Period = 100
+        self.Period = 50
         self.img_width = 480
         self.img_height = 360
 
