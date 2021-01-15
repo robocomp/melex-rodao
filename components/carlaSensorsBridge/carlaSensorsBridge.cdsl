@@ -5,6 +5,6 @@ Component carlaSensorsBridge
 
     };
     language python;
-    statemachine "statemachine.smdsl";
+
 };
 
