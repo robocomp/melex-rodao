@@ -1,0 +1,5 @@
+numpy~=1.19.4
+ice~=0.0.2
+PySide2~=5.15.2
+argparse~=1.4.0
+termcolor~=1.1.0
