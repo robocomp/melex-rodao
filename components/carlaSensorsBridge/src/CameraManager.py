@@ -1,4 +1,4 @@
-from carla import ColorConverter as cc
+
 import glob
 import os
 import sys
@@ -19,6 +19,7 @@ except IndexError:
     pass
 
 import carla
+from carla import ColorConverter as cc
 
 mutex = Lock()
 
