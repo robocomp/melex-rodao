@@ -5,6 +5,7 @@ The easiest way to install them is following the steps indicated in point B from
 
 We are currently using CARLA [Development version 0.9.10](https://github.com/carla-simulator/carla/blob/master/Docs/download.md). You can download the [tar.gz file](https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.10.tar.gz) uncompres in your own carla directory, execute the ./ImportAssets.sh script and the isstallation is done.
 ```bash
+wget 
 ```
 
 
@@ -12,6 +13,6 @@ We are currently using CARLA [Development version 0.9.10](https://github.com/car
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTAwNzMzMzA2MSwxNjc4NzI5NTgzLDM1OD
-IzNjc4Nl19
+eyJoaXN0b3J5IjpbLTE0ODAyMDMzNjAsMTY3ODcyOTU4MywzNT
+gyMzY3ODZdfQ==
 -->
