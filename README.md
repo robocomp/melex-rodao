@@ -11,12 +11,14 @@ tar -xvf CARLA_0.9.10.tar.gz -C carla
 cd carla
 sh ImportAssets.sh
 ```
-
+Try to execute the PythonAPI example manual_control.py
+You may need to install some packages to make it work. You can do it manually or jus
+~/software/carla/PythonAPI/examples$ sudo pip3 install -r requirements.txt
 
  
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQzNDg5MzMxLDE2Nzg3Mjk1ODMsMzU4Mj
-M2Nzg2XX0=
+eyJoaXN0b3J5IjpbMTYzNTU3ODE5LDE0MzQ4OTMzMSwxNjc4Nz
+I5NTgzLDM1ODIzNjc4Nl19
 -->
