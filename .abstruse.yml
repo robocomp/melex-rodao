@@ -6,4 +6,4 @@ branches:
   - development
   - dev/*
 script:
-  - ls
+  - cd components && mkdir build && cd build && cmake .. && make

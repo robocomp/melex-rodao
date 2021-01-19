@@ -3,7 +3,7 @@
 In this project we use the simulator [CARLA](https://carla.readthedocs.io/en/latest/start_quickstart).
 The easiest way to install them is following the steps indicated in point B from the [precompiled package](https://carla.readthedocs.io/en/latest/start_quickstart/#b-package-installation).
 
-We are currently using CARLA [Development version 0.9.10](https://github.com/carla-simulator/carla/blob/master/Docs/download.md). You can download the [tar.gz file](https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.10.tar.gz) uncompres in your own carla directory, execute the ./ImportAssets.sh script and the isstallation is done.
+We are currently using CARLA [Development version 0.9.10](https://github.com/carla-simulator/carla/blob/master/Docs/download.md). You can download the [tar.gz file](https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.10.tar.gz) uncompres in your own carla directory, execute the ./ImportAssets.sh script and the installation is done.
 ```bash
 wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.10.tar.gz
 mkdir -p carla
@@ -26,7 +26,6 @@ ln -s PythonAPI/carla/dist/carla-0.9.10-py3.7-linux-x86_64.egg PythonAPI/carla/d
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MzM3MzY2NDksLTUwNDA2NzYxMSwxNj
-QwOTY4NDYwLC04Mjg5OTM4MjAsMTEyNzE1NDY0NSwxNDM0ODkz
-MzEsMTY3ODcyOTU4MywzNTgyMzY3ODZdfQ==
+eyJoaXN0b3J5IjpbLTMyMDcwMjU2OCwxNDM0ODkzMzEsMTY3OD
+cyOTU4MywzNTgyMzY3ODZdfQ==
 -->
