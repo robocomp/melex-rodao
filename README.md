@@ -18,13 +18,14 @@ in the examples directory.
 
 
 ```bash
-ln -s ../carla/dist/carla-0.9.10-py3.7-linux-x86_64.egg ../carla/dist/carla-0.9.10-py3.8-linux-x86_64.egg
+ln -s PythonAPI/carla/dist/carla-0.9.10-py3.7-linux-x86_64.egg PythonAPI/carla/dist/carla-0.9.10-py3.8-linux-x86_64.egg
 ```
 
  
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTgyODk5MzgyMCwxMTI3MTU0NjQ1LDE0Mz
-Q4OTMzMSwxNjc4NzI5NTgzLDM1ODIzNjc4Nl19
+eyJoaXN0b3J5IjpbMTY0MDk2ODQ2MCwtODI4OTkzODIwLDExMj
+cxNTQ2NDUsMTQzNDg5MzMxLDE2Nzg3Mjk1ODMsMzU4MjM2Nzg2
+XX0=
 -->
