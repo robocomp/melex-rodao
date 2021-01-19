@@ -11,6 +11,15 @@ tar -xvf CARLA_0.9.10.tar.gz -C carla
 cd carla
 sh ImportAssets.sh
 ```
+Try to execute the PythonAPI example manual_control.py
+You may need to install some packages to make it work. You can do it manually or just execute:
+sudo pip3 install -r requirements.txt
+in the examples directory.
+
+Carla's packaging right now only includes a .egg for Python version 3.7, but it is compatible with 3.8. To make it work with 3.8, it is enough to make a symbolic link from the same file:
+```bash
+ln -s PythonAPI/carla/dist/carla-0.9.10-py3.7-linux-x86_64.egg PythonAPI/carla/dist/carla-0.9.10-py3.8-linux-x86_64.egg
+```
 
 
  
