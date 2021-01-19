@@ -21,11 +21,12 @@ Carla's packaging right now only includes a .egg for Python version 3.7, but it 
 ln -s PythonAPI/carla/dist/carla-0.9.10-py3.7-linux-x86_64.egg PythonAPI/carla/dist/carla-0.9.10-py3.8-linux-x86_64.egg
 ```
 
+
  
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTUwNDA2NzYxMSwxNjQwOTY4NDYwLC04Mj
-g5OTM4MjAsMTEyNzE1NDY0NSwxNDM0ODkzMzEsMTY3ODcyOTU4
-MywzNTgyMzY3ODZdfQ==
+eyJoaXN0b3J5IjpbLTE3MzM3MzY2NDksLTUwNDA2NzYxMSwxNj
+QwOTY4NDYwLC04Mjg5OTM4MjAsMTEyNzE1NDY0NSwxNDM0ODkz
+MzEsMTY3ODcyOTU4MywzNTgyMzY3ODZdfQ==
 -->
