@@ -1,5 +1,5 @@
 image:
-  robocomp_dependences_20.04
+  robocomp_installed_20_04
 matrix:
   - env: SCRIPT="melex-ci"
 branches:
