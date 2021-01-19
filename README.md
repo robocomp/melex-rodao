@@ -17,10 +17,14 @@ sudo pip3 install -r requirements.txt
 in the examples directory.
 
 
+```bash
+ln -s ../carla/dist/carla-0.9.10-py3.7-linux-x86_64.egg ../carla/dist/carla-0.9.10-py3.8-linux-x86_64.egg
+```
+
  
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTEyNzE1NDY0NSwxNDM0ODkzMzEsMTY3OD
-cyOTU4MywzNTgyMzY3ODZdfQ==
+eyJoaXN0b3J5IjpbLTgyODk5MzgyMCwxMTI3MTU0NjQ1LDE0Mz
+Q4OTMzMSwxNjc4NzI5NTgzLDM1ODIzNjc4Nl19
 -->
