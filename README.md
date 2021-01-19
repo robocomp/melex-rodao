@@ -12,13 +12,15 @@ cd carla
 sh ImportAssets.sh
 ```
 Try to execute the PythonAPI example manual_control.py
-You may need to install some packages to make it work. You can do it manually or jus
-~/software/carla/PythonAPI/examples$ sudo pip3 install -r requirements.txt
+You may need to install some packages to make it work. You can do it manually or just execute:
+sudo pip3 install -r requirements.txt
+in the examples directory.
+
 
  
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTYzNTU3ODE5LDE0MzQ4OTMzMSwxNjc4Nz
-I5NTgzLDM1ODIzNjc4Nl19
+eyJoaXN0b3J5IjpbMTEyNzE1NDY0NSwxNDM0ODkzMzEsMTY3OD
+cyOTU4MywzNTgyMzY3ODZdfQ==
 -->
