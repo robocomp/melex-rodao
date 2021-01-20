@@ -4,6 +4,9 @@ from multiprocessing import SimpleQueue
 import weakref
 import carla
 import math
+from threading import Lock
+mutex = Lock()
+
 # ==============================================================================
 # -- IMUSensor -----------------------------------------------------------------
 # ==============================================================================
@@ -29,6 +32,8 @@ class IMUSensor(object):
 
     @staticmethod
     def _IMU_callback(weak_self, sensor_data):
+        global mutex
+        mutex.acquire()
         self = weak_self()
         if not self:
             return
@@ -46,3 +51,4 @@ class IMUSensor(object):
         self.timestamp = sensor_data.timestamp
         self.imu_queue.put((self.timestamp, self.frame, self.accelerometer, self.gyroscope, self.compass))
 
+        mutex.release()

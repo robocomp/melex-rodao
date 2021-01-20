@@ -2,6 +2,8 @@ from queue import Queue
 from multiprocessing import SimpleQueue
 import weakref
 import carla
+from threading import Lock
+mutex = Lock()
 
 # ==============================================================================
 # -- GnssSensor ----------------------------------------------------------------
@@ -24,6 +26,8 @@ class GnssSensor(object):
 
     @staticmethod
     def _GNSS_callback(weak_self, sensor_data):
+        global mutex
+        mutex.acquire()
         self = weak_self()
         if not self:
             return
@@ -33,8 +37,4 @@ class GnssSensor(object):
         self.timestamp = sensor_data.timestamp
         self.gnss_queue.put((self.timestamp, self.frame, self.lat, self.lon))
 
-        # print('------------- GNSS -------------')
-        # print('Latitud:', self.lat)
-        # print('Longitud:', self.lon)
-        # print('\n')
-
+        mutex.release()
