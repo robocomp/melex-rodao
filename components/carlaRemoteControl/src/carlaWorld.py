@@ -2,9 +2,9 @@ import carla
 import re
 import random
 from Collision import CollisionSensor
+from LaneInvasion import LaneInvasionSensor
 from GNSS import GnssSensor
 from CameraManager import CameraManager
-from IMU import IMUSensor
 
 def find_weather_presets():
     rgx = re.compile('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)')
@@ -20,16 +20,10 @@ def get_actor_display_name(actor, truncate=250):
 
 
 class World(object):
-    def __init__(self, carla_world, carla_map, hud, camerargbdsimplepub_proxy):
-
+    def __init__(self, carla_world, carla_map, hud):
         self.world = carla_world
         self.carla_map = carla_map
         self.hud = hud
-        self.camerargbdsimplepub_proxy = camerargbdsimplepub_proxy
-        self.sensor_width = 480
-        self.sensor_height = 360
-        # self.sensor_width = 1920
-        # self.sensor_height = 1080
         self.player = None
         self.collision_sensor = None
         # self.lane_invasion_sensor = None
@@ -66,8 +60,7 @@ class World(object):
         self.collision_sensor = CollisionSensor(self.player, self.hud)
         # self.lane_invasion_sensor = LaneInvasionSensor(self.player, self.hud)
         self.gnss_sensor = GnssSensor(self.player)
-        self.imu_sensor = IMUSensor(self.player)
-        self.camera_manager = CameraManager(self.world.get_blueprint_library(), self.player, self.hud, self.sensor_width, self.sensor_height,self.camerargbdsimplepub_proxy)
+        self.camera_manager = CameraManager(self.player, self.hud)
         self.camera_manager.transform_index = cam_pos_index
         self.camera_manager.set_sensor(cam_index, notify=False)
         actor_type = get_actor_display_name(self.player)
@@ -91,7 +84,7 @@ class World(object):
         sensors = [
             self.camera_manager.sensor,
             self.collision_sensor.sensor,
-            self.imu_sensor.sensor,
+            # self.lane_invasion_sensor.sensor,
             self.gnss_sensor.sensor]
         for sensor in sensors:
             if sensor is not None:

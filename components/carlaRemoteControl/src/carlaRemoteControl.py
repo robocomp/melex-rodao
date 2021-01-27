@@ -20,7 +20,7 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# \mainpage RoboComp::carlaSensorsBridge
+# \mainpage RoboComp::carlaRemoteControl
 #
 # \section intro_sec Introduction
 #
@@ -48,7 +48,7 @@
 #
 # \subsection execution_ssec Execution
 #
-# Just: "${PATH_TO_BINARY}/carlaSensorsBridge --Ice.Config=${PATH_TO_CONFIG_FILE}"
+# Just: "${PATH_TO_BINARY}/carlaRemoteControl --Ice.Config=${PATH_TO_CONFIG_FILE}"
 #
 # \subsection running_ssec Once running
 #
@@ -112,33 +112,6 @@ if __name__ == '__main__':
     parameters = {}
     for i in ic.getProperties():
         parameters[str(i)] = str(ic.getProperties().getProperty(i))
-
-    # Topic Manager
-    proxy = ic.getProperties().getProperty("TopicManager.Proxy")
-    obj = ic.stringToProxy(proxy)
-    try:
-        topicManager = IceStorm.TopicManagerPrx.checkedCast(obj)
-    except Ice.ConnectionRefusedException as e:
-        print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
-        exit(1)
-
-    # Create a proxy to publish a CameraRGBDSimplePub topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("CameraRGBDSimplePub")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("CameraRGBDSimplePub")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("CameraRGBDSimplePub")
-            except:
-                print('Another client created the CameraRGBDSimplePub topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    camerargbdsimplepubTopic = RoboCompCameraRGBDSimplePub.CameraRGBDSimplePubPrx.uncheckedCast(pub)
-    mprx["CameraRGBDSimplePubPub"] = camerargbdsimplepubTopic
 
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)

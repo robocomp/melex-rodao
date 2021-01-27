@@ -71,7 +71,7 @@ class DualControl(object):
         self._joystick.init()
 
         self._parser = ConfigParser()
-        self._parser.read('/home/robocomp/carla/wheel_config.ini')
+        self._parser.read('/home/robolab/carla/wheel_config.ini')
         self._steer_idx = int(
             self._parser.get('G29 Racing Wheel', 'steering_wheel'))
         self._throttle_idx = int(
@@ -86,17 +86,20 @@ class DualControl(object):
             if event.type == pygame.QUIT:
                 return True
             elif event.type == pygame.JOYBUTTONDOWN:
-                # if event.button == 0:
-                #     print('0 pressed')
-                #     world.restart()
-                if event.button == 1:
+                if event.button == 0:
+                    world.restart()
+                elif event.button == 1:
                     world.hud.toggle_info()
                 elif event.button == 2:
                     world.camera_manager.toggle_camera()
                 elif event.button == 3:
                     world.next_weather()
                 elif event.button == self._handbrake_idx:
+                    print('pressed handbrake')
+                    print( self.handbrake_on)
                     self.handbrake_on = False if self.handbrake_on else True
+                    print(self.handbrake_on)
+
                 elif event.button == self._reverse_idx:
                     self._control.gear = 1 if self._control.reverse else -1
                 elif event.button == 23:
@@ -112,22 +115,16 @@ class DualControl(object):
                 elif event.key == K_h or (event.key == K_SLASH and pygame.key.get_mods() & KMOD_SHIFT):
                     world.hud.help.toggle()
                 elif event.key == K_TAB:
-                    print('toggle_camera')
                     world.camera_manager.toggle_camera()
                 elif event.key == K_c and pygame.key.get_mods() & KMOD_SHIFT:
-                    print('next weather')
                     world.next_weather(reverse=True)
                 elif event.key == K_c:
-                    print('netx weather')
                     world.next_weather()
                 elif event.key == K_BACKQUOTE:
-                    print('backquote')
                     world.camera_manager.next_sensor()
                 elif K_0 < event.key <= K_9:
-                    print('set_sensor')
                     world.camera_manager.set_sensor(event.key - 1 - K_0)
                 elif event.key == K_r:
-                    print('recording')
                     world.camera_manager.toggle_recording()
                 if isinstance(self._control, carla.VehicleControl):
                     if event.key == K_q:
@@ -181,7 +178,7 @@ class DualControl(object):
 
         K2 = 1.6  # 1.6
         throttleCmd = K2 + (2.05 * math.log10(
-            -0.7 * jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.8
+            -0.7 * jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.75
         if throttleCmd <= 0:
             throttleCmd = 0
         elif throttleCmd > 1:

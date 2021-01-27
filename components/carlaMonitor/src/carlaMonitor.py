@@ -20,7 +20,7 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# \mainpage RoboComp::carlaSensorsBridge
+# \mainpage RoboComp::carlaMonitor
 #
 # \section intro_sec Introduction
 #
@@ -48,7 +48,7 @@
 #
 # \subsection execution_ssec Execution
 #
-# Just: "${PATH_TO_BINARY}/carlaSensorsBridge --Ice.Config=${PATH_TO_CONFIG_FILE}"
+# Just: "${PATH_TO_BINARY}/carlaMonitor --Ice.Config=${PATH_TO_CONFIG_FILE}"
 #
 # \subsection running_ssec Once running
 #
@@ -121,31 +121,35 @@ if __name__ == '__main__':
     except Ice.ConnectionRefusedException as e:
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
-
-    # Create a proxy to publish a CameraRGBDSimplePub topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("CameraRGBDSimplePub")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("CameraRGBDSimplePub")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("CameraRGBDSimplePub")
-            except:
-                print('Another client created the CameraRGBDSimplePub topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    camerargbdsimplepubTopic = RoboCompCameraRGBDSimplePub.CameraRGBDSimplePubPrx.uncheckedCast(pub)
-    mprx["CameraRGBDSimplePubPub"] = camerargbdsimplepubTopic
-
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)
     else:
         print("Error getting required connections, check config file")
         sys.exit(-1)
+
+
+    CameraRGBDSimplePub_adapter = ic.createObjectAdapter("CameraRGBDSimplePubTopic")
+    camerargbdsimplepubI_ = camerargbdsimplepubI.CameraRGBDSimplePubI(worker)
+    camerargbdsimplepub_proxy = CameraRGBDSimplePub_adapter.addWithUUID(camerargbdsimplepubI_).ice_oneway()
+
+    subscribeDone = False
+    while not subscribeDone:
+        try:
+            camerargbdsimplepub_topic = topicManager.retrieve("CameraRGBDSimplePub")
+            subscribeDone = True
+        except Ice.Exception as e:
+            print("Error. Topic does not exist (creating)")
+            time.sleep(1)
+            try:
+                camerargbdsimplepub_topic = topicManager.create("CameraRGBDSimplePub")
+                subscribeDone = True
+            except:
+                print("Error. Topic could not be created. Exiting")
+                status = 0
+    qos = {}
+    camerargbdsimplepub_topic.subscribeAndGetPublisher(qos, camerargbdsimplepub_proxy)
+    CameraRGBDSimplePub_adapter.activate()
 
     signal.signal(signal.SIGINT, sigint_handler)
     app.exec_()

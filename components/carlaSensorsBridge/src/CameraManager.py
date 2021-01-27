@@ -1,4 +1,3 @@
-
 import glob
 import os
 import sys
@@ -11,6 +10,7 @@ import cv2
 from threading import Lock
 import carla
 from carla import ColorConverter as cc
+import RoboCompCameraRGBDSimple
 
 mutex = Lock()
 
@@ -18,16 +18,18 @@ mutex = Lock()
 # # ==============================================================================
 # # -- CameraManager -------------------------------------------------------------
 # # ==============================================================================
-#
-#
+
 class CameraManager(object):
-    def __init__(self, bp_library, parent_actor, hud, width, height):
+    def __init__(self, bp_library, parent_actor, hud, width, height, camerargbdsimplepub_proxy):
         self.sensor = None
         self.surface = None
+
         self.img_width = width
         self.img_height = height
         self._parent = parent_actor
         self.hud = hud
+        self.camerargbdsimplepub_proxy = camerargbdsimplepub_proxy
+
         self.recording = False
         self._camera_transforms = [
             carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15)),
@@ -45,7 +47,6 @@ class CameraManager(object):
                 bp.set_attribute('image_size_y', str(hud.dim[1]))
             item.append(bp)
 
-
         self.sensor_list = []
         self.cm_queue = SimpleQueue()
         world = self._parent.get_world()
@@ -58,17 +59,24 @@ class CameraManager(object):
                     'camera RGB 02': cc.Raw,
                     'camera RGB 03': cc.Raw,
                     'camera RGB 04': cc.Raw,
-                    'lidar': None,
-
+                    'teleco': cc.Raw,
+                    'obras publicas': cc.Raw,
+                    'investigacion': cc.Raw,
+                    'profesorado': cc.Raw,
                     }
+
         cam_bp = self.blueprint_library.find('sensor.camera.rgb')
         cam_bp.set_attribute('image_size_x', f'{self.img_width}')
         cam_bp.set_attribute('image_size_y', f'{self.img_height}')
         cam_bp.set_attribute('fov', '110')
         cam_bp.set_attribute('sensor_tick', '1.0')
 
-        lmanager = world.get_lightmanager()
-        mylights = lmanager.get_all_lights()
+        ####################
+        ## STREET SENSORS ##
+        ####################
+
+        # lmanager = world.get_lightmanager()
+        # mylights = lmanager.get_all_lights()
 
         # spawn_point_8 = carla.Transform(
         #     carla.Location(x=mylights[8].location.x, z=mylights[8].location.z + 5, y=mylights[8].location.y),
@@ -110,16 +118,42 @@ class CameraManager(object):
         # sensor_35.listen(lambda data: self.sensor_callback(weak_self,data, "sensor35"))
         # self.sensor_list.append(sensor_35)
 
+        #######################
+        ## BUILDING SENSORS ##
+        ######################
+
+        # teleco_sp = carla.Transform(carla.Location(x=135.0, y=100.0, z=15),carla.Rotation(pitch=0, yaw=-45))
+        # teleco_sensor = world.spawn_actor(cam_bp, teleco_sp, attach_to=None)
+        # teleco_sensor.listen(lambda data: self.sensor_callback(weak_self,data,"teleco"))
+        # self.sensor_list.append(teleco_sensor)
+
+        # investigacion_sp = carla.Transform(carla.Location(x=-100.0, y=10, z=30), carla.Rotation(pitch=0, yaw=0))
+        # investigacion_sensor = world.spawn_actor(cam_bp, investigacion_sp, attach_to=None)
+        # investigacion_sensor.listen(lambda data: self.sensor_callback(weak_self, data, "investigacion"))
+        # self.sensor_list.append(investigacion_sensor)
+
+        # profesorado_sp = carla.Transform(carla.Location(x=-0.1679, y=-0.089, z=10))
+        # profesorado_sensor = world.spawn_actor(cam_bp, profesorado_sp, attach_to=None)
+        # profesorado_sensor.listen(lambda data: self.sensor_callback(weak_self,data,"profesorado"))
+        # self.sensor_list.append(profesorado_sensor)
+
+        ###############
+        ##CAR SENSORS##
+        ###############
+
         spawn_point_car = carla.Transform(carla.Location(x=2.5, z=0.7))
+
         cam04 = world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
-        cam04.listen(lambda data: self.sensor_callback(weak_self, data, 'camera RGB 04'))
+        # cam04.listen(lambda data: self.sensor_callback_old(weak_self, data, 'camera RGB 04'))
+        cam04.listen(lambda data: self.sensor_callback(weak_self,
+                                                       data, 'camera RGB 04'))
         self.sensor_list.append(cam04)
-
-        depth_bp = self.blueprint_library.find('sensor.camera.depth')
-        depth_bp.set_attribute('image_size_x', f'{self.img_width}')
-        depth_bp.set_attribute('image_size_y', f'{self.img_height}')
-
-
+        #
+        # depth_bp = self.blueprint_library.find('sensor.camera.depth')
+        # depth_bp.set_attribute('image_size_x', f'{self.img_width}')
+        # depth_bp.set_attribute('image_size_y', f'{self.img_height}')
+        #
+        #
         # cam05 = world.spawn_actor(depth_bp, spawn_point_car, attach_to=parent_actor)
         # cam05.listen(lambda data: self.sensor_callback(weak_self, data, 'DepthRaw'))
         # self.sensor_list.append(cam05)
@@ -128,18 +162,20 @@ class CameraManager(object):
         # cam06.listen(lambda data: self.sensor_callback(weak_self, data, 'Depth'))
         # self.sensor_list.append(cam06)
 
-        cam07 = world.spawn_actor(depth_bp, spawn_point_car, attach_to=parent_actor)
-        cam07.listen(lambda data: self.sensor_callback(weak_self, data, 'DepthLogarithmic'))
-        self.sensor_list.append(cam07)
+        # cam07 = world.spawn_actor(depth_bp, spawn_point_car, attach_to=parent_actor)
+        # cam07.listen(lambda data: self.sensor_callback(weak_self, data, 'DepthLogarithmic'))
+        # self.sensor_list.append(cam07)
 
     @staticmethod
-    def sensor_callback(weak_self, img, sensor_name):
+    def sensor_callback_old(weak_self, img, sensor_name):
+
         global mutex
         mutex.acquire()
 
         self = weak_self()
         self.frame = img.frame
         self.timestamp = img.timestamp
+
 
         if not self:
             return
@@ -153,10 +189,28 @@ class CameraManager(object):
 
         mutex.release()
 
+    @staticmethod
+    def sensor_callback(weak_self, img, sensor_name):
+
+        self = weak_self()
+
+        global mutex
+        mutex.acquire()
+        cameraType = RoboCompCameraRGBDSimple.TImage()
+        cameraType.width = img.width
+        cameraType.height = img.height
+        cameraType.ImgType = img.raw_data
+        depthType = RoboCompCameraRGBDSimple.TDepth()
+        print('Trying to send RGBD info')
+        self.camerargbdsimplepub_proxy.pushRGBD(cameraType, depthType)
+        print('[DONE] Trying to send RGBD info')
+
+        mutex.release()
+
+
     def show_img(self, image, name):
         cv2.imshow(name, image)
         cv2.waitKey(1)
-
 
     def toggle_camera(self):
         self.transform_index = (self.transform_index + 1) % len(self._camera_transforms)

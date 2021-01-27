@@ -1,0 +1,10 @@
+Component carlaRemoteControl
+{
+    Communications
+    {
+
+    };
+    language python;
+ 
+};
+

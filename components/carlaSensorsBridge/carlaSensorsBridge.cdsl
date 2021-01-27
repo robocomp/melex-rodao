@@ -1,8 +1,10 @@
+import "CameraRGBDSimplePub.idsl";
+
 Component carlaSensorsBridge
 {
     Communications
     {
-
+	publishes CameraRGBDSimplePub;
     };
     language python;
 

@@ -75,6 +75,7 @@ class DepthType(list):
 setattr(RoboCompCameraRGBDSimple, "DepthType", DepthType)
 
 
+import camerargbdsimplepubI
 
 
 
@@ -86,7 +87,6 @@ class GenericWorker(QtCore.QObject):
     def __init__(self, mprx):
         super(GenericWorker, self).__init__()
 
-        self.camerargbdsimplepub_proxy = mprx["CameraRGBDSimplePubPub"]
 
         self.mutex = QtCore.QMutex(QtCore.QMutex.Recursive)
         self.Period = 30

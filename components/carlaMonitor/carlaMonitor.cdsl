@@ -1,0 +1,13 @@
+
+import "CameraRGBDSimplePub.idsl";
+
+Component carlaMonitor
+{
+    Communications
+    {
+        subscribesTo CameraRGBDSimplePub; 
+    };
+
+    language python;
+};
+
