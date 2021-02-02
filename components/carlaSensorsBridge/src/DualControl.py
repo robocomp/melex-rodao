@@ -55,9 +55,9 @@ class DualControl(object):
     def __init__(self, world):
         self._autopilot_enabled = False
         self._control = carla.VehicleControl()
-            # world.player.set_autopilot(self._autopilot_enabled)
+        # world.player.set_autopilot(self._autopilot_enabled)
         self._steer_cache = 0.0
-        self.handbrake_on  = False
+        self.handbrake_on = False
         world.hud.notification("Press 'H' or '?' for help.", seconds=4.0)
 
         # initialize steering wheel
@@ -71,7 +71,7 @@ class DualControl(object):
         self._joystick.init()
 
         self._parser = ConfigParser()
-        self._parser.read('/home/robocomp/carla/wheel_config.ini')
+        self._parser.read('/home/robocomp/carla_package/wheel_config.ini')
         self._steer_idx = int(
             self._parser.get('G29 Racing Wheel', 'steering_wheel'))
         self._throttle_idx = int(
@@ -150,7 +150,7 @@ class DualControl(object):
             self._parse_vehicle_keys(pygame.key.get_pressed(), clock.get_time())
             self._parse_vehicle_wheel()
             self._control.reverse = self._control.gear < 0
-            self._control.hand_brake =  self.handbrake_on
+            self._control.hand_brake = self.handbrake_on
             world.player.apply_control(self._control)
 
     def _parse_vehicle_keys(self, keys, milliseconds):
@@ -198,13 +198,10 @@ class DualControl(object):
         self._control.brake = brakeCmd
         self._control.throttle = throttleCmd
 
-        #toggle = jsButtons[self._reverse_idx]
+        # toggle = jsButtons[self._reverse_idx]
 
         # self._control.hand_brake = bool(jsButtons[self._handbrake_idx])
-
-
 
     @staticmethod
     def _is_quit_shortcut(key):
         return (key == K_ESCAPE) or (key == K_q and pygame.key.get_mods() & KMOD_CTRL)
-
