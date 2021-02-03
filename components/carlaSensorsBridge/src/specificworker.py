@@ -83,14 +83,11 @@ class SpecificWorker(GenericWorker):
         self.sensor_height = 720
         self.vehicle = None
         self.collision_sensor = None
-        # self.lane_invasion_sensor = None
         self.gnss_sensor = None
         self.camera_manager = None
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
         self.restart()
-
-        # self.controller = DualControl(self.world)
 
         if startup_check:
             self.startup_check()
@@ -108,13 +105,7 @@ class SpecificWorker(GenericWorker):
         return True
 
     def restart(self):
-        cam_index = self.camera_manager.index if self.camera_manager is not None else 0
-        cam_pos_index = self.camera_manager.transform_index if self.camera_manager is not None else 0
         blueprint = random.choice(self.blueprint_library.filter('vehicle.*'))
-        blueprint.set_attribute('role_name', 'hero')
-        if blueprint.has_attribute('color'):
-            color = random.choice(blueprint.get_attribute('color').recommended_values)
-            blueprint.set_attribute('color', color)
         # Spawn the player.
         if self.vehicle is not None:
             spawn_point = self.vehicle.get_transform()
@@ -135,18 +126,12 @@ class SpecificWorker(GenericWorker):
         self.imu_sensor = IMUSensor(self.vehicle)
         self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.sensor_width,
                                             self.sensor_height, self.camerargbdsimplepub_proxy)
-        self.camera_manager.transform_index = cam_pos_index
-        self.camera_manager.set_sensor(cam_index, notify=False)
-        actor_type = get_actor_display_name(self.vehicle)
 
     def next_weather(self, reverse=False):
         self._weather_index += -1 if reverse else 1
         self._weather_index %= len(self._weather_presets)
         preset = self._weather_presets[self._weather_index]
         self.vehicle.get_world().set_weather(preset[0])
-
-    def render(self, display):
-        self.camera_manager.render(display)
 
     def destroy(self):
         sensors = [
