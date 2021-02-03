@@ -35,6 +35,8 @@ Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimple.ice")
 import RoboCompCameraRGBDSimple
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
 import RoboCompCameraRGBDSimplePub
+Ice.loadSlice("-I ./src/ --all ./src/CarlaVehicleControl.ice")
+import RoboCompCarlaVehicleControl
 
 class ImgType(list):
     def __init__(self, iterable=list()):
@@ -87,6 +89,7 @@ class GenericWorker(QtCore.QObject):
     def __init__(self, mprx):
         super(GenericWorker, self).__init__()
 
+        self.carlavehiclecontrol_proxy = mprx["CarlaVehicleControlPub"]
 
         self.mutex = QtCore.QMutex(QtCore.QMutex.Recursive)
         self.Period = 30

@@ -29,7 +29,8 @@ from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
 from genericworker import *
 from numpy import random
-import pygame
+import re
+import random
 
 try:
     sys.path.append(glob.glob('/home/robocomp/carla_package/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
@@ -40,45 +41,56 @@ except IndexError:
     6
 
 import carla
-
-from Hud import HUD
-from carlaWorld import World
-from DualControl import DualControl
+from IMU import IMUSensor
+from GNSS import GnssSensor
+from CameraManager import CameraManager
 
 client = carla.Client('localhost', 2000)
 client.set_timeout(50.0)
-print(f'Client version {client.get_client_version()}')
-print(f'Server version {client.get_server_version()}')
 print('Loading world...')
 world = client.load_world('CampusV3')
 print('Done')
-# world = client.load_world('CampusVersionDos')
 # world = client.get_world()
 
 carla_map = world.get_map()
 blueprint_library = world.get_blueprint_library()
 
 
+def find_weather_presets():
+    rgx = re.compile('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)')
+    name = lambda x: ' '.join(m.group(0) for m in rgx.finditer(x))
+    presets = [x for x in dir(carla.WeatherParameters) if re.match('[A-Z].+', x)]
+    return [(getattr(carla.WeatherParameters, x), name(x)) for x in presets]
+
+
+def get_actor_display_name(actor, truncate=250):
+    name = ' '.join(actor.type_id.replace('_', '.').title().split('.')[1:])
+    return (name[:truncate - 1] + u'\u2026') if len(name) > truncate else name
+
+
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
-        global world, carla_map
+        global world, carla_map, blueprint_library
 
         self.Period = 0
-        self.pygame_width = 1280
-        self.pygame_height = 720
-        pygame.init()
-        pygame.font.init()
-        self.display = pygame.display.set_mode(
-            (self.pygame_width, self.pygame_height),
-            pygame.HWSURFACE | pygame.DOUBLEBUF)
-        self.world = None
+        self.world = world
+        self.carla_map = carla_map
+        self.blueprint_library = blueprint_library
+        # self.sensor_width = 480
+        # self.sensor_height = 360
+        self.sensor_width = 1280
+        self.sensor_height = 720
+        self.vehicle = None
+        self.collision_sensor = None
+        # self.lane_invasion_sensor = None
+        self.gnss_sensor = None
+        self.camera_manager = None
+        self._weather_presets = find_weather_presets()
+        self._weather_index = 0
+        self.restart()
 
-        hud = HUD(carla_map, self.pygame_width, self.pygame_height)
-        self.world = World(world, carla_map, hud, self.camerargbdsimplepub_proxy)
-        self.controller = DualControl(self.world)
-
-        self.clock = pygame.time.Clock()
+        # self.controller = DualControl(self.world)
 
         if startup_check:
             self.startup_check()
@@ -89,34 +101,100 @@ class SpecificWorker(GenericWorker):
     def __del__(self):
         print('SpecificWorker destructor')
 
-        self.world.destroy()
-        pygame.quit()
+        self.destroy()
         cv2.destroyAllWindows()
 
     def setParams(self, params):
         return True
 
+    def restart(self):
+        cam_index = self.camera_manager.index if self.camera_manager is not None else 0
+        cam_pos_index = self.camera_manager.transform_index if self.camera_manager is not None else 0
+        blueprint = random.choice(self.blueprint_library.filter('vehicle.*'))
+        blueprint.set_attribute('role_name', 'hero')
+        if blueprint.has_attribute('color'):
+            color = random.choice(blueprint.get_attribute('color').recommended_values)
+            blueprint.set_attribute('color', color)
+        # Spawn the player.
+        if self.vehicle is not None:
+            spawn_point = self.vehicle.get_transform()
+            spawn_point.location.z += 2.0
+            spawn_point.rotation.roll = 0.0
+            spawn_point.rotation.pitch = 0.0
+            self.destroy()
+            self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+        while self.vehicle is None:
+            spawn_points = self.carla_map.get_spawn_points()
+            spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+            self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+        # Set up the sensors.
+        # self.collision_sensor = CollisionSensor(self.player, self.hud)
+
+        ### SENSORS ###
+        self.gnss_sensor = GnssSensor(self.vehicle)
+        self.imu_sensor = IMUSensor(self.vehicle)
+        self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.sensor_width,
+                                            self.sensor_height, self.camerargbdsimplepub_proxy)
+        self.camera_manager.transform_index = cam_pos_index
+        self.camera_manager.set_sensor(cam_index, notify=False)
+        actor_type = get_actor_display_name(self.vehicle)
+
+    def next_weather(self, reverse=False):
+        self._weather_index += -1 if reverse else 1
+        self._weather_index %= len(self._weather_presets)
+        preset = self._weather_presets[self._weather_index]
+        self.vehicle.get_world().set_weather(preset[0])
+
+    def render(self, display):
+        self.camera_manager.render(display)
+
     def destroy(self):
-        self.world.destroy()
-        pygame.quit()
-        cv2.destroyAllWindows()
-        exit()
+        sensors = [
+            self.camera_manager.sensor,
+            self.collision_sensor.sensor,
+            self.imu_sensor.sensor,
+            self.gnss_sensor.sensor]
+        for sensor in sensors:
+            if sensor is not None:
+                sensor.stop()
+                sensor.destroy()
+        if self.vehicle is not None:
+            self.vehicle.destroy()
+
+    def move_car(self, control):
+        self.vehicle.apply_control(control)
+
 
     @QtCore.Slot()
     def compute(self):
-        # print('SpecificWorker.compute...')
-        self.clock.tick_busy_loop(60)
-        if self.controller.parse_events(self.world, self.clock):
-            self.destroy()
-        self.world.tick(self.clock)
-        self.world.render(self.display)
-        pygame.display.flip()
-
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
-    ######################
-    # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
-    # self.camerargbdsimplepub_proxy.pushRGBD(...)
+    # =============== Methods for Component SubscribesTo ================
+    # ===================================================================
+    #
+    # SUBSCRIPTION to updateVehicleControl method from CarlaVehicleControl interface
+    #
+    def CarlaVehicleControl_updateVehicleControl(self, control):
+        controller = carla.VehicleControl()
+        controller.throttle = control.throttle
+        controller.steer = control.steer
+        controller.brake = control.brake
+        controller.gear = int(control.gear)
+        controller.hand_brake = control.handbrake
+        controller.reverse = control.reverse
+
+        self.move_car(controller)
+
+# ===================================================================
+# ===================================================================
+
+######################
+# From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
+# self.camerargbdsimplepub_proxy.pushRGBD(...)
+
+######################
+# From the RoboCompCarlaVehicleControl you can use this types:
+# RoboCompCarlaVehicleControl.VehicleControl

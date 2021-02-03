@@ -45,9 +45,9 @@ class HUD(object):
         self._notifications.tick(world, clock)
         if not self._show_info:
             return
-        t = world.player.get_transform()
-        v = world.player.get_velocity()
-        c = world.player.get_control()
+        t = world.vehicle.get_transform()
+        v = world.vehicle.get_velocity()
+        c = world.vehicle.get_control()
         compass = world.imu_sensor.compass
         heading = 'N' if abs(t.rotation.yaw) < 89.5 else ''
         heading += 'S' if abs(t.rotation.yaw) > 90.5 else ''
@@ -62,7 +62,7 @@ class HUD(object):
             'Server:  % 16.0f FPS' % self.server_fps,
             # 'Client:  % 16.0f FPS' % clock.get_fps(),
             '',
-            'Vehicle: % 20s' % get_actor_display_name(world.player, truncate=20),
+            'Vehicle: % 20s' % get_actor_display_name(world.vehicle, truncate=20),
             'Map:     % 20s' % self.carla_map.name,
             'Simulation time: % 12s' % datetime.timedelta(seconds=int(self.simulation_time)),
             '',
@@ -98,7 +98,7 @@ class HUD(object):
             self._info_text += ['Nearby vehicles:']
             distance = lambda l: math.sqrt(
                 (l.x - t.location.x) ** 2 + (l.y - t.location.y) ** 2 + (l.z - t.location.z) ** 2)
-            vehicles = [(distance(x.get_location()), x) for x in vehicles if x.id != world.player.id]
+            vehicles = [(distance(x.get_location()), x) for x in vehicles if x.id != world.vehicle.id]
             for d, vehicle in sorted(vehicles):
                 if d > 200.0:
                     break

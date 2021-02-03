@@ -147,6 +147,29 @@ if __name__ == '__main__':
         print("Error getting required connections, check config file")
         sys.exit(-1)
 
+
+    CarlaVehicleControl_adapter = ic.createObjectAdapter("CarlaVehicleControlTopic")
+    carlavehiclecontrolI_ = carlavehiclecontrolI.CarlaVehicleControlI(worker)
+    carlavehiclecontrol_proxy = CarlaVehicleControl_adapter.addWithUUID(carlavehiclecontrolI_).ice_oneway()
+
+    subscribeDone = False
+    while not subscribeDone:
+        try:
+            carlavehiclecontrol_topic = topicManager.retrieve("CarlaVehicleControl")
+            subscribeDone = True
+        except Ice.Exception as e:
+            print("Error. Topic does not exist (creating)")
+            time.sleep(1)
+            try:
+                carlavehiclecontrol_topic = topicManager.create("CarlaVehicleControl")
+                subscribeDone = True
+            except:
+                print("Error. Topic could not be created. Exiting")
+                status = 0
+    qos = {}
+    carlavehiclecontrol_topic.subscribeAndGetPublisher(qos, carlavehiclecontrol_proxy)
+    CarlaVehicleControl_adapter.activate()
+
     signal.signal(signal.SIGINT, sigint_handler)
     app.exec_()
 

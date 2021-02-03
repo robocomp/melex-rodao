@@ -1,10 +1,11 @@
-
+import "CarlaVehicleControl.idsl";
 import "CameraRGBDSimplePub.idsl";
 
 Component carlaMonitor
 {
     Communications
     {
+	publishes CarlaVehicleControl;
         subscribesTo CameraRGBDSimplePub; 
     };
 

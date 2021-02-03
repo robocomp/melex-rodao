@@ -1,0 +1,20 @@
+
+module RoboCompCarlaVehicleControl
+{
+	struct VehicleControl
+	{
+		float throttle;
+		float steer;
+		float brake;
+		float gear;
+		bool handbrake;
+		bool reverse;
+	};
+	
+
+	interface CarlaVehicleControl
+	{
+		idempotent void updateVehicleControl(VehicleControl control);
+
+	};
+};

@@ -112,29 +112,23 @@ class DualControl(object):
                 elif event.key == K_h or (event.key == K_SLASH and pygame.key.get_mods() & KMOD_SHIFT):
                     world.hud.help.toggle()
                 elif event.key == K_TAB:
-                    print('toggle_camera')
                     world.camera_manager.toggle_camera()
                 elif event.key == K_c and pygame.key.get_mods() & KMOD_SHIFT:
-                    print('next weather')
                     world.next_weather(reverse=True)
                 elif event.key == K_c:
-                    print('netx weather')
                     world.next_weather()
                 elif event.key == K_BACKQUOTE:
-                    print('backquote')
                     world.camera_manager.next_sensor()
                 elif K_0 < event.key <= K_9:
-                    print('set_sensor')
                     world.camera_manager.set_sensor(event.key - 1 - K_0)
                 elif event.key == K_r:
-                    print('recording')
                     world.camera_manager.toggle_recording()
                 if isinstance(self._control, carla.VehicleControl):
                     if event.key == K_q:
                         self._control.gear = 1 if self._control.reverse else -1
                     elif event.key == K_m:
                         self._control.manual_gear_shift = not self._control.manual_gear_shift
-                        self._control.gear = world.player.get_control().gear
+                        self._control.gear = world.vehicle.get_control().gear
                         world.hud.notification('%s Transmission' %
                                                ('Manual' if self._control.manual_gear_shift else 'Automatic'))
                     elif self._control.manual_gear_shift and event.key == K_COMMA:
@@ -151,7 +145,7 @@ class DualControl(object):
             self._parse_vehicle_wheel()
             self._control.reverse = self._control.gear < 0
             self._control.hand_brake = self.handbrake_on
-            world.player.apply_control(self._control)
+            world.vehicle.apply_control(self._control)
 
     def _parse_vehicle_keys(self, keys, milliseconds):
         self._control.throttle = 1.0 if keys[K_UP] or keys[K_w] else 0.0

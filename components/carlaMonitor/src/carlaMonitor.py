@@ -121,6 +121,25 @@ if __name__ == '__main__':
     except Ice.ConnectionRefusedException as e:
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
+
+    # Create a proxy to publish a CarlaVehicleControl topic
+    topic = False
+    try:
+        topic = topicManager.retrieve("CarlaVehicleControl")
+    except:
+        pass
+    while not topic:
+        try:
+            topic = topicManager.retrieve("CarlaVehicleControl")
+        except IceStorm.NoSuchTopic:
+            try:
+                topic = topicManager.create("CarlaVehicleControl")
+            except:
+                print('Another client created the CarlaVehicleControl topic? ...')
+    pub = topic.getPublisher().ice_oneway()
+    carlavehiclecontrolTopic = RoboCompCarlaVehicleControl.CarlaVehicleControlPrx.uncheckedCast(pub)
+    mprx["CarlaVehicleControlPub"] = carlavehiclecontrolTopic
+
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)

@@ -19,6 +19,7 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 import time
+import traceback
 
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
@@ -26,6 +27,10 @@ from genericworker import *
 from multiprocessing import SimpleQueue
 import numpy as np
 import cv2
+import pygame
+
+from DualControl import DualControl
+
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # sys.path.append('/opt/robocomp/lib')
@@ -38,8 +43,24 @@ class SpecificWorker(GenericWorker):
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 0
         self.data_queue = SimpleQueue()
+
         self.contFPS = 0
         self.start = time.time()
+
+        self.width = 1280
+        self.height = 720
+        self.surface = None
+
+        pygame.init()
+        pygame.font.init()
+
+        self.display = pygame.display.set_mode(
+            (self.width, self.height),
+            pygame.HWSURFACE | pygame.DOUBLEBUF)
+
+
+        self.controller = DualControl(self.carlavehiclecontrol_proxy)
+        self.clock = pygame.time.Clock()
 
         if startup_check:
             self.startup_check()
@@ -47,38 +68,44 @@ class SpecificWorker(GenericWorker):
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
 
+
     def __del__(self):
         print('SpecificWorker destructor')
 
     def setParams(self, params):
-        #try:
-        #	self.innermodel = InnerModel(params["InnerModelPath"])
-        #except:
-        #	traceback.print_exc()
-        #	print("Error reading config params")
         return True
 
     def show_img(self, im):
         array = np.frombuffer(im.image, dtype=np.dtype("uint8"))
         array = np.reshape(array, (im.height, im.width, 4))
         array = array[:, :, :3]
-        window_name = "camera"+str(im.cameraID)
-        cv2.imshow(window_name, array)
-        cv2.waitKey(1)
+        array_pg = array[:, :, ::-1]
+        self.surface = pygame.surfarray.make_surface(array_pg.swapaxes(0, 1))
+
+        # window_name = "camera" + str(im.cameraID)
+        # cv2.imshow(window_name, array)
+        # cv2.waitKey(1)
 
     @QtCore.Slot()
     def compute(self):
-        pass
-        # print('compute')
         try:
             self.show_img(self.data_queue.get())
         except Exception as e:
             print(e)
+
+        if self.surface is not None:
+            self.display.blit(self.surface, (0, 0))
+        pygame.display.flip()
+
+        # if self.controller.parse_events(self.world, self.clock):
+        if self.controller.parse_events(self.clock):
+            exit(-1)
+        # self.world.tick(self.clock)
+
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
-
 
     # =============== Methods for Component SubscribesTo ================
     # ===================================================================
@@ -98,5 +125,10 @@ class SpecificWorker(GenericWorker):
     # ===================================================================
     # ===================================================================
 
+    ######################
+    # From the RoboCompCarlaVehicleControl you can publish calling this methods:
+    # self.carlavehiclecontrol_proxy.updateVehicleControl(...)
 
-
+    ######################
+    # From the RoboCompCarlaVehicleControl you can use this types:
+    # RoboCompCarlaVehicleControl.VehicleControl

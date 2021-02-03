@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.6)
 PROJECT(  carlaMonitor )
 
+INSTALL(FILES "files/interfaces/CarlaVehicleControl.idsl" DESTINATION "/opt/robocomp/interfaces/IDSLs/" )
+INSTALL(FILES "files/interfaces/CarlaVehicleControl.ice"  DESTINATION "/opt/robocomp/interfaces/" )
+
 SET(RC_COMPONENT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "component base path")
 SET(RC_COMPONENT_DEVEL_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "component binary path")
 ADD_SUBDIRECTORY( src )
