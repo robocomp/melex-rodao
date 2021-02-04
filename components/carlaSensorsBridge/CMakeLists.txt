@@ -1,8 +1,4 @@
 cmake_minimum_required(VERSION 2.6)
-
-INSTALL(FILES "files/interfaces/CarlaVehicleControl.idsl" DESTINATION "/opt/robocomp/interfaces/IDSLs/" )
-INSTALL(FILES "files/interfaces/CarlaVehicleControl.ice"  DESTINATION "/opt/robocomp/interfaces/" )
-
 PROJECT(  carlaSensorsBridge )
 
 SET(RC_COMPONENT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "component base path")

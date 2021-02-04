@@ -29,8 +29,9 @@ import numpy as np
 import cv2
 import pygame
 
+from SensorManager import CameraManager
 from DualControl import DualControl
-
+from HUD import HUD
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # sys.path.append('/opt/robocomp/lib')
@@ -42,14 +43,12 @@ class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 0
-        self.data_queue = SimpleQueue()
 
         self.contFPS = 0
         self.start = time.time()
 
         self.width = 1280
         self.height = 720
-        self.surface = None
 
         pygame.init()
         pygame.font.init()
@@ -58,8 +57,10 @@ class SpecificWorker(GenericWorker):
             (self.width, self.height),
             pygame.HWSURFACE | pygame.DOUBLEBUF)
 
-
-        self.controller = DualControl(self.carlavehiclecontrol_proxy)
+        self.hud = HUD(self.width, self.height)
+        self.camera_manager = CameraManager(self.width, self.height)
+        self.controller = DualControl(self.camera_manager, self.hud, self.carlavehiclecontrol_proxy)
+        # self.controller = DualControl(self.camera_manager,  self.carlavehiclecontrol_proxy)
         self.clock = pygame.time.Clock()
 
         if startup_check:
@@ -75,31 +76,28 @@ class SpecificWorker(GenericWorker):
     def setParams(self, params):
         return True
 
-    def show_img(self, im):
-        array = np.frombuffer(im.image, dtype=np.dtype("uint8"))
-        array = np.reshape(array, (im.height, im.width, 4))
-        array = array[:, :, :3]
-        array_pg = array[:, :, ::-1]
-        self.surface = pygame.surfarray.make_surface(array_pg.swapaxes(0, 1))
 
-        # window_name = "camera" + str(im.cameraID)
-        # cv2.imshow(window_name, array)
-        # cv2.waitKey(1)
+
 
     @QtCore.Slot()
     def compute(self):
-        try:
-            self.show_img(self.data_queue.get())
-        except Exception as e:
-            print(e)
+        # self.clock.tick_busy_loop(60)
+        # try:
+        #     self.camera_manager.show_img()
+        # except Exception as e:
+        #     print(e)
 
-        if self.surface is not None:
-            self.display.blit(self.surface, (0, 0))
-        pygame.display.flip()
-
-        # if self.controller.parse_events(self.world, self.clock):
         if self.controller.parse_events(self.clock):
             exit(-1)
+
+
+        control = self.controller.publish_vehicle_control()
+        self.hud.tick(self, self.clock, control)
+        self.camera_manager.render(self.display)
+        self.hud.render(self.display)
+        pygame.display.flip()
+
+
         # self.world.tick(self.clock)
 
         return True
@@ -114,13 +112,14 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
-        if time.time() - self.start > 1:
-            print("FPS:", self.contFPS)
-            self.start = time.time()
-            self.contFPS = 0
-        self.contFPS += 1
+        # if time.time() - self.start > 1:
+        #     print("FPS:", self.contFPS)
+        #     self.start = time.time()
+        #     self.contFPS = 0
+        # self.contFPS += 1
 
-        self.data_queue.put((im))
+        # self.camera_manager.data_queue.put(im)
+        self.camera_manager.show_img(im)
 
     # ===================================================================
     # ===================================================================

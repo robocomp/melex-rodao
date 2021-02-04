@@ -6,7 +6,8 @@ module RoboCompCarlaVehicleControl
 		float throttle;
 		float steer;
 		float brake;
-		float gear;
+		int gear;
+		bool manualgear;
 		bool handbrake;
 		bool reverse;
 	};

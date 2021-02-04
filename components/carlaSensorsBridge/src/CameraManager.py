@@ -121,13 +121,14 @@ class CameraManager(object):
         ##CAR SENSORS##
         ###############
 
-        # spawn_point_car = carla.Transform(carla.Location(x=1.6, z=1.7))
-        #
-        # cam06 = world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
-        # cam06.listen(lambda data: self.sensor_callback(weak_self, data, '005'))
-        # self.sensor_list.append(cam06)
+        spawn_point_car = carla.Transform(carla.Location(x=1.6, z=1.7))
 
-        spawn_point_car2 = carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))
+        cam06 = world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
+        cam06.listen(lambda data: self.sensor_callback(weak_self, data, '005'))
+        self.sensor_list.append(cam06)
+
+        # spawn_point_car2 =carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))
+        spawn_point_car2 = carla.Transform(carla.Location(x=15, z=30), carla.Rotation(pitch=-90))
 
         cam06 = world.spawn_actor(cam_bp, spawn_point_car2, attach_to=parent_actor)
         cam06.listen(lambda data: self.sensor_callback(weak_self, data, '006'))
@@ -161,11 +162,11 @@ class CameraManager(object):
         if not self:
             return
 
-        if time.time() - self.start > 1:
-            print("FPS:", self.contFPS)
-            self.start = time.time()
-            self.contFPS = 0
-        self.contFPS += 1
+        # if time.time() - self.start > 1:
+        #     print("FPS:", self.contFPS)
+        #     self.start = time.time()
+        #     self.contFPS = 0
+        # self.contFPS += 1
 
         self.frame = img.frame
         self.timestamp = img.timestamp

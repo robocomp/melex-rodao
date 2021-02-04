@@ -31,6 +31,7 @@ from genericworker import *
 from numpy import random
 import re
 import random
+import time
 
 try:
     sys.path.append(glob.glob('/home/robocomp/carla_package/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
@@ -46,7 +47,7 @@ from GNSS import GnssSensor
 from CameraManager import CameraManager
 
 client = carla.Client('localhost', 2000)
-client.set_timeout(50.0)
+client.set_timeout(25.0)
 print('Loading world...')
 world = client.load_world('CampusV3')
 print('Done')
@@ -77,6 +78,8 @@ class SpecificWorker(GenericWorker):
         self.world = world
         self.carla_map = carla_map
         self.blueprint_library = blueprint_library
+        self.contFPS = 0
+        self.start = time.time()
         # self.sensor_width = 480
         # self.sensor_height = 360
         self.sensor_width = 1280
@@ -149,7 +152,6 @@ class SpecificWorker(GenericWorker):
     def move_car(self, control):
         self.vehicle.apply_control(control)
 
-
     @QtCore.Slot()
     def compute(self):
         return True
@@ -167,10 +169,10 @@ class SpecificWorker(GenericWorker):
         controller.throttle = control.throttle
         controller.steer = control.steer
         controller.brake = control.brake
-        controller.gear = int(control.gear)
+        controller.gear = control.gear
         controller.hand_brake = control.handbrake
         controller.reverse = control.reverse
-
+        controller.manual_gear_shift = control.manualgear
         self.move_car(controller)
 
 # ===================================================================
