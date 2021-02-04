@@ -16,7 +16,6 @@ class CameraManager(object):
         # self.sencond_height = 720
 
     def show_img(self, im):
-        # im = self.data_queue.get()
         array = np.frombuffer(im.image, dtype=np.dtype("uint8"))
         array = np.reshape(array, (im.height, im.width, 4))
         array = array[:, :, :3]

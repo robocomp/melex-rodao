@@ -49,6 +49,7 @@ class SpecificWorker(GenericWorker):
 
         self.width = 1280
         self.height = 720
+        self.data_queue = SimpleQueue()
 
         pygame.init()
         pygame.font.init()
@@ -60,7 +61,6 @@ class SpecificWorker(GenericWorker):
         self.hud = HUD(self.width, self.height)
         self.camera_manager = CameraManager(self.width, self.height)
         self.controller = DualControl(self.camera_manager, self.hud, self.carlavehiclecontrol_proxy)
-        # self.controller = DualControl(self.camera_manager,  self.carlavehiclecontrol_proxy)
         self.clock = pygame.time.Clock()
 
         if startup_check:
@@ -81,11 +81,11 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-        # self.clock.tick_busy_loop(60)
-        # try:
-        #     self.camera_manager.show_img()
-        # except Exception as e:
-        #     print(e)
+        self.clock.tick_busy_loop(60)
+        try:
+            self.camera_manager.show_img(self.data_queue.get())
+        except Exception as e:
+            print(e)
 
         if self.controller.parse_events(self.clock):
             exit(-1)
@@ -118,8 +118,8 @@ class SpecificWorker(GenericWorker):
         #     self.contFPS = 0
         # self.contFPS += 1
 
-        # self.camera_manager.data_queue.put(im)
-        self.camera_manager.show_img(im)
+        self.data_queue.put(im)
+        # self.camera_manager.show_img(im)
 
     # ===================================================================
     # ===================================================================
