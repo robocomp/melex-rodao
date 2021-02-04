@@ -34,7 +34,7 @@ import random
 import time
 
 try:
-    sys.path.append(glob.glob('/home/robocomp/carla_package/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('/home/robocomp/robocomp/components/melex-rodao/files/carla/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])

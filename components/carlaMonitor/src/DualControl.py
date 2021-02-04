@@ -85,7 +85,7 @@ class DualControl(object):
         self._joystick.init()
 
         self._parser = ConfigParser()
-        self._parser.read("/home/robocomp/carla_package/wheel_config.ini")
+        self._parser.read("/home/robocomp/robocomp/components/melex-rodao/files/carla/wheel_config.ini")
         self._steer_idx = int(
             self._parser.get('G29 Racing Wheel', 'steering_wheel'))
         self._throttle_idx = int(
