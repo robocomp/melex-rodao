@@ -1,0 +1,29 @@
+module RoboCompCarlaSensors
+{
+	sequence <float> CarlaXYZ;
+
+	struct IMU
+	{
+		int frame;
+		double timestamp;
+		CarlaXYZ accelerometer;
+		CarlaXYZ gyroscope;		
+		float compass;
+	};
+	
+	struct GNSS
+	{
+		int frame;
+		double timestamp;
+		double latitude;
+		double longitude;
+		double altitude;	
+
+	};
+
+	interface CarlaSensors
+	{
+		idempotent void updateSensorIMU(IMU imuData);
+		idempotent void updateSensorGNSS(GNSS gnssData);
+	};
+};
