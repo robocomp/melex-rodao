@@ -29,9 +29,10 @@ import numpy as np
 import cv2
 import pygame
 
-from SensorManager import CameraManager
+from SensorManager import CameraManager, GNSSSensor, IMUSensor
 from DualControl import DualControl
 from HUD import HUD
+
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # sys.path.append('/opt/robocomp/lib')
@@ -58,9 +59,12 @@ class SpecificWorker(GenericWorker):
             (self.width, self.height),
             pygame.HWSURFACE | pygame.DOUBLEBUF)
 
-        self.hud = HUD(self.width, self.height)
         self.camera_manager = CameraManager(self.width, self.height)
-        self.controller = DualControl(self.camera_manager, self.hud, self.carlavehiclecontrol_proxy)
+        self.gnss_sensor = GNSSSensor()
+        self.imu_sensor = IMUSensor()
+        self.hud = HUD(self.width, self.height, self.gnss_sensor, self.imu_sensor)
+        self.controller = DualControl(self.camera_manager, self.hud,
+                                      self.carlavehiclecontrol_proxy)
         self.clock = pygame.time.Clock()
 
         if startup_check:
@@ -69,34 +73,30 @@ class SpecificWorker(GenericWorker):
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
 
-
     def __del__(self):
         print('SpecificWorker destructor')
 
     def setParams(self, params):
         return True
 
-
-
-
     @QtCore.Slot()
     def compute(self):
         self.clock.tick_busy_loop(60)
-        try:
-            self.camera_manager.show_img(self.data_queue.get())
-        except Exception as e:
-            print(e)
+
+        # try:
+        #     cm_image, cm_width, cm_height, cm_cameraID = self.data_queue.get()
+        #     self.camera_manager.show_img(cm_image, cm_width, cm_height, cm_cameraID)
+        # except Exception as e:
+        #     print(e)
 
         if self.controller.parse_events(self.clock):
             exit(-1)
-
 
         control = self.controller.publish_vehicle_control()
         self.hud.tick(self, self.clock, control)
         self.camera_manager.render(self.display)
         self.hud.render(self.display)
         pygame.display.flip()
-
 
         # self.world.tick(self.clock)
 
@@ -118,12 +118,25 @@ class SpecificWorker(GenericWorker):
         #     self.contFPS = 0
         # self.contFPS += 1
 
-        self.data_queue.put(im)
-        # self.camera_manager.show_img(im)
+        # self.data_queue.put((im.image, im.width, im.height,im.cameraID))
+        # self.data_queue.put(im)
+        self.camera_manager.show_img_noqueue(im.image, im.width, im.height, im.cameraID)
+
+    #
+    # SUBSCRIPTION to updateSensorGNSS method from CarlaSensors interface
+    #
+    def CarlaSensors_updateSensorGNSS(self, gnssData):
+        self.gnss_sensor.update(gnssData.latitude, gnssData.longitude, gnssData.altitude, gnssData.frame,
+                                gnssData.timestamp)
+
+    #
+    # SUBSCRIPTION to updateSensorIMU method from CarlaSensors interface
+    #
+    def CarlaSensors_updateSensorIMU(self, imuData):
+        self.imu_sensor.update(imuData.accelerometer, imuData.gyroscope, imuData.compass, imuData.frame, imuData.timestamp)
 
     # ===================================================================
     # ===================================================================
-
     ######################
     # From the RoboCompCarlaVehicleControl you can publish calling this methods:
     # self.carlavehiclecontrol_proxy.updateVehicleControl(...)

@@ -3,4 +3,4 @@ PROJECT(  carlaMonitor )
 
 INCLUDE( /opt/robocomp/cmake/robocomp.cmake )
 
-ROBOCOMP_IDSL_TO_ICE( CommonBehavior CameraRGBDSimple CameraRGBDSimplePub CarlaVehicleControl )
+ROBOCOMP_IDSL_TO_ICE( CommonBehavior CameraRGBDSimple CameraRGBDSimplePub CarlaSensors CarlaVehicleControl )

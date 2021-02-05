@@ -58,7 +58,7 @@ class DualControl(object):
     # def __init__(self, camera_manager, proxy):
         self.carlavehiclecontrol_proxy = proxy
         self.camera_manager = camera_manager
-        # self.hud = hud
+        self.hud = hud
         self.contFPS = 0
         self.start = time.time()
 
@@ -238,9 +238,6 @@ class DualControl(object):
         self._control_brake = brakeCmd
         self._control_throttle = throttleCmd
 
-        # toggle = jsButtons[self._reverse_idx]
-
-        # self._control_hand_brake = bool(jsButtons[self._handbrake_idx])
 
     @staticmethod
     def _is_quit_shortcut(key):

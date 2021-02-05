@@ -15,7 +15,9 @@ def get_actor_display_name(actor, truncate=250):
 
 
 class HUD(object):
-    def __init__(self, width, height):
+    def __init__(self, width, height, gnss, imu):
+        self.imu = imu
+        self.gnss = gnss
         self.dim = (width, height)
         font = pygame.font.Font(pygame.font.get_default_font(), 20)
         font_name = 'courier' if os.name == 'nt' else 'mono'
@@ -56,7 +58,20 @@ class HUD(object):
         # max_col = max(1.0, max(collision))
         # collision = [x / max_col for x in collision]
         # vehicles = world.world.get_actors().filter('vehicle.*')
+
         self._info_text = [
+            ('Throttle:', control.throttle, 0.0, 1.0),
+            ('Steer:', control.steer, -1.0, 1.0),
+            ('Brake:', control.brake, 0.0, 1.0),
+            ('Reverse:', control.reverse),
+            ('Hand brake:', control.handbrake),
+            ('Manual:', control.manualgear),
+            'Gear:        %s' % {-1: 'R', 0: 'N'}.get(control.gear, control.gear),
+            ' '
+        ]
+
+        self._info_text += [
+            ' ',
             # 'Server:  % 16.0f FPS' % self.server_fps,
             # 'Client:  % 16.0f FPS' % clock.get_fps(),
             # '',
@@ -66,21 +81,17 @@ class HUD(object):
             # '',
             # 'Speed:   % 15.0f km/h' % (3.6 * math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)),
             # 'Location:% 20s' % ('(% 5.1f, % 5.1f)' % (t.location.x, t.location.y)),
-            # 'GNSS:% 24s' % ('(% 2.6f, % 3.6f)' % (world.gnss_sensor.lat, world.gnss_sensor.lon)),
-            # u'Compass:% 17.0f\N{DEGREE SIGN} % 2s' % (compass, heading),
-            # 'Accelero: (%5.1f,%5.1f,%5.1f)' % (world.imu_sensor.accelerometer),
-            # 'Gyroscop: (%5.1f,%5.1f,%5.1f)' % (world.imu_sensor.gyroscope),
-            '']
-
-        self._info_text += [
-            ('Throttle:', control.throttle, 0.0, 1.0),
-            ('Steer:', control.steer, -1.0, 1.0),
-            ('Brake:', control.brake, 0.0, 1.0),
-            ('Reverse:', control.reverse),
-            ('Hand brake:', control.handbrake),
-            ('Manual:', control.manualgear),
-            'Gear:        %s' % {-1: 'R', 0: 'N'}.get(control.gear, control.gear)
-        ]
+            'GNSS ',
+            'Latitude: %2.6f' % self.gnss.latitude,
+            'Longitude: %2.6f ' % self.gnss.longitude,
+            'Altitude: %2.6f' % (self.gnss.altitude),
+            '',
+            'IMU ',
+            u'Compass:% 17.0f\N{DEGREE SIGN} ' % (self.imu.compass),
+            'Accelero: (%5.1f,%5.1f,%5.1f)' % (self.imu.accelerometer[0],self.imu.accelerometer[1],self.imu.accelerometer[2]),
+            'Gyroscop: (%5.1f,%5.1f,%5.1f)' % (self.imu.gyroscope[0],self.imu.gyroscope[1],self.imu.gyroscope[2]),
+            ' ',
+             ]
 
         # self._info_text += [
             # '',

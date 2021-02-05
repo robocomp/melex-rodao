@@ -1,12 +1,13 @@
 import "CarlaVehicleControl.idsl";
 import "CameraRGBDSimplePub.idsl";
+import "CarlaSensors.idsl";
 
 Component carlaMonitor
 {
     Communications
     {
 	publishes CarlaVehicleControl;
-        subscribesTo CameraRGBDSimplePub; 
+        subscribesTo CameraRGBDSimplePub,CarlaSensors; 
     };
 
     language python;

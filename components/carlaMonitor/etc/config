@@ -1,5 +1,6 @@
 # Endpoints for subscriptions interfaces
 CameraRGBDSimplePubTopic.Endpoints=tcp -p 0
+CarlaSensorsTopic.Endpoints=tcp -p 0
 
 
 
