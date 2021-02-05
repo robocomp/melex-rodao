@@ -47,11 +47,11 @@ from GNSS import GnssSensor
 from CameraManager import CameraManager
 
 client = carla.Client('localhost', 2000)
-client.set_timeout(25.0)
+client.set_timeout(30.0)
 print('Loading world...')
 world = client.load_world('CampusV3')
-print('Done')
 # world = client.get_world()
+print('Done')
 
 carla_map = world.get_map()
 blueprint_library = world.get_blueprint_library()
@@ -125,8 +125,8 @@ class SpecificWorker(GenericWorker):
         # self.collision_sensor = CollisionSensor(self.player, self.hud)
 
         ### SENSORS ###
-        self.gnss_sensor = GnssSensor(self.vehicle)
-        self.imu_sensor = IMUSensor(self.vehicle)
+        self.gnss_sensor = GnssSensor(self.vehicle, self.carlasensors_proxy)
+        self.imu_sensor = IMUSensor(self.vehicle, self.carlasensors_proxy)
         self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.sensor_width,
                                             self.sensor_height, self.camerargbdsimplepub_proxy)
 
@@ -154,6 +154,13 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
+        # try:
+        #     img,sensor_name = self.camera_manager.cm_queue.get()
+        #     self.camera_manager.show_img(img,sensor_name, self.sensor_width,self.sensor_height)
+        #
+        # except Exception as e:
+        #     print(e)
+
         return True
 
     def startup_check(self):
@@ -178,10 +185,21 @@ class SpecificWorker(GenericWorker):
 # ===================================================================
 # ===================================================================
 
-######################
-# From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
-# self.camerargbdsimplepub_proxy.pushRGBD(...)
+    ######################
+    # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
+    # self.camerargbdsimplepub_proxy.pushRGBD(...)
 
-######################
-# From the RoboCompCarlaVehicleControl you can use this types:
-# RoboCompCarlaVehicleControl.VehicleControl
+    ######################
+    # From the RoboCompCarlaSensors you can publish calling this methods:
+    # self.carlasensors_proxy.updateSensorGNSS(...)
+    # self.carlasensors_proxy.updateSensorIMU(...)
+
+    ######################
+    # From the RoboCompCarlaSensors you can use this types:
+    # RoboCompCarlaSensors.IMU
+    # RoboCompCarlaSensors.GNSS
+
+    ######################
+    # From the RoboCompCarlaVehicleControl you can use this types:
+    # RoboCompCarlaVehicleControl.VehicleControl
+

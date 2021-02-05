@@ -140,6 +140,25 @@ if __name__ == '__main__':
     camerargbdsimplepubTopic = RoboCompCameraRGBDSimplePub.CameraRGBDSimplePubPrx.uncheckedCast(pub)
     mprx["CameraRGBDSimplePubPub"] = camerargbdsimplepubTopic
 
+
+    # Create a proxy to publish a CarlaSensors topic
+    topic = False
+    try:
+        topic = topicManager.retrieve("CarlaSensors")
+    except:
+        pass
+    while not topic:
+        try:
+            topic = topicManager.retrieve("CarlaSensors")
+        except IceStorm.NoSuchTopic:
+            try:
+                topic = topicManager.create("CarlaSensors")
+            except:
+                print('Another client created the CarlaSensors topic? ...')
+    pub = topic.getPublisher().ice_oneway()
+    carlasensorsTopic = RoboCompCarlaSensors.CarlaSensorsPrx.uncheckedCast(pub)
+    mprx["CarlaSensorsPub"] = carlasensorsTopic
+
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)

@@ -123,9 +123,9 @@ class CameraManager(object):
 
         spawn_point_car = carla.Transform(carla.Location(x=1.6, z=1.7))
 
-        cam06 = world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
-        cam06.listen(lambda data: self.sensor_callback(weak_self, data, '005'))
-        self.sensor_list.append(cam06)
+        cam05 = world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
+        cam05.listen(lambda data: self.sensor_callback(weak_self, data, '005'))
+        self.sensor_list.append(cam05)
 
         # spawn_point_car2 =carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))
         spawn_point_car2 = carla.Transform(carla.Location(x=15, z=30), carla.Rotation(pitch=-90))
@@ -133,8 +133,6 @@ class CameraManager(object):
         cam06 = world.spawn_actor(cam_bp, spawn_point_car2, attach_to=parent_actor)
         cam06.listen(lambda data: self.sensor_callback(weak_self, data, '006'))
         self.sensor_list.append(cam06)
-
-
 
         # depth_bp = self.blueprint_library.find('sensor.camera.depth')
         # depth_bp.set_attribute('image_size_x', f'{self.img_width}')
@@ -152,6 +150,15 @@ class CameraManager(object):
         # cam07 = world.spawn_actor(depth_bp, spawn_point_car, attach_to=parent_actor)
         # cam07.listen(lambda data: self.sensor_callback(weak_self, data, 'DepthLogarithmic'))
         # self.sensor_list.append(cam07)
+
+    def show_img(self, img, sensor_name,w,h):
+        # img.convert(self._cc[str(img.cameraID)])
+        # array = np.frombuffer(img.raw_data, dtype=np.dtype("uint8"))
+        array = np.reshape(img, (h, w, 4))
+        array = array[:, :, :3]
+
+        cv2.imshow(sensor_name, array)
+        cv2.waitKey(1)
 
     @staticmethod
     def sensor_callback(weak_self, img, sensor_name):
@@ -172,14 +179,31 @@ class CameraManager(object):
         self.timestamp = img.timestamp
 
         cameraType = RoboCompCameraRGBDSimple.TImage()
+
+        # img.convert(self._cc[sensor_name])
+        # array = np.frombuffer(img.raw_data, dtype=np.dtype("uint8"))
+        # array_bytes = array.tobytes()
+        cameraType.image = img.raw_data
         cameraType.cameraID = int(sensor_name)
         cameraType.width = img.width
         cameraType.height = img.height
-        cameraType.image = img.raw_data
+
         depthType = RoboCompCameraRGBDSimple.TDepth()
+
         try:
             self.camerargbdsimplepub_proxy.pushRGBD(cameraType, depthType)
         except Exception as e:
             print(e)
+
+        # # To show the image locally
+        # img.convert(self._cc[sensor_name])
+        # array = np.frombuffer(img.raw_data, dtype=np.dtype("uint8"))
+        # array = np.reshape(array, (img.height, img.width, 4))
+        # array = array[:, :, :3]
+        # # array = array[:, :, ::-1]
+        # self.cm_queue.put((self.timestamp, self.frame, sensor_name, array))
+
+        # self.cm_queue.put((array, sensor_name))
+
 
         mutex.release()
