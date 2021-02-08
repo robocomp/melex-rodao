@@ -1,0 +1,15 @@
+
+import "CameraRGBDSimplePub.idsl";
+
+
+Component carlaVisualization
+{
+    Communications
+    {
+
+        subscribesTo CameraRGBDSimplePub; 
+    };
+
+    language python;
+};
+
