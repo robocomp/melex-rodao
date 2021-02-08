@@ -81,7 +81,7 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-        self.clock.tick_busy_loop(60)
+
 
         # try:
         #     cm_image, cm_width, cm_height, cm_cameraID = self.data_queue.get()
@@ -89,6 +89,8 @@ class SpecificWorker(GenericWorker):
         # except Exception as e:
         #     print(e)
 
+
+        self.clock.tick_busy_loop(60)
         if self.controller.parse_events(self.clock):
             exit(-1)
 
@@ -120,7 +122,7 @@ class SpecificWorker(GenericWorker):
 
         # self.data_queue.put((im.image, im.width, im.height,im.cameraID))
         # self.data_queue.put(im)
-        self.camera_manager.show_img_noqueue(im.image, im.width, im.height, im.cameraID)
+        self.camera_manager.update(im.image, im.width, im.height, im.cameraID)
 
     #
     # SUBSCRIPTION to updateSensorGNSS method from CarlaSensors interface
