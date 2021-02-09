@@ -1,0 +1,13 @@
+import "CameraRGBDSimplePub.idsl";
+
+Component carlaSecondBridge
+{
+    Communications
+    {
+	publishes CameraRGBDSimplePub;
+    };
+    
+    language python;
+
+};
+
