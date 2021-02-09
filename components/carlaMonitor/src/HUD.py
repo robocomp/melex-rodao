@@ -84,7 +84,7 @@ class HUD(object):
             'GNSS ',
             'Latitude: %2.6f' % self.gnss.latitude,
             'Longitude: %2.6f ' % self.gnss.longitude,
-            'Altitude: %2.6f' % (self.gnss.altitude),
+            f'Altitude: {self.gnss.altitude:2.6f}',
             '',
             'IMU ',
             u'Compass:% 17.0f\N{DEGREE SIGN} ' % (self.imu.compass),

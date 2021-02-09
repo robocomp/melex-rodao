@@ -6,7 +6,7 @@ import cv2
 
 class CameraManager(object):
     def __init__(self, width, height):
-
+        self.images_received = {}
         self.current_image = None
         self.current_image_width = None
         self.current_image_height = None
@@ -17,6 +17,7 @@ class CameraManager(object):
         self.surface = None
         self.second_surface = None
         self.id_camera_to_show = 5
+        self.id_second_camera_to_show = 7
         self.second_width = 360
         self.sencond_height = 280
         # self.second_width = 1280
@@ -28,37 +29,38 @@ class CameraManager(object):
         self.current_image_height = height
         self.current_image_ID = cameraID
 
-
-    # def show_img(self, image, width, height, cameraID):
     def convert_img(self):
-        array = np.frombuffer(self.current_image, dtype=np.dtype("uint8"))
-        array = np.reshape(array, (self.current_image_height, self.current_image_width, 4))
-        array = array[:, :, :3]
-        # array = cv2.resize(array, dsize=(self.second_width, self.sencond_height))
-        # window_name = "camera" + str(cameraID)
-        # cv2.imshow(window_name, array)
-        # cv2.waitKey(1)
+        for camera_ID, camera_data in self.images_received.items():
 
-        array_pygame = array[:, :, ::-1]
+            array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
+            array = np.reshape(array, (camera_data.height, camera_data.width, 4))
+            array = array[:, :, :3]
 
-        if self.current_image_ID == self.id_camera_to_show:
-            self.surface = pygame.surfarray.make_surface(array_pygame.swapaxes(0, 1))
-        else:
-
-            array_pygame = cv2.resize(array_pygame, dsize=(self.second_width, self.sencond_height))
-            self.second_surface = pygame.surfarray.make_surface(array_pygame.swapaxes(0, 1))
+            if camera_ID == self.id_camera_to_show:
+                array_pygame = array[:, :, ::-1]
+                self.surface = pygame.surfarray.make_surface(array_pygame.swapaxes(0, 1))
+            elif camera_ID == self.id_second_camera_to_show:
+                array_pygame = array[:, :, ::-1]
+                array_pygame = cv2.resize(array_pygame, dsize=(self.second_width, self.sencond_height))
+                self.second_surface = pygame.surfarray.make_surface(array_pygame.swapaxes(0, 1))
+            else:
+                array = cv2.resize(array, dsize=(self.second_width, self.sencond_height))
+                window_name = "camera" + str(camera_ID)
+                cv2.imshow(window_name, array)
+                cv2.waitKey(1)
 
     def render(self, display):
         self.convert_img()
         if self.surface is not None:
             display.blit(self.surface, (0, 0))
         if self.second_surface is not None:
-            display.blit(self.second_surface, (self.sensor_width - self.second_width, self.sensor_height - self.sencond_height))
+            display.blit(self.second_surface,
+                         (self.sensor_width - self.second_width, self.sensor_height - self.sencond_height))
 
     def toggle_camera(self):
         print('toggle_camera')
         if self.id_camera_to_show == 5:
-            self.id_camera_to_show = 6
+            self.id_camera_to_show = 7
         else:
             self.id_camera_to_show = 5
 

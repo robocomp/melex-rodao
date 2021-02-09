@@ -44,7 +44,6 @@ class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 0
-
         self.contFPS = 0
         self.start = time.time()
 
@@ -82,13 +81,11 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
 
-
         # try:
         #     cm_image, cm_width, cm_height, cm_cameraID = self.data_queue.get()
         #     self.camera_manager.show_img(cm_image, cm_width, cm_height, cm_cameraID)
         # except Exception as e:
         #     print(e)
-
 
         self.clock.tick_busy_loop(60)
         if self.controller.parse_events(self.clock):
@@ -114,15 +111,9 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
-        # if time.time() - self.start > 1:
-        #     print("FPS:", self.contFPS)
-        #     self.start = time.time()
-        #     self.contFPS = 0
-        # self.contFPS += 1
-
-        # self.data_queue.put((im.image, im.width, im.height,im.cameraID))
-        # self.data_queue.put(im)
-        self.camera_manager.update(im.image, im.width, im.height, im.cameraID)
+        if im.cameraID == 5 or im.cameraID == 7:
+            self.camera_manager.images_received[im.cameraID] = im
+        # self.camera_manager.update(im.image, im.width, im.height, im.cameraID)
 
     #
     # SUBSCRIPTION to updateSensorGNSS method from CarlaSensors interface
@@ -135,7 +126,8 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to updateSensorIMU method from CarlaSensors interface
     #
     def CarlaSensors_updateSensorIMU(self, imuData):
-        self.imu_sensor.update(imuData.accelerometer, imuData.gyroscope, imuData.compass, imuData.frame, imuData.timestamp)
+        self.imu_sensor.update(imuData.accelerometer, imuData.gyroscope, imuData.compass, imuData.frame,
+                               imuData.timestamp)
 
     # ===================================================================
     # ===================================================================
