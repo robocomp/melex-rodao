@@ -25,6 +25,7 @@ import sys
 from queue import Empty
 
 import cv2
+import pygame
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
 from genericworker import *
@@ -34,7 +35,7 @@ import random
 import time
 
 try:
-    sys.path.append(glob.glob('/home/robocomp/robocomp/components/melex-rodao/files/carla/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -49,7 +50,8 @@ from CameraManager import CameraManager
 client = carla.Client('localhost', 2000)
 client.set_timeout(30.0)
 print('Loading world...')
-world = client.load_world('CampusV3')
+# world = client.load_world('CampusV3')
+world = client.load_world('Town07')
 # world = client.get_world()
 print('Done')
 
@@ -80,16 +82,16 @@ class SpecificWorker(GenericWorker):
         self.blueprint_library = blueprint_library
         self.contFPS = 0
         self.start = time.time()
-        # self.sensor_width = 480
-        # self.sensor_height = 360
-        self.sensor_width = 1280
-        self.sensor_height = 720
+
         self.vehicle = None
         self.collision_sensor = None
         self.gnss_sensor = None
         self.camera_manager = None
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
+
+        self.server_fps = 0
+        self._server_clock = pygame.time.Clock()
         self.restart()
 
         if startup_check:
@@ -108,7 +110,8 @@ class SpecificWorker(GenericWorker):
         return True
 
     def restart(self):
-        blueprint = random.choice(self.blueprint_library.filter('vehicle.*'))
+        # blueprint = self.blueprint_library.filter('vehicle.posicion.*')[0]
+        blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
         # Spawn the player.
         if self.vehicle is not None:
             spawn_point = self.vehicle.get_transform()
@@ -127,8 +130,15 @@ class SpecificWorker(GenericWorker):
         ### SENSORS ###
         self.gnss_sensor = GnssSensor(self.vehicle, self.carlasensors_proxy)
         self.imu_sensor = IMUSensor(self.vehicle, self.carlasensors_proxy)
-        self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.sensor_width,
-                                            self.sensor_height, self.camerargbdsimplepub_proxy)
+        self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.camerargbdsimplepub_proxy)
+
+        # Connect to the callback to get server fps
+        self.world.on_tick(self.on_world_tick)
+
+    def on_world_tick(self, timestamp):
+        self._server_clock.tick()
+        self.server_fps = self._server_clock.get_fps()
+        print('Server FPS', int(self.server_fps))
 
     def next_weather(self, reverse=False):
         self._weather_index += -1 if reverse else 1
@@ -185,21 +195,20 @@ class SpecificWorker(GenericWorker):
 # ===================================================================
 # ===================================================================
 
-    ######################
-    # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
-    # self.camerargbdsimplepub_proxy.pushRGBD(...)
+######################
+# From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
+# self.camerargbdsimplepub_proxy.pushRGBD(...)
 
-    ######################
-    # From the RoboCompCarlaSensors you can publish calling this methods:
-    # self.carlasensors_proxy.updateSensorGNSS(...)
-    # self.carlasensors_proxy.updateSensorIMU(...)
+######################
+# From the RoboCompCarlaSensors you can publish calling this methods:
+# self.carlasensors_proxy.updateSensorGNSS(...)
+# self.carlasensors_proxy.updateSensorIMU(...)
 
-    ######################
-    # From the RoboCompCarlaSensors you can use this types:
-    # RoboCompCarlaSensors.IMU
-    # RoboCompCarlaSensors.GNSS
+######################
+# From the RoboCompCarlaSensors you can use this types:
+# RoboCompCarlaSensors.IMU
+# RoboCompCarlaSensors.GNSS
 
-    ######################
-    # From the RoboCompCarlaVehicleControl you can use this types:
-    # RoboCompCarlaVehicleControl.VehicleControl
-
+######################
+# From the RoboCompCarlaVehicleControl you can use this types:
+# RoboCompCarlaVehicleControl.VehicleControl
