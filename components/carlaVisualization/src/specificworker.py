@@ -18,11 +18,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+import pygame
+from SensorManager import CameraManager
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
 from genericworker import *
 
+from threading import Lock
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # sys.path.append('/opt/robocomp/lib')
@@ -33,41 +35,41 @@ from genericworker import *
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
-        self.Period = 2000
+        self.mutex = Lock()
+
+        self.pygame_width = 1280
+        self.pygame_height = 720
+
+        # pygame.init()
+        # pygame.font.init()
+        #
+        # self.display = pygame.display.set_mode(
+        #     (self.pygame_width, self.pygame_height),
+        #     pygame.HWSURFACE | pygame.DOUBLEBUF)
+
+        self.camera_manager = CameraManager(self.mutex)
+
+        self.Period = 0
         if startup_check:
             self.startup_check()
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
 
+
+
     def __del__(self):
         print('SpecificWorker destructor')
 
     def setParams(self, params):
-        #try:
-        #	self.innermodel = InnerModel(params["InnerModelPath"])
-        #except:
-        #	traceback.print_exc()
-        #	print("Error reading config params")
-        return True
 
+        return True
 
     @QtCore.Slot()
     def compute(self):
-        print('SpecificWorker.compute...')
-        # computeCODE
-        # try:
-        #   self.differentialrobot_proxy.setSpeedBase(100, 0)
-        # except Ice.Exception as e:
-        #   traceback.print_exc()
-        #   print(e)
-
-        # The API of python-innermodel is not exactly the same as the C++ version
-        # self.innermodel.updateTransformValues('head_rot_tilt_pose', 0, 0, 0, 1.3, 0, 0)
-        # z = librobocomp_qmat.QVec(3,0)
-        # r = self.innermodel.transform('rgbd', z, 'laser')
-        # r.printvector('d')
-        # print(r[0], r[1], r[2])
+        # self.camera_manager.render(self.display)
+        self.camera_manager.render()
+        # pygame.display.flip()
 
         return True
 
@@ -82,12 +84,11 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
-    
-        #
-        # write your CODE here
-        #
-        pass
-
+        print('Received image from camera ', im.cameraID)
+        self.mutex.acquire()
+        if im.cameraID != 5 and im.cameraID != 7:
+            self.camera_manager.images_received[im.cameraID] = im
+        self.mutex.release()
 
     # ===================================================================
     # ===================================================================
