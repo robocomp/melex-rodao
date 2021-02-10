@@ -18,6 +18,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
+import time
+
 import pygame
 from SensorManager import CameraManager
 from PySide2.QtCore import QTimer
@@ -36,16 +38,8 @@ class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.mutex = Lock()
-
-        self.pygame_width = 1280
-        self.pygame_height = 720
-
-        # pygame.init()
-        # pygame.font.init()
-        #
-        # self.display = pygame.display.set_mode(
-        #     (self.pygame_width, self.pygame_height),
-        #     pygame.HWSURFACE | pygame.DOUBLEBUF)
+        self.start = time.time()
+        self.contFPS = 0
 
         self.camera_manager = CameraManager(self.mutex)
 
@@ -84,9 +78,15 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
-        print('Received image from camera ', im.cameraID)
         self.mutex.acquire()
         if im.cameraID != 5 and im.cameraID != 7:
+
+            # if time.time() - self.start > 1:
+            #     print("FPS:", self.contFPS)
+            #     self.start = time.time()
+            #     self.contFPS = 0
+            # self.contFPS += 1
+
             self.camera_manager.images_received[im.cameraID] = im
         self.mutex.release()
 

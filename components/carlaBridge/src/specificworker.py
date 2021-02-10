@@ -36,6 +36,7 @@ import time
 
 try:
     sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
+    # sys.path.append(glob.glob('/home/robolab/carla_package/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -48,10 +49,11 @@ from GNSS import GnssSensor
 from CameraManager import CameraManager
 
 client = carla.Client('localhost', 2000)
+print('Client version ', client.get_client_version())
+print('Server version ', client.get_server_version())
 client.set_timeout(30.0)
 print('Loading world...')
-# world = client.load_world('CampusV3')
-world = client.load_world('Town07')
+world = client.load_world('CampusV3')
 # world = client.get_world()
 print('Done')
 
@@ -110,8 +112,11 @@ class SpecificWorker(GenericWorker):
         return True
 
     def restart(self):
-        # blueprint = self.blueprint_library.filter('vehicle.posicion.*')[0]
-        blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
+        # car_blueprints = self.blueprint_library.filter('vehicle.*')
+        # for car in car_blueprints:
+        #     print(car)
+        blueprint = self.blueprint_library.filter('vehicle.posicion.*')[0]
+        # blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
         # Spawn the player.
         if self.vehicle is not None:
             spawn_point = self.vehicle.get_transform()

@@ -52,12 +52,12 @@ class CameraManager(object):
                     'profesorado': cc.Raw,
                     }
 
-
         cam_bp_low = self.blueprint_library.find('sensor.camera.rgb')
-        cam_bp_low.set_attribute('image_size_x', f'{  self.sensor_width_low}')
-        cam_bp_low.set_attribute('image_size_y', f'{  self.sensor_height_low}')
+        cam_bp_low.set_attribute('image_size_x', f'{self.sensor_width_low}')
+        cam_bp_low.set_attribute('image_size_y', f'{self.sensor_height_low}')
         cam_bp_low.set_attribute('fov', '110')
-        cam_bp_low.set_attribute('sensor_tick', '10.0')
+        cam_bp_low.set_attribute('sensor_tick', '0.2')
+
         ###################
         # STREET SENSORS ##
         ###################
@@ -65,46 +65,45 @@ class CameraManager(object):
         lmanager = world.get_lightmanager()
         mylights = lmanager.get_all_lights()
 
+        spawn_point_8 = carla.Transform(
+            carla.Location(x=mylights[8].location.x, z=mylights[8].location.z + 5, y=mylights[8].location.y),
+            carla.Rotation(pitch=-15, yaw=-90)
+        )
+        sensor_8 = world.spawn_actor(cam_bp_low, spawn_point_8, attach_to=None)
+        sensor_8.listen(lambda data: self.sensor_callback(weak_self, data, "000"))
+        self.sensor_list.append(sensor_8)
 
-        # spawn_point_8 = carla.Transform(
-        #     carla.Location(x=mylights[8].location.x, z=mylights[8].location.z + 5, y=mylights[8].location.y),
-        #     carla.Rotation(pitch=-15, yaw=-90)
-        # )
-        # sensor_8 = world.spawn_actor(cam_bp, spawn_point_8, attach_to=None)
-        # sensor_8.listen(lambda data: self.sensor_callback(weak_self, data, "000"))
-        # self.sensor_list.append(sensor_8)
+        spawn_point_18 = carla.Transform(
+            carla.Location(x=mylights[18].location.x, z=mylights[18].location.z + 10, y=mylights[18].location.y),
+            carla.Rotation(pitch=-15, yaw=45)
+        )
+        sensor_18 = world.spawn_actor(cam_bp_low, spawn_point_18, attach_to=None)
+        sensor_18.listen(lambda data: self.sensor_callback(weak_self, data, "001"))
+        self.sensor_list.append(sensor_18)
 
-        # spawn_point_18 = carla.Transform(
-        #     carla.Location(x=mylights[18].location.x, z=mylights[18].location.z + 10, y=mylights[18].location.y),
-        #     carla.Rotation(pitch=-15, yaw=45)
-        # )
-        # sensor_18 = world.spawn_actor(cam_bp_low, spawn_point_18, attach_to=None)
-        # sensor_18.listen(lambda data: self.sensor_callback(weak_self, data, "001"))
-        # self.sensor_list.append(sensor_18)
+        spawn_point_31 = carla.Transform(
+            carla.Location(x=mylights[31].location.x, z=mylights[31].location.z + 5, y=mylights[31].location.y),
+            carla.Rotation(pitch=-15, yaw=90)
+        )
+        sensor_31 = world.spawn_actor(cam_bp_low, spawn_point_31, attach_to=None)
+        sensor_31.listen(lambda data: self.sensor_callback(weak_self, data, "002"))
+        self.sensor_list.append(sensor_31)
 
-        # spawn_point_31 = carla.Transform(
-        #     carla.Location(x=mylights[31].location.x, z=mylights[31].location.z + 5, y=mylights[31].location.y),
-        #     carla.Rotation(pitch=-15, yaw=90)
-        # )
-        # sensor_31 = world.spawn_actor(cam_bp, spawn_point_31, attach_to=None)
-        # sensor_31.listen(lambda data: self.sensor_callback(weak_self, data, "002"))
-        # self.sensor_list.append(sensor_31)
+        spawn_point_34 = carla.Transform(
+            carla.Location(x=mylights[34].location.x, z=mylights[34].location.z + 10, y=mylights[34].location.y),
+            carla.Rotation(pitch=-15, yaw=-135)
+        )
+        sensor_34 = world.spawn_actor(cam_bp_low, spawn_point_34, attach_to=None)
+        sensor_34.listen(lambda data: self.sensor_callback(weak_self, data, "003"))
+        self.sensor_list.append(sensor_34)
 
-        # spawn_point_34 = carla.Transform(
-        #     carla.Location(x=mylights[34].location.x, z=mylights[34].location.z + 10, y=mylights[34].location.y),
-        #     carla.Rotation(pitch=-15, yaw=-135)
-        # )
-        # sensor_34 = world.spawn_actor(cam_bp_low, spawn_point_34, attach_to=None)
-        # sensor_34.listen(lambda data: self.sensor_callback(weak_self, data, "003"))
-        # self.sensor_list.append(sensor_34)
-
-        # spawn_point_35 = carla.Transform(
-        #     carla.Location(x=mylights[35].location.x, z=mylights[35].location.z + 5, y=mylights[35].location.y),
-        #     carla.Rotation(pitch=-15, yaw=0)
-        # )
-        # sensor_35 = world.spawn_actor(cam_bp, spawn_point_35, attach_to=None)
-        # sensor_35.listen(lambda data: self.sensor_callback(weak_self, data, "004"))
-        # self.sensor_list.append(sensor_35)
+        spawn_point_35 = carla.Transform(
+            carla.Location(x=mylights[35].location.x, z=mylights[35].location.z + 5, y=mylights[35].location.y),
+            carla.Rotation(pitch=-15, yaw=0)
+        )
+        sensor_35 = world.spawn_actor(cam_bp_low, spawn_point_35, attach_to=None)
+        sensor_35.listen(lambda data: self.sensor_callback(weak_self, data, "004"))
+        self.sensor_list.append(sensor_35)
 
         ###############
         ##CAR SENSORS##
@@ -161,7 +160,7 @@ class CameraManager(object):
         depthType = RoboCompCameraRGBDSimple.TDepth()
 
         try:
-            print('Sending image from camera ', cameraType.cameraID)
+            # print('Sending image from camera ', cameraType.cameraID)
             self.camerargbdsimplepub_proxy.pushRGBD(cameraType, depthType)
         except Exception as e:
             print(e)
