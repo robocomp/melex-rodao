@@ -1,7 +1,7 @@
-import carla
 import pygame
 import math
 import sys
+import time
 
 if sys.version_info >= (3, 0):
     from configparser import ConfigParser
@@ -45,6 +45,8 @@ try:
 except ImportError:
     raise RuntimeError('cannot import numpy, make sure numpy package is installed')
 
+import RoboCompCarlaVehicleControl
+
 
 # ==============================================================================
 # -- DualControl -----------------------------------------------------------
@@ -52,13 +54,25 @@ except ImportError:
 
 
 class DualControl(object):
-    def __init__(self, world):
+    def __init__(self, camera_manager, hud, proxy):
+    # def __init__(self, camera_manager, proxy):
+        self.carlavehiclecontrol_proxy = proxy
+        self.camera_manager = camera_manager
+        self.hud = hud
+        self.contFPS = 0
+        self.start = time.time()
+
         self._autopilot_enabled = False
-        self._control = carla.VehicleControl()
-            # world.player.set_autopilot(self._autopilot_enabled)
         self._steer_cache = 0.0
-        self.handbrake_on  = False
-        world.hud.notification("Press 'H' or '?' for help.", seconds=4.0)
+        self._control_gear = 0
+        self._control_throttle = 0.0
+        self._control_steer = 0.0
+        self._control_brake = 0.0
+        self._control_gear = 0.0
+        self._control_hand_brake = False
+        self._control_reverse = False
+        self.handbrake_on = False
+        self._control_manual_gear_shift = False
 
         # initialize steering wheel
         pygame.joystick.init()
@@ -71,7 +85,7 @@ class DualControl(object):
         self._joystick.init()
 
         self._parser = ConfigParser()
-        self._parser.read('/home/robolab/carla/wheel_config.ini')
+        self._parser.read("/home/robocomp/robocomp/components/melex-rodao/files/carla/wheel_config.ini")
         self._steer_idx = int(
             self._parser.get('G29 Racing Wheel', 'steering_wheel'))
         self._throttle_idx = int(
@@ -81,77 +95,105 @@ class DualControl(object):
         self._handbrake_idx = int(
             self._parser.get('G29 Racing Wheel', 'handbrake'))
 
-    def parse_events(self, world, clock):
+    # def parse_events(self, world, clock):
+    def parse_events(self, clock):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return True
+
+            ######################
+            ## Joystick control##
+            ####################
             elif event.type == pygame.JOYBUTTONDOWN:
-                if event.button == 0:
-                    world.restart()
-                elif event.button == 1:
-                    world.hud.toggle_info()
-                elif event.button == 2:
-                    world.camera_manager.toggle_camera()
-                elif event.button == 3:
-                    world.next_weather()
-                elif event.button == self._handbrake_idx:
-                    print('pressed handbrake')
-                    print( self.handbrake_on)
+                # if event.button == 0:
+                #     world.restart()
+                if event.button == 1:
+                    self.hud.toggle_info()
+                if event.button == 2:
+                    self.camera_manager.toggle_camera()
+                # elif event.button == 3:
+                #     world.next_weather()
+
+                if event.button == self._handbrake_idx:
+                    print('HAANDBRAKE !!!!')
                     self.handbrake_on = False if self.handbrake_on else True
-                    print(self.handbrake_on)
 
                 elif event.button == self._reverse_idx:
-                    self._control.gear = 1 if self._control.reverse else -1
-                elif event.button == 23:
-                    world.camera_manager.next_sensor()
+                    self._control_gear = 1 if self._control_reverse else -1
+                # elif event.button == 23:
+                #     print('Next sensors pressed')
+                #     world.camera_manager.next_sensor()
 
+            ######################
+            ## Keyboard control ##
+            ######################
             elif event.type == pygame.KEYUP:
                 if self._is_quit_shortcut(event.key):
                     return True
-                elif event.key == K_BACKSPACE:
-                    world.restart()
-                elif event.key == K_F1:
-                    world.hud.toggle_info()
-                elif event.key == K_h or (event.key == K_SLASH and pygame.key.get_mods() & KMOD_SHIFT):
-                    world.hud.help.toggle()
-                elif event.key == K_TAB:
-                    world.camera_manager.toggle_camera()
-                elif event.key == K_c and pygame.key.get_mods() & KMOD_SHIFT:
-                    world.next_weather(reverse=True)
-                elif event.key == K_c:
-                    world.next_weather()
-                elif event.key == K_BACKQUOTE:
-                    world.camera_manager.next_sensor()
-                elif K_0 < event.key <= K_9:
-                    world.camera_manager.set_sensor(event.key - 1 - K_0)
-                elif event.key == K_r:
-                    world.camera_manager.toggle_recording()
-                if isinstance(self._control, carla.VehicleControl):
-                    if event.key == K_q:
-                        self._control.gear = 1 if self._control.reverse else -1
-                    elif event.key == K_m:
-                        self._control.manual_gear_shift = not self._control.manual_gear_shift
-                        self._control.gear = world.player.get_control().gear
-                        world.hud.notification('%s Transmission' %
-                                               ('Manual' if self._control.manual_gear_shift else 'Automatic'))
-                    elif self._control.manual_gear_shift and event.key == K_COMMA:
-                        self._control.gear = max(-1, self._control.gear - 1)
-                    elif self._control.manual_gear_shift and event.key == K_PERIOD:
-                        self._control.gear = self._control.gear + 1
-                    elif event.key == K_p:
-                        self._autopilot_enabled = not self._autopilot_enabled
-                        # world.player.set_autopilot(self._autopilot_enabled)
-                        world.hud.notification('Autopilot %s' % ('On' if self._autopilot_enabled else 'Off'))
+                # elif event.key == K_BACKSPACE:
+                #     world.restart()
+                # elif event.key == K_F1:
+                #     world.hud.toggle_info()
+                # elif event.key == K_h or (event.key == K_SLASH and pygame.key.get_mods() & KMOD_SHIFT):
+                #     world.hud.help.toggle()
+                # elif event.key == K_TAB:
+                #     world.camera_manager.toggle_camera()
+                # elif event.key == K_c and pygame.key.get_mods() & KMOD_SHIFT:
+                #     world.next_weather(reverse=True)
+                # elif event.key == K_c:
+                #     world.next_weather()
+                # elif event.key == K_BACKQUOTE:
+                #     world.camera_manager.next_sensor()
+                # elif K_0 < event.key <= K_9:
+                #     world.camera_manager.set_sensor(event.key - 1 - K_0)
+                # elif event.key == K_r:
+                #     world.camera_manager.toggle_recording()
+
+                if event.key == K_q:
+                    self._control_gear = 1 if self._control_reverse else -1
+                elif event.key == K_m:
+                    self._control_manual_gear_shift = not self._control_manual_gear_shift
+                    # self._control_gear = world.player.get_control().gear
+                    self._control_gear = 1
+                    # world.hud.notification('%s Transmission' %
+                    #                        ('Manual' if self._control_manual_gear_shift else 'Automatic'))
+                elif self._control_manual_gear_shift and event.key == K_COMMA:
+                    self._control_gear = max(-1, self._control_gear - 1)
+                elif self._control_manual_gear_shift and event.key == K_PERIOD:
+                    self._control_gear = self._control_gear + 1
+                elif event.key == K_p:
+                    self._autopilot_enabled = not self._autopilot_enabled
+                    # world.player.set_autopilot(self._autopilot_enabled)
+                    # world.hud.notification('Autopilot %s' % ('On' if self._autopilot_enabled else 'Off'))
 
         if not self._autopilot_enabled:
             self._parse_vehicle_keys(pygame.key.get_pressed(), clock.get_time())
             self._parse_vehicle_wheel()
-            self._control.reverse = self._control.gear < 0
-            self._control.hand_brake =  self.handbrake_on
-            world.player.apply_control(self._control)
+            self._control_reverse = self._control_gear < 0
+            self._control_hand_brake = self.handbrake_on
+
+
+    def publish_vehicle_control(self):
+        control = RoboCompCarlaVehicleControl.VehicleControl()
+        control.throttle = self._control_throttle
+        control.steer = self._control_steer
+        control.brake = self._control_brake
+        control.gear = self._control_gear
+        control.handbrake = self._control_hand_brake
+        control.reverse = self._control_reverse
+        control.manualgear = self._control_manual_gear_shift
+
+
+        try:
+            self.carlavehiclecontrol_proxy.updateVehicleControl(control)
+
+        except Exception as e:
+            print(e)
+
+        return control
 
     def _parse_vehicle_keys(self, keys, milliseconds):
-        self._control.throttle = 1.0 if keys[K_UP] or keys[K_w] else 0.0
+        self._control_throttle = 1.0 if keys[K_UP] or keys[K_w] else 0.0
         steer_increment = 5e-4 * milliseconds
         if keys[K_LEFT] or keys[K_a]:
             self._steer_cache -= steer_increment
@@ -160,9 +202,9 @@ class DualControl(object):
         else:
             self._steer_cache = 0.0
         self._steer_cache = min(0.7, max(-0.7, self._steer_cache))
-        self._control.steer = round(self._steer_cache, 1)
-        self._control.brake = 1.0 if keys[K_DOWN] or keys[K_s] else 0.0
-        self._control.hand_brake = keys[K_SPACE]
+        self._control_steer = round(self._steer_cache, 1)
+        self._control_brake = 1.0 if keys[K_DOWN] or keys[K_s] else 0.0
+        self._control_hand_brake = keys[K_SPACE]
 
     def _parse_vehicle_wheel(self):
         numAxes = self._joystick.get_numaxes()
@@ -173,6 +215,7 @@ class DualControl(object):
 
         # Custom function to map range of inputs [1, -1] to outputs [0, 1] i.e 1 from inputs means nothing is pressed
         # For the steering, it seems fine as it is
+
         K1 = 0.55  # 0.55
         steerCmd = K1 * math.tan(1.1 * jsInputs[self._steer_idx])
 
@@ -191,17 +234,11 @@ class DualControl(object):
         elif brakeCmd > 1:
             brakeCmd = 1
 
-        self._control.steer = steerCmd
-        self._control.brake = brakeCmd
-        self._control.throttle = throttleCmd
-
-        #toggle = jsButtons[self._reverse_idx]
-
-        # self._control.hand_brake = bool(jsButtons[self._handbrake_idx])
-
+        self._control_steer = steerCmd
+        self._control_brake = brakeCmd
+        self._control_throttle = throttleCmd
 
 
     @staticmethod
     def _is_quit_shortcut(key):
         return (key == K_ESCAPE) or (key == K_q and pygame.key.get_mods() & KMOD_CTRL)
-

@@ -1,10 +1,15 @@
+import "CarlaVehicleControl.idsl";
+import "CameraRGBDSimplePub.idsl";
+import "CarlaSensors.idsl";
+
 Component carlaRemoteControl
 {
     Communications
     {
-
+	publishes CarlaVehicleControl;
+        subscribesTo CameraRGBDSimplePub,CarlaSensors; 
     };
+
     language python;
- 
 };
 

@@ -18,91 +18,64 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
-import time
-import traceback
-
+import pygame
+from SensorManager import CameraManager
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
 from genericworker import *
-from multiprocessing import SimpleQueue
-import numpy as np
-import cv2
-import pygame
 
-from SensorManager import CameraManager, GNSSSensor, IMUSensor
-from DualControl import DualControl
-from HUD import HUD
-
+from threading import Lock
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # sys.path.append('/opt/robocomp/lib')
 # import librobocomp_qmat
-# import librobocomp_osgviewerser
+# import librobocomp_osgviewer
 # import librobocomp_innermodel
 
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
+        self.mutex = Lock()
+
+        self.pygame_width = 1280
+        self.pygame_height = 720
+
+        # pygame.init()
+        # pygame.font.init()
+        #
+        # self.display = pygame.display.set_mode(
+        #     (self.pygame_width, self.pygame_height),
+        #     pygame.HWSURFACE | pygame.DOUBLEBUF)
+
+        self.camera_manager = CameraManager(self.mutex)
+
         self.Period = 0
-        self.contFPS = 0
-        self.start = time.time()
-
-        self.width = 1280
-        self.height = 720
-        self.data_queue = SimpleQueue()
-
-        pygame.init()
-        pygame.font.init()
-
-        self.display = pygame.display.set_mode(
-            (self.width, self.height),
-            pygame.HWSURFACE | pygame.DOUBLEBUF)
-
-        self.camera_manager = CameraManager(self.width, self.height)
-        self.gnss_sensor = GNSSSensor()
-        self.imu_sensor = IMUSensor()
-        self.hud = HUD(self.width, self.height, self.gnss_sensor, self.imu_sensor)
-        self.controller = DualControl(self.camera_manager, self.hud,
-                                      self.carlavehiclecontrol_proxy)
-        self.clock = pygame.time.Clock()
-
         if startup_check:
             self.startup_check()
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
 
+
+
     def __del__(self):
         print('SpecificWorker destructor')
 
     def setParams(self, params):
+
         return True
 
     @QtCore.Slot()
     def compute(self):
-
-        # try:
-        #     cm_image, cm_width, cm_height, cm_cameraID = self.data_queue.get()
-        #     self.camera_manager.show_img(cm_image, cm_width, cm_height, cm_cameraID)
-        # except Exception as e:
-        #     print(e)
-
-        self.clock.tick_busy_loop(60)
-        if self.controller.parse_events(self.clock):
-            exit(-1)
-
-        control = self.controller.publish_vehicle_control()
-        self.hud.tick(self, self.clock, control)
-        self.camera_manager.render(self.display)
-        self.hud.render(self.display)
-        pygame.display.flip()
-
-        # self.world.tick(self.clock)
+        # self.camera_manager.render(self.display)
+        self.camera_manager.render()
+        # pygame.display.flip()
 
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
+
 
     # =============== Methods for Component SubscribesTo ================
     # ===================================================================
@@ -111,30 +84,14 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
-        if im.cameraID == 5 or im.cameraID == 7:
+        print('Received image from camera ', im.cameraID)
+        self.mutex.acquire()
+        if im.cameraID != 5 and im.cameraID != 7:
             self.camera_manager.images_received[im.cameraID] = im
-        # self.camera_manager.update(im.image, im.width, im.height, im.cameraID)
-
-    #
-    # SUBSCRIPTION to updateSensorGNSS method from CarlaSensors interface
-    #
-    def CarlaSensors_updateSensorGNSS(self, gnssData):
-        self.gnss_sensor.update(gnssData.latitude, gnssData.longitude, gnssData.altitude, gnssData.frame,
-                                gnssData.timestamp)
-
-    #
-    # SUBSCRIPTION to updateSensorIMU method from CarlaSensors interface
-    #
-    def CarlaSensors_updateSensorIMU(self, imuData):
-        self.imu_sensor.update(imuData.accelerometer, imuData.gyroscope, imuData.compass, imuData.frame,
-                               imuData.timestamp)
+        self.mutex.release()
 
     # ===================================================================
     # ===================================================================
-    ######################
-    # From the RoboCompCarlaVehicleControl you can publish calling this methods:
-    # self.carlavehiclecontrol_proxy.updateVehicleControl(...)
 
-    ######################
-    # From the RoboCompCarlaVehicleControl you can use this types:
-    # RoboCompCarlaVehicleControl.VehicleControl
+
+

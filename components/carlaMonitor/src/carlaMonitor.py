@@ -121,25 +121,6 @@ if __name__ == '__main__':
     except Ice.ConnectionRefusedException as e:
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
-
-    # Create a proxy to publish a CarlaVehicleControl topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("CarlaVehicleControl")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("CarlaVehicleControl")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("CarlaVehicleControl")
-            except:
-                print('Another client created the CarlaVehicleControl topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    carlavehiclecontrolTopic = RoboCompCarlaVehicleControl.CarlaVehicleControlPrx.uncheckedCast(pub)
-    mprx["CarlaVehicleControlPub"] = carlavehiclecontrolTopic
-
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)
@@ -169,29 +150,6 @@ if __name__ == '__main__':
     qos = {}
     camerargbdsimplepub_topic.subscribeAndGetPublisher(qos, camerargbdsimplepub_proxy)
     CameraRGBDSimplePub_adapter.activate()
-
-
-    CarlaSensors_adapter = ic.createObjectAdapter("CarlaSensorsTopic")
-    carlasensorsI_ = carlasensorsI.CarlaSensorsI(worker)
-    carlasensors_proxy = CarlaSensors_adapter.addWithUUID(carlasensorsI_).ice_oneway()
-
-    subscribeDone = False
-    while not subscribeDone:
-        try:
-            carlasensors_topic = topicManager.retrieve("CarlaSensors")
-            subscribeDone = True
-        except Ice.Exception as e:
-            print("Error. Topic does not exist (creating)")
-            time.sleep(1)
-            try:
-                carlasensors_topic = topicManager.create("CarlaSensors")
-                subscribeDone = True
-            except:
-                print("Error. Topic could not be created. Exiting")
-                status = 0
-    qos = {}
-    carlasensors_topic.subscribeAndGetPublisher(qos, carlasensors_proxy)
-    CarlaSensors_adapter.activate()
 
     signal.signal(signal.SIGINT, sigint_handler)
     app.exec_()

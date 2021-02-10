@@ -20,7 +20,7 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# \mainpage RoboComp::carlaVisualization
+# \mainpage RoboComp::carlaBridge
 #
 # \section intro_sec Introduction
 #
@@ -48,7 +48,7 @@
 #
 # \subsection execution_ssec Execution
 #
-# Just: "${PATH_TO_BINARY}/carlaVisualization --Ice.Config=${PATH_TO_CONFIG_FILE}"
+# Just: "${PATH_TO_BINARY}/carlaBridge --Ice.Config=${PATH_TO_CONFIG_FILE}"
 #
 # \subsection running_ssec Once running
 #
@@ -121,6 +121,44 @@ if __name__ == '__main__':
     except Ice.ConnectionRefusedException as e:
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
+
+    # Create a proxy to publish a CameraRGBDSimplePub topic
+    topic = False
+    try:
+        topic = topicManager.retrieve("CameraRGBDSimplePub")
+    except:
+        pass
+    while not topic:
+        try:
+            topic = topicManager.retrieve("CameraRGBDSimplePub")
+        except IceStorm.NoSuchTopic:
+            try:
+                topic = topicManager.create("CameraRGBDSimplePub")
+            except:
+                print('Another client created the CameraRGBDSimplePub topic? ...')
+    pub = topic.getPublisher().ice_oneway()
+    camerargbdsimplepubTopic = RoboCompCameraRGBDSimplePub.CameraRGBDSimplePubPrx.uncheckedCast(pub)
+    mprx["CameraRGBDSimplePubPub"] = camerargbdsimplepubTopic
+
+
+    # Create a proxy to publish a CarlaSensors topic
+    topic = False
+    try:
+        topic = topicManager.retrieve("CarlaSensors")
+    except:
+        pass
+    while not topic:
+        try:
+            topic = topicManager.retrieve("CarlaSensors")
+        except IceStorm.NoSuchTopic:
+            try:
+                topic = topicManager.create("CarlaSensors")
+            except:
+                print('Another client created the CarlaSensors topic? ...')
+    pub = topic.getPublisher().ice_oneway()
+    carlasensorsTopic = RoboCompCarlaSensors.CarlaSensorsPrx.uncheckedCast(pub)
+    mprx["CarlaSensorsPub"] = carlasensorsTopic
+
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)
@@ -129,27 +167,27 @@ if __name__ == '__main__':
         sys.exit(-1)
 
 
-    CameraRGBDSimplePub_adapter = ic.createObjectAdapter("CameraRGBDSimplePubTopic")
-    camerargbdsimplepubI_ = camerargbdsimplepubI.CameraRGBDSimplePubI(worker)
-    camerargbdsimplepub_proxy = CameraRGBDSimplePub_adapter.addWithUUID(camerargbdsimplepubI_).ice_oneway()
+    CarlaVehicleControl_adapter = ic.createObjectAdapter("CarlaVehicleControlTopic")
+    carlavehiclecontrolI_ = carlavehiclecontrolI.CarlaVehicleControlI(worker)
+    carlavehiclecontrol_proxy = CarlaVehicleControl_adapter.addWithUUID(carlavehiclecontrolI_).ice_oneway()
 
     subscribeDone = False
     while not subscribeDone:
         try:
-            camerargbdsimplepub_topic = topicManager.retrieve("CameraRGBDSimplePub")
+            carlavehiclecontrol_topic = topicManager.retrieve("CarlaVehicleControl")
             subscribeDone = True
         except Ice.Exception as e:
             print("Error. Topic does not exist (creating)")
             time.sleep(1)
             try:
-                camerargbdsimplepub_topic = topicManager.create("CameraRGBDSimplePub")
+                carlavehiclecontrol_topic = topicManager.create("CarlaVehicleControl")
                 subscribeDone = True
             except:
                 print("Error. Topic could not be created. Exiting")
                 status = 0
     qos = {}
-    camerargbdsimplepub_topic.subscribeAndGetPublisher(qos, camerargbdsimplepub_proxy)
-    CameraRGBDSimplePub_adapter.activate()
+    carlavehiclecontrol_topic.subscribeAndGetPublisher(qos, carlavehiclecontrol_proxy)
+    CarlaVehicleControl_adapter.activate()
 
     signal.signal(signal.SIGINT, sigint_handler)
     app.exec_()

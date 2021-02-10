@@ -2,7 +2,7 @@ import "CameraRGBDSimplePub.idsl";
 import "CarlaVehicleControl.idsl";
 import "CarlaSensors.idsl";
 
-Component carlaSensorsBridge
+Component carlaBridge
 {
     Communications
     {
