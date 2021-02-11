@@ -1,4 +1,3 @@
-
 import "CameraRGBDSimplePub.idsl";
 
 
@@ -11,5 +10,6 @@ Component carlaMonitor
     };
 
     language python;
+    gui Qt(QMainWindow);
 };
 
