@@ -1,11 +1,11 @@
 import "CameraRGBDSimplePub.idsl";
-
+import "AdminBridge.idsl";
 
 Component carlaMonitor
 {
     Communications
     {
-
+	requires AdminBridge;
         subscribesTo CameraRGBDSimplePub; 
     };
 

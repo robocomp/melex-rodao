@@ -1,11 +1,13 @@
 import "CameraRGBDSimplePub.idsl";
 import "CarlaVehicleControl.idsl";
 import "CarlaSensors.idsl";
+import "AdminBridge.idsl";
 
 Component carlaBridge
 {
     Communications
     {
+	implements AdminBridge;
 	publishes CameraRGBDSimplePub, CarlaSensors;
 	subscribesTo CarlaVehicleControl;
     };

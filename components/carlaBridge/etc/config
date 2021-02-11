@@ -1,3 +1,7 @@
+# Endpoints for implements interfaces
+AdminBridge.Endpoints=tcp -p 18111
+
+
 # Endpoints for subscriptions interfaces
 CarlaVehicleControlTopic.Endpoints=tcp -p 0
 

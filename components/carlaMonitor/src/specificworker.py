@@ -19,14 +19,13 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 import time
+from threading import Lock
 
-import pygame
-from SensorManager import CameraManager
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
+from SensorManager import CameraManager
 from genericworker import *
 
-from threading import Lock
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # sys.path.append('/opt/robocomp/lib')
@@ -42,7 +41,7 @@ class SpecificWorker(GenericWorker):
         self.mutex = Lock()
         self.start = time.time()
         self.contFPS = 0
-
+        self.start_stop = time.time()
         self.camera_manager = CameraManager(self.mutex)
 
         self.Period = 0
@@ -65,9 +64,22 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-        # self.camera_manager.render(self.display)
+        if time.time() - self.start_stop > 10:
+            # print(self.camera_manager.images_received.keys())
+            for sensorID, sensor in self.camera_manager.images_received.items():
+                if sensor is not None:
+                    done = self.adminbridge_proxy.stopSensor(sensorID)
+                    if done:
+                        print(f'Sensor {sensorID} stopped')
+                        self.camera_manager.images_received[sensorID] = None
+                else:
+                    if self.adminbridge_proxy.activateSensor(sensorID):
+                        print(f'Sensor {sensorID} activated')
+
+
+            self.start_stop = time.time()
         self.camera_manager.render()
-        # pygame.display.flip()
+
 
         return True
 
@@ -84,13 +96,6 @@ class SpecificWorker(GenericWorker):
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
         self.mutex.acquire()
         if im.cameraID != 0 and im.cameraID != 1:
-
-            # if time.time() - self.start > 1:
-            #     print("FPS:", self.contFPS)
-            #     self.start = time.time()
-            #     self.contFPS = 0
-            # self.contFPS += 1
-
             self.camera_manager.images_received[im.cameraID] = im
         self.mutex.release()
 
@@ -98,4 +103,8 @@ class SpecificWorker(GenericWorker):
     # ===================================================================
 
 
+    ######################
+    # From the RoboCompAdminBridge you can call this methods:
+    # self.adminbridge_proxy.activateSensor(...)
+    # self.adminbridge_proxy.stopSensor(...)
 

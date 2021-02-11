@@ -31,6 +31,8 @@ except KeyError:
 Ice.loadSlice("-I ./src/ --all ./src/CommonBehavior.ice")
 import RoboCompCommonBehavior
 
+Ice.loadSlice("-I ./src/ --all ./src/AdminBridge.ice")
+import RoboCompAdminBridge
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimple.ice")
 import RoboCompCameraRGBDSimple
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
@@ -98,6 +100,7 @@ class CarlaXYZ(list):
 setattr(RoboCompCarlaSensors, "CarlaXYZ", CarlaXYZ)
 
 
+import adminbridgeI
 import carlavehiclecontrolI
 
 

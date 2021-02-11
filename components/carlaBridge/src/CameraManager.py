@@ -24,6 +24,8 @@ class CameraManager(object):
         self.start = time.time()
         self.sensor_width = 1280
         self.sensor_height = 720
+        # self.sensor_width_low = 480
+        # self.sensor_height_low = 360
         self.sensor_width_low = 360
         self.sensor_height_low = 280
         self._parent = parent_actor
@@ -102,18 +104,23 @@ class CameraManager(object):
 
     def create_sensor(self, sensorID):
         print('Creating sensor')
+
+        created = False
         spawn_point_car, parent_actor, cam_bp, _ = self.sensor_attrs[sensorID]
-        sensor = self.world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
+        sensor = self.world.try_spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
+        if sensor is not None:
+            created = True
         sensor.listen(lambda data: self.sensor_callback(self.weak_self, data, sensorID))
         self.sensorID_dict[sensorID] = sensor
-        return sensor
+        return created
 
     def delete_sensor(self, sensorID):
-        print('Deleting sensor')
         sensor = self.sensorID_dict[sensorID]
         sensor.stop()
-        sensor.destroy()
+        deleted = sensor.destroy()
         self.sensorID_dict[sensorID] = None
+        print(f'Sensor {sensorID} deleted {deleted}')
+        return True
 
     @staticmethod
     def sensor_callback(weak_self, img, sensorID):

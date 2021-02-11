@@ -122,6 +122,23 @@ if __name__ == '__main__':
     except Ice.ConnectionRefusedException as e:
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
+
+    # Remote object connection for AdminBridge
+    try:
+        proxyString = ic.getProperties().getProperty('AdminBridgeProxy')
+        try:
+            basePrx = ic.stringToProxy(proxyString)
+            adminbridge_proxy = RoboCompAdminBridge.AdminBridgePrx.uncheckedCast(basePrx)
+            mprx["AdminBridgeProxy"] = adminbridge_proxy
+        except Ice.Exception:
+            print('Cannot connect to the remote object (AdminBridge)', proxyString)
+            #traceback.print_exc()
+            status = 1
+    except Ice.Exception as e:
+        print(e)
+        print('Cannot get AdminBridgeProxy property.')
+        status = 1
+
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)

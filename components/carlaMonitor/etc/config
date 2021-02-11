@@ -2,6 +2,10 @@
 CameraRGBDSimplePubTopic.Endpoints=tcp -p 0
 
 
+# Proxies for required interfaces
+AdminBridgeProxy = adminbridge:tcp -h localhost -p 18111
+
+
 
 # This property is used by the clients to connect to IceStorm.
 TopicManager.Proxy=IceStorm/TopicManager:default -p 9999

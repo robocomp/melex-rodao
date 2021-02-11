@@ -83,9 +83,6 @@ class SpecificWorker(GenericWorker):
         self.blueprint_library = blueprint_library
         self.contFPS = 0
         self.start = time.time()
-
-        self.start_stop = time.time()
-
         self.vehicle = None
         self.collision_sensor = None
         self.gnss_sensor = None
@@ -174,17 +171,6 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-
-        if time.time()-self.start_stop > 15:
-            for name, sensor in self.camera_manager.sensorID_dict.items():
-                if sensor is not None:
-                    print('---- STOPPING SENSORS ----')
-                    self.camera_manager.delete_sensor(name)
-                else:
-                    print('---- CREATING SENSORS ----')
-                    self.camera_manager.create_sensor(name)
-
-            self.start_stop = time.time()
         return True
 
     def startup_check(self):
@@ -206,23 +192,45 @@ class SpecificWorker(GenericWorker):
         controller.manual_gear_shift = control.manualgear
         self.move_car(controller)
 
-# ===================================================================
-# ===================================================================
+    # ===================================================================
+    # ===================================================================
 
-######################
-# From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
-# self.camerargbdsimplepub_proxy.pushRGBD(...)
+    # =============== Methods for Component Implements ==================
+    # ===================================================================
 
-######################
-# From the RoboCompCarlaSensors you can publish calling this methods:
-# self.carlasensors_proxy.updateSensorGNSS(...)
-# self.carlasensors_proxy.updateSensorIMU(...)
+    #
+    # IMPLEMENTATION of activateSensor method from AdminBridge interface
+    #
+    def AdminBridge_activateSensor(self, IDSensor):
+        print('AdminBridge_activateSensor')
+        ret = self.camera_manager.create_sensor(IDSensor)
+        return ret
 
-######################
-# From the RoboCompCarlaSensors you can use this types:
-# RoboCompCarlaSensors.IMU
-# RoboCompCarlaSensors.GNSS
+    #
+    # IMPLEMENTATION of stopSensor method from AdminBridge interface
+    #
+    def AdminBridge_stopSensor(self, IDSensor):
+        print('AdminBridge_stopSensor')
+        ret = self.camera_manager.delete_sensor(IDSensor)
+        print('Returning ', ret)
+        return True
+    # ===================================================================
+    # ===================================================================
 
-######################
-# From the RoboCompCarlaVehicleControl you can use this types:
-# RoboCompCarlaVehicleControl.VehicleControl
+    ######################
+    # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
+    # self.camerargbdsimplepub_proxy.pushRGBD(...)
+
+    ######################
+    # From the RoboCompCarlaSensors you can publish calling this methods:
+    # self.carlasensors_proxy.updateSensorGNSS(...)
+    # self.carlasensors_proxy.updateSensorIMU(...)
+
+    ######################
+    # From the RoboCompCarlaSensors you can use this types:
+    # RoboCompCarlaSensors.IMU
+    # RoboCompCarlaSensors.GNSS
+
+    ######################
+    # From the RoboCompCarlaVehicleControl you can use this types:
+    # RoboCompCarlaVehicleControl.VehicleControl

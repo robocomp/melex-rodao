@@ -31,6 +31,8 @@ except KeyError:
 Ice.loadSlice("-I ./src/ --all ./src/CommonBehavior.ice")
 import RoboCompCommonBehavior
 
+Ice.loadSlice("-I ./src/ --all ./src/AdminBridge.ice")
+import RoboCompAdminBridge
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimple.ice")
 import RoboCompCameraRGBDSimple
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
@@ -93,6 +95,7 @@ class GenericWorker(QtWidgets.QMainWindow):
     def __init__(self, mprx):
         super(GenericWorker, self).__init__()
 
+        self.adminbridge_proxy = mprx["AdminBridgeProxy"]
 
         self.ui = Ui_guiDlg()
         self.ui.setupUi(self)

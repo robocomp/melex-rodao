@@ -166,6 +166,10 @@ if __name__ == '__main__':
         print("Error getting required connections, check config file")
         sys.exit(-1)
 
+    adapter = ic.createObjectAdapter('AdminBridge')
+    adapter.add(adminbridgeI.AdminBridgeI(worker), ic.stringToIdentity('adminbridge'))
+    adapter.activate()
+
 
     CarlaVehicleControl_adapter = ic.createObjectAdapter("CarlaVehicleControlTopic")
     carlavehiclecontrolI_ = carlavehiclecontrolI.CarlaVehicleControlI(worker)
