@@ -36,7 +36,6 @@ import time
 
 try:
     sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
-    # sys.path.append(glob.glob('/home/robolab/carla_package/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -85,6 +84,8 @@ class SpecificWorker(GenericWorker):
         self.contFPS = 0
         self.start = time.time()
 
+        self.start_stop = time.time()
+
         self.vehicle = None
         self.collision_sensor = None
         self.gnss_sensor = None
@@ -126,9 +127,13 @@ class SpecificWorker(GenericWorker):
             self.destroy()
             self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
         while self.vehicle is None:
-            spawn_points = self.carla_map.get_spawn_points()
-            spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
-            self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+            # spawn_points = self.carla_map.get_spawn_points()
+            # spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+            # self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+
+            spawn_point = carla.Transform(carla.Location(x=52.64, y=27.21))
+            self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
+
         # Set up the sensors.
         # self.collision_sensor = CollisionSensor(self.player, self.hud)
 
@@ -153,7 +158,7 @@ class SpecificWorker(GenericWorker):
 
     def destroy(self):
         sensors = [
-            self.camera_manager.sensor,
+            self.camera_manager.sensor_name_dict.values(),
             self.collision_sensor.sensor,
             self.imu_sensor.sensor,
             self.gnss_sensor.sensor]
@@ -169,13 +174,17 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-        # try:
-        #     img,sensor_name = self.camera_manager.cm_queue.get()
-        #     self.camera_manager.show_img(img,sensor_name, self.sensor_width,self.sensor_height)
-        #
-        # except Exception as e:
-        #     print(e)
 
+        if time.time()-self.start_stop > 15:
+            for name, sensor in self.camera_manager.sensor_name_dict.items():
+                if sensor is not None:
+                    print('---- STOPPING SENSORS ----')
+                    self.camera_manager.delete_sensor(name)
+                else:
+                    print('---- CREATING SENSORS ----')
+                    self.camera_manager.create_sensor(name)
+
+            self.start_stop = time.time()
         return True
 
     def startup_check(self):
