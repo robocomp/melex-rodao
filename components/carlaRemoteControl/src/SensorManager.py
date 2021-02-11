@@ -16,12 +16,10 @@ class CameraManager(object):
         self.sensor_height = height
         self.surface = None
         self.second_surface = None
-        self.id_camera_to_show = 5
-        self.id_second_camera_to_show = 7
+        self.id_camera_to_show = 0
+        self.id_second_camera_to_show = 1
         self.second_width = 360
         self.sencond_height = 280
-        # self.second_width = 1280
-        # self.sencond_height = 720
 
     def update(self, image, width, height, cameraID):
         self.current_image = image
@@ -59,10 +57,10 @@ class CameraManager(object):
 
     def toggle_camera(self):
         print('toggle_camera')
-        if self.id_camera_to_show == 5:
-            self.id_camera_to_show = 7
+        if self.id_camera_to_show == 0:
+            self.id_camera_to_show = 1
         else:
-            self.id_camera_to_show = 5
+            self.id_camera_to_show = 0
 
 
 class GNSSSensor(object):

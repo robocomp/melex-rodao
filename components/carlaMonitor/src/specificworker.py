@@ -79,7 +79,7 @@ class SpecificWorker(GenericWorker):
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
         self.mutex.acquire()
-        if im.cameraID != 5 and im.cameraID != 7:
+        if im.cameraID != 0 and im.cameraID != 1:
 
             # if time.time() - self.start > 1:
             #     print("FPS:", self.contFPS)

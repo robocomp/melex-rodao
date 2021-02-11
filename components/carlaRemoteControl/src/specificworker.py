@@ -111,7 +111,7 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
-        if im.cameraID == 5 or im.cameraID == 7:
+        if im.cameraID == 0 or im.cameraID == 1:
             self.camera_manager.images_received[im.cameraID] = im
         # self.camera_manager.update(im.image, im.width, im.height, im.cameraID)
 

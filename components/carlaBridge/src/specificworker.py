@@ -158,7 +158,7 @@ class SpecificWorker(GenericWorker):
 
     def destroy(self):
         sensors = [
-            self.camera_manager.sensor_name_dict.values(),
+            self.camera_manager.sensorID_dict.values(),
             self.collision_sensor.sensor,
             self.imu_sensor.sensor,
             self.gnss_sensor.sensor]
@@ -176,7 +176,7 @@ class SpecificWorker(GenericWorker):
     def compute(self):
 
         if time.time()-self.start_stop > 15:
-            for name, sensor in self.camera_manager.sensor_name_dict.items():
+            for name, sensor in self.camera_manager.sensorID_dict.items():
                 if sensor is not None:
                     print('---- STOPPING SENSORS ----')
                     self.camera_manager.delete_sensor(name)

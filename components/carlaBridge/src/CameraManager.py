@@ -31,7 +31,7 @@ class CameraManager(object):
         self.camerargbdsimplepub_proxy = camerargbdsimplepub_proxy
 
         self.sensor_attrs = {}
-        self.sensor_name_dict = {}
+        self.sensorID_dict = {}
 
         self.cm_queue = SimpleQueue()
 
@@ -48,15 +48,15 @@ class CameraManager(object):
 
         # spawn_point_car = carla.Transform(carla.Location(x=1.6, z=1.0))
         spawn_point_car = carla.Transform(carla.Location(x=0.0, y=-0.25, z=1.0))  # Carrito de golf
-        self.sensor_attrs['000'] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
+        self.sensor_attrs[0] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
 
         # depth_bp = self.blueprint_library.find('sensor.camera.depth')
         # cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
         # cam_bp.set_attribute('image_size_y', f'{self.sensor_height}')
         #
-        # self.sensor_attrs['001'] = [spawn_point_car, parent_actor, depth_bp, cc.Raw]
-        # self.sensor_attrs['002'] = [spawn_point_car, parent_actor, depth_bp, cc.Depth]
-        # self.sensor_attrs['003'] = [spawn_point_car, parent_actor, depth_bp, cc.LogarithmicDepth]
+        # self.sensor_attrs'[1] = [spawn_point_car, parent_actor, depth_bp, cc.Raw]
+        # self.sensor_attrs'[2] = [spawn_point_car, parent_actor, depth_bp, cc.Depth]
+        # self.sensor_attrs'[3] = [spawn_point_car, parent_actor, depth_bp, cc.LogarithmicDepth]
 
         # ###################
         # # STREET SENSORS ##
@@ -73,50 +73,50 @@ class CameraManager(object):
         spawn_point = carla.Transform(
             carla.Location(x=mylights[8].location.x, z=mylights[8].location.z + 5, y=mylights[8].location.y),
             carla.Rotation(pitch=-15, yaw=-90))
-        self.sensor_attrs['004'] = [spawn_point, None, cam_bp_low, cc.Raw]
+        self.sensor_attrs[4] = [spawn_point, None, cam_bp_low, cc.Raw]
 
         spawn_point = carla.Transform(
             carla.Location(x=mylights[18].location.x, z=mylights[18].location.z + 10, y=mylights[18].location.y),
             carla.Rotation(pitch=-15, yaw=45))
-        self.sensor_attrs['005'] = [spawn_point, None, cam_bp_low, cc.Raw]
+        self.sensor_attrs[5] = [spawn_point, None, cam_bp_low, cc.Raw]
 
         spawn_point = carla.Transform(
             carla.Location(x=mylights[31].location.x, z=mylights[31].location.z + 5, y=mylights[31].location.y),
             carla.Rotation(pitch=-15, yaw=90))
-        self.sensor_attrs['006'] = [spawn_point, None, cam_bp_low, cc.Raw]
+        self.sensor_attrs[6] = [spawn_point, None, cam_bp_low, cc.Raw]
 
         spawn_point = carla.Transform(
             carla.Location(x=mylights[34].location.x, z=mylights[34].location.z + 10, y=mylights[34].location.y),
             carla.Rotation(pitch=-15, yaw=-135))
-        self.sensor_attrs['007'] = [spawn_point, None, cam_bp_low, cc.Raw]
+        self.sensor_attrs[7] = [spawn_point, None, cam_bp_low, cc.Raw]
 
         spawn_point = carla.Transform(
             carla.Location(x=mylights[35].location.x, z=mylights[35].location.z + 5, y=mylights[35].location.y),
             carla.Rotation(pitch=-15, yaw=0))
-        self.sensor_attrs['008'] = [spawn_point, None, cam_bp_low, cc.Raw]
+        self.sensor_attrs[8] = [spawn_point, None, cam_bp_low, cc.Raw]
 
 
         # Spawn sensors
         for s in self.sensor_attrs.keys():
             self.create_sensor(s)
 
-    def create_sensor(self, sensor_name):
+    def create_sensor(self, sensorID):
         print('Creating sensor')
-        spawn_point_car, parent_actor, cam_bp, _ = self.sensor_attrs[sensor_name]
+        spawn_point_car, parent_actor, cam_bp, _ = self.sensor_attrs[sensorID]
         sensor = self.world.spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
-        sensor.listen(lambda data: self.sensor_callback(self.weak_self, data, sensor_name))
-        self.sensor_name_dict[sensor_name] = sensor
+        sensor.listen(lambda data: self.sensor_callback(self.weak_self, data, sensorID))
+        self.sensorID_dict[sensorID] = sensor
         return sensor
 
-    def delete_sensor(self, name):
+    def delete_sensor(self, sensorID):
         print('Deleting sensor')
-        sensor = self.sensor_name_dict[name]
+        sensor = self.sensorID_dict[sensorID]
         sensor.stop()
         sensor.destroy()
-        self.sensor_name_dict[name] = None
+        self.sensorID_dict[sensorID] = None
 
     @staticmethod
-    def sensor_callback(weak_self, img, sensor_name):
+    def sensor_callback(weak_self, img, sensorID):
         global mutex
         mutex.acquire()
 
@@ -128,10 +128,10 @@ class CameraManager(object):
         self.timestamp = img.timestamp
 
         cameraType = RoboCompCameraRGBDSimple.TImage()
-        img.convert(self.sensor_attrs[sensor_name][-1])
+        img.convert(self.sensor_attrs[sensorID][-1])
 
         cameraType.image = img.raw_data
-        cameraType.cameraID = int(sensor_name)
+        cameraType.cameraID = sensorID
         cameraType.width = img.width
         cameraType.height = img.height
 
