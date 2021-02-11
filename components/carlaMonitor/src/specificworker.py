@@ -33,6 +33,8 @@ from threading import Lock
 # import librobocomp_qmat
 # import librobocomp_osgviewer
 # import librobocomp_innermodel
+from src.widgets.control import ControlWidget
+
 
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
@@ -49,6 +51,8 @@ class SpecificWorker(GenericWorker):
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+        self.main_widget = ControlWidget()
+        self.setCentralWidget(self.main_widget)
 
 
 
