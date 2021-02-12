@@ -18,6 +18,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
+import random
 import time
 from threading import Lock
 from PySide2.QtGui import QPixmap, qRgb
@@ -36,6 +37,25 @@ from genericworker import *
 # import librobocomp_innermodel
 from src.widgets.control import ControlWidget
 
+
+TEST_COORDS = [
+    (39.479210092531716, -6.339588761329651),
+    (39.4793136063216, -6.339540481567383),
+    (39.48030559871805, -6.34292206451805),
+    (39.479386828445975, -6.342741953472997),
+    (39.47927986899325, -6.342080617891014),
+    (39.47910695815743, -6.341302917891016),
+    (39.479715987931584, -6.339325253473012),
+    (39.47974999871805, -6.339403289055005),
+    (39.48030559871805, -6.3429167001000515),
+    (39.48033122847412, -6.343055600100026),
+    (39.48035902847498, -6.343169382309031),
+    (39.479942328462506, -6.344722200100028),
+    (39.48013889871801, -6.3444140178910295),
+    (39.480140968967596, -6.344222200100026),
+    (39.480083298718085, -6.344083300100029)
+
+]
 
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
@@ -62,6 +82,11 @@ class SpecificWorker(GenericWorker):
         if startup_check:
             self.startup_check()
         else:
+            # TODO: REMOVE, just for testing
+            self.stimer = QTimer()
+            self.stimer.timeout.connect(lambda: self.main_widget.update_map_position(random.choice(TEST_COORDS)))
+            self.stimer.start(1000)
+            # #############
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
 
