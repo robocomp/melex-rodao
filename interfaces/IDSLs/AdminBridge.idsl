@@ -1,0 +1,10 @@
+module RoboCompAdminBridge
+{
+
+	interface AdminBridge
+	{
+		bool activateSensor(int IDSensor);
+		bool stopSensor(int IDSensor);
+
+	};
+};
