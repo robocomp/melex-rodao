@@ -33,7 +33,13 @@ class ControlWidget(QWidget):
         self.state_panel.addWidget(self.ve_camera_state_light)
         self.state_panel.addWidget(self.gps_state_light)
         self.state_panel.addWidget(self.imu_state_light)
+        self.camera1_switch.setChecked(True)
+        self.camera2_switch.setChecked(True)
+        self.ve_camera_state_light.turn_on()
         self.gps_state_light.turn_on()
+        self.imu_state_light.turn_on()
+        self.state_light1.turn_on()
+        self.state_light2.turn_on()
 
 
 

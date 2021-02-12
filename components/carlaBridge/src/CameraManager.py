@@ -47,7 +47,7 @@ class CameraManager(object):
         cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
         cam_bp.set_attribute('image_size_y', f'{self.sensor_height}')
         cam_bp.set_attribute('fov', '110')
-
+        #
         # spawn_point_car = carla.Transform(carla.Location(x=1.6, z=1.0))
         spawn_point_car = carla.Transform(carla.Location(x=0.0, y=-0.25, z=1.0))  # Carrito de golf
         self.sensor_attrs[0] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
@@ -72,30 +72,30 @@ class CameraManager(object):
         lmanager = self.world.get_lightmanager()
         mylights = lmanager.get_all_lights()
 
-        spawn_point = carla.Transform(
-            carla.Location(x=mylights[8].location.x, z=mylights[8].location.z + 5, y=mylights[8].location.y),
-            carla.Rotation(pitch=-15, yaw=-90))
-        self.sensor_attrs[4] = [spawn_point, None, cam_bp_low, cc.Raw]
+        # spawn_point = carla.Transform(
+        #     carla.Location(x=mylights[8].location.x, z=mylights[8].location.z + 5, y=mylights[8].location.y),
+        #     carla.Rotation(pitch=-15, yaw=-90))
+        # self.sensor_attrs[4] = [spawn_point, None, cam_bp_low, cc.Raw]
 
         spawn_point = carla.Transform(
             carla.Location(x=mylights[18].location.x, z=mylights[18].location.z + 10, y=mylights[18].location.y),
             carla.Rotation(pitch=-15, yaw=45))
         self.sensor_attrs[5] = [spawn_point, None, cam_bp_low, cc.Raw]
 
-        spawn_point = carla.Transform(
-            carla.Location(x=mylights[31].location.x, z=mylights[31].location.z + 5, y=mylights[31].location.y),
-            carla.Rotation(pitch=-15, yaw=90))
-        self.sensor_attrs[6] = [spawn_point, None, cam_bp_low, cc.Raw]
+        # spawn_point = carla.Transform(
+        #     carla.Location(x=mylights[31].location.x, z=mylights[31].location.z + 5, y=mylights[31].location.y),
+        #     carla.Rotation(pitch=-15, yaw=90))
+        # self.sensor_attrs[6] = [spawn_point, None, cam_bp_low, cc.Raw]
 
         spawn_point = carla.Transform(
             carla.Location(x=mylights[34].location.x, z=mylights[34].location.z + 10, y=mylights[34].location.y),
             carla.Rotation(pitch=-15, yaw=-135))
         self.sensor_attrs[7] = [spawn_point, None, cam_bp_low, cc.Raw]
 
-        spawn_point = carla.Transform(
-            carla.Location(x=mylights[35].location.x, z=mylights[35].location.z + 5, y=mylights[35].location.y),
-            carla.Rotation(pitch=-15, yaw=0))
-        self.sensor_attrs[8] = [spawn_point, None, cam_bp_low, cc.Raw]
+        # spawn_point = carla.Transform(
+        #     carla.Location(x=mylights[35].location.x, z=mylights[35].location.z + 5, y=mylights[35].location.y),
+        #     carla.Rotation(pitch=-15, yaw=0))
+        # self.sensor_attrs[8] = [spawn_point, None, cam_bp_low, cc.Raw]
 
 
         # Spawn sensors
@@ -116,6 +116,8 @@ class CameraManager(object):
 
     def delete_sensor(self, sensorID):
         sensor = self.sensorID_dict[sensorID]
+        if sensor is None:
+            return False
         sensor.stop()
         deleted = sensor.destroy()
         self.sensorID_dict[sensorID] = None
