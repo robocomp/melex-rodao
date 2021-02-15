@@ -30,10 +30,10 @@ class MapViewer(QtWidgets.QWidget):
 
         vbox.addWidget(view)
 
-        button = QtWidgets.QPushButton("Go to Paris")
-        panToParis = functools.partial(self.panMap, 2.3272, 48.8620)
-        button.clicked.connect(panToParis)
-        vbox.addWidget(button)
+        # button = QtWidgets.QPushButton("Go to Paris")
+        # panToParis = functools.partial(self.panMap, 2.3272, 48.8620)
+        # button.clicked.connect(panToParis)
+        # vbox.addWidget(button)
 
     @Slot(float, float)
     def onMapMove(self, lat, lng):
@@ -43,11 +43,10 @@ class MapViewer(QtWidgets.QWidget):
     def panMap(self, lat, lng):
         page = self.view.page()
         page.runJavaScript("map.panTo(L.latLng({}, {}));".format(lat, lng))
-        # page.runJavaScript("var marker = L.marker(map.getCenter()).addTo(map); marker.bindPopup(\"Car is here!\").openPopup();")
         page.runJavaScript(f"var newLatLng = new L.LatLng({lat}, {lng});marker.setLatLng(newLatLng);")
+
     def update_map_position(self, lat, lng):
         self.panMap(lat, lng)
-
 
 if __name__ == "__main__":
     import sys
@@ -55,6 +54,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     w = MapViewer()
     w.show()
+    w.update_map_position(39.47978558137163, -6.3421153169747795)
     sys.exit(app.exec_())
 
 

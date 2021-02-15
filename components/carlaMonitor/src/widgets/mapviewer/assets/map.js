@@ -1,5 +1,6 @@
 var map;
-var maker;
+var marker;
+
 function initialize(){
     map = L.map('map').setView([55.61121, 12.99351], 16);
 
