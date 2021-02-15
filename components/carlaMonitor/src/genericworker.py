@@ -37,6 +37,8 @@ Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimple.ice")
 import RoboCompCameraRGBDSimple
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
 import RoboCompCameraRGBDSimplePub
+Ice.loadSlice("-I ./src/ --all ./src/CarlaSensors.ice")
+import RoboCompCarlaSensors
 
 class ImgType(list):
     def __init__(self, iterable=list()):
@@ -76,8 +78,28 @@ class DepthType(list):
 
 setattr(RoboCompCameraRGBDSimple, "DepthType", DepthType)
 
+class CarlaXYZ(list):
+    def __init__(self, iterable=list()):
+        super(CarlaXYZ, self).__init__(iterable)
+
+    def append(self, item):
+        assert isinstance(item, float)
+        super(CarlaXYZ, self).append(item)
+
+    def extend(self, iterable):
+        for item in iterable:
+            assert isinstance(item, float)
+        super(CarlaXYZ, self).extend(iterable)
+
+    def insert(self, index, item):
+        assert isinstance(item, float)
+        super(CarlaXYZ, self).insert(index, item)
+
+setattr(RoboCompCarlaSensors, "CarlaXYZ", CarlaXYZ)
+
 
 import camerargbdsimplepubI
+import carlasensorsI
 
 
 try:

@@ -1,12 +1,13 @@
 import "CameraRGBDSimplePub.idsl";
 import "AdminBridge.idsl";
+import "CarlaSensors.idsl";
 
 Component carlaMonitor
 {
     Communications
     {
 	requires AdminBridge;
-        subscribesTo CameraRGBDSimplePub; 
+        subscribesTo CameraRGBDSimplePub, CarlaSensors; 
     };
 
     language python;

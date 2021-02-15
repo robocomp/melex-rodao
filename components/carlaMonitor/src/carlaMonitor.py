@@ -169,6 +169,29 @@ if __name__ == '__main__':
     camerargbdsimplepub_topic.subscribeAndGetPublisher(qos, camerargbdsimplepub_proxy)
     CameraRGBDSimplePub_adapter.activate()
 
+
+    CarlaSensors_adapter = ic.createObjectAdapter("CarlaSensorsTopic")
+    carlasensorsI_ = carlasensorsI.CarlaSensorsI(worker)
+    carlasensors_proxy = CarlaSensors_adapter.addWithUUID(carlasensorsI_).ice_oneway()
+
+    subscribeDone = False
+    while not subscribeDone:
+        try:
+            carlasensors_topic = topicManager.retrieve("CarlaSensors")
+            subscribeDone = True
+        except Ice.Exception as e:
+            print("Error. Topic does not exist (creating)")
+            time.sleep(1)
+            try:
+                carlasensors_topic = topicManager.create("CarlaSensors")
+                subscribeDone = True
+            except:
+                print("Error. Topic could not be created. Exiting")
+                status = 0
+    qos = {}
+    carlasensors_topic.subscribeAndGetPublisher(qos, carlasensors_proxy)
+    CarlaSensors_adapter.activate()
+
     signal.signal(signal.SIGINT, sigint_handler)
     app.exec_()
 

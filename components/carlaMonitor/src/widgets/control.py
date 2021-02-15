@@ -37,11 +37,7 @@ class ControlWidget(QWidget):
         self.state_panel.addWidget(self.imu_state_light)
         self.camera1_switch.setChecked(True)
         self.camera2_switch.setChecked(True)
-        self.ve_camera_state_light.turn_on()
-        self.gps_state_light.turn_on()
-        self.imu_state_light.turn_on()
-        self.state_light1.turn_on()
-        self.state_light2.turn_on()
+
 
     def update_map_position(self, coords):
         new_url = f"{BASE_MAP_URL}&marker={','.join(str(s) for s in coords)}"

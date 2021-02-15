@@ -38,37 +38,27 @@ from genericworker import *
 from src.widgets.control import ControlWidget
 
 
-TEST_COORDS = [
-    (39.479210092531716, -6.339588761329651),
-    (39.4793136063216, -6.339540481567383),
-    (39.48030559871805, -6.34292206451805),
-    (39.479386828445975, -6.342741953472997),
-    (39.47927986899325, -6.342080617891014),
-    (39.47910695815743, -6.341302917891016),
-    (39.479715987931584, -6.339325253473012),
-    (39.47974999871805, -6.339403289055005),
-    (39.48030559871805, -6.3429167001000515),
-    (39.48033122847412, -6.343055600100026),
-    (39.48035902847498, -6.343169382309031),
-    (39.479942328462506, -6.344722200100028),
-    (39.48013889871801, -6.3444140178910295),
-    (39.480140968967596, -6.344222200100026),
-    (39.480083298718085, -6.344083300100029)
-
-]
-
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.mutex = Lock()
-        self.start = time.time()
-        self.contFPS = 0
-        self.start_stop = time.time()
-        self.data_received = {}
+
+        self.images_received = {}
+
+        self.latitude = 39.47978558137163
+        self.longitude = -6.3421153169747795
+        self.altitude = 0
+        self.gps_data_received = False
+
+        self.accelerometer = 0
+        self.gyroscope = 0
+        self.compass = 0
+        self.imu_data_received = False
 
         self.init_ui()
 
         self.cameras_widget_dict = {
+            0: [None, None, self.main_widget.ve_camera_state_light],
             5: [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
             7: [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
         }
@@ -78,37 +68,87 @@ class SpecificWorker(GenericWorker):
             7: True,
         }
 
+        self.camera_timer_dict = {}
+        self.camera_data_received = {}
+
+        self.sensor_downtime = 1000
         self.Period = 0
         if startup_check:
             self.startup_check()
         else:
-            # TODO: REMOVE, just for testing
-            self.stimer = QTimer()
-            self.stimer.timeout.connect(lambda: self.main_widget.update_map_position(random.choice(TEST_COORDS)))
-            self.stimer.start(1000)
-            # #############
+            self.initialize_sensor_timers()
+
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+
+    def initialize_sensor_timers(self):
+        self.stimer = QTimer()
+        self.stimer.timeout.connect(lambda: self.main_widget.update_map_position((self.latitude, self.longitude)))
+        self.stimer.start(self.sensor_downtime)
+
+        self.imu_timer = QTimer()
+        self.imu_timer.timeout.connect(lambda: self.main_widget.imu_state_light.turn_off())
+        self.imu_timer.start(self.sensor_downtime)
+
+        self.gps_timer = QTimer()
+        self.gps_timer.timeout.connect(lambda: self.main_widget.gps_state_light.turn_off())
+        self.gps_timer.start(self.sensor_downtime)
+
+        self.camera1_timer = QTimer()
+        self.camera1_timer.timeout.connect(lambda: self.main_widget.state_light1.turn_off())
+        self.camera1_timer.start(self.sensor_downtime)
+
+        self.camera2_timer = QTimer()
+        self.camera2_timer.timeout.connect(lambda: self.main_widget.state_light2.turn_off())
+        self.camera2_timer.start(self.sensor_downtime)
+
+        self.ve_camera_timer = QTimer()
+        self.ve_camera_timer.timeout.connect(lambda: self.main_widget.ve_camera_state_light.turn_off())
+        self.ve_camera_timer.start(self.sensor_downtime)
+
+        self.camera_timer_dict = {
+            0: self.ve_camera_timer,
+            5: self.camera1_timer,
+            7: self.camera2_timer,
+        }
 
     def init_ui(self):
         self.main_widget = ControlWidget()
         self.setCentralWidget(self.main_widget)
         self.main_widget.camera1_switch.stateChanged.connect(self.change_camera_state)
         self.main_widget.camera2_switch.stateChanged.connect(self.change_camera_state)
+        self.main_widget.update_map_position((self.latitude, self.longitude))
 
     def change_camera_state(self):
-        print('change_camera_state')
-        for id, [_, switch, led] in self.cameras_widget_dict.items():
-            if switch.isChecked():
+        for id, [_, switch, _] in self.cameras_widget_dict.items():
+            if switch is None:
+                continue
+            elif switch.isChecked():
                 if not self.is_sensor_active[id]:
                     self.adminbridge_proxy.activateSensor(id)
                     self.is_sensor_active[id] = True
-                    led.turn_on()
             else:
                 if self.is_sensor_active[id]:
                     self.adminbridge_proxy.stopSensor(id)
                     self.is_sensor_active[id] = False
-                    led.turn_off()
+
+    def admin_sensor_state_lights(self):
+        if self.imu_data_received:
+            self.main_widget.imu_state_light.turn_on()
+            self.imu_timer.start(self.sensor_downtime)
+            self.imu_data_received = False
+
+        if self.gps_data_received:
+            self.main_widget.gps_state_light.turn_on()
+            self.gps_timer.start(self.sensor_downtime)
+            self.gps_data_received = False
+
+        for id, data_received in self.camera_data_received.items():
+            if data_received:
+                self.cameras_widget_dict[id][2].turn_on()
+                self.camera_timer_dict[id].start(self.sensor_downtime)
+                self.camera_data_received[id] = False
+
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -116,10 +156,15 @@ class SpecificWorker(GenericWorker):
     def setParams(self, params):
         return True
 
+
+
     @QtCore.Slot()
     def compute(self):
         self.mutex.acquire()
-        for camera_ID, camera_data in self.data_received.items():
+
+        self.admin_sensor_state_lights()
+
+        for camera_ID, camera_data in self.images_received.items():
             if camera_data is None:
                 continue
 
@@ -130,13 +175,12 @@ class SpecificWorker(GenericWorker):
 
             else:
                 qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
-                qImg.fill(qRgb(0,0,0))
+                qImg.fill(qRgb(0, 0, 0))
 
             self.cameras_widget_dict[camera_ID][0].setPixmap(QPixmap(qImg))
             self.cameras_widget_dict[camera_ID][1].setText('Cámara ' + str(camera_ID))
 
         self.mutex.release()
-
         return True
 
     def startup_check(self):
@@ -150,8 +194,38 @@ class SpecificWorker(GenericWorker):
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
         self.mutex.acquire()
-        if im.cameraID != 0 and im.cameraID != 1:
-            self.data_received[im.cameraID] = im
+
+        self.camera_data_received[im.cameraID] = True
+
+        if im.cameraID != 0:
+            self.images_received[im.cameraID] = im
+        self.mutex.release()
+
+    #
+    # SUBSCRIPTION to updateSensorGNSS method from CarlaSensors interface
+    #
+    def CarlaSensors_updateSensorGNSS(self, gnssData):
+        self.mutex.acquire()
+
+        self.latitude = gnssData.latitude
+        self.longitude = gnssData.longitude
+        self.altitude = gnssData.altitude
+
+        self.gps_data_received = True
+
+        self.mutex.release()
+
+    #
+    # SUBSCRIPTION to updateSensorIMU method from CarlaSensors interface
+    #
+    def CarlaSensors_updateSensorIMU(self, imuData):
+        self.mutex.acquire()
+
+        self.accelerometer = imuData.accelerometer
+        self.gyroscope = imuData.gyroscope
+        self.compass = imuData.compass
+        self.imu_data_received = True
+
         self.mutex.release()
 
     # ===================================================================
@@ -161,3 +235,8 @@ class SpecificWorker(GenericWorker):
     # From the RoboCompAdminBridge you can call this methods:
     # self.adminbridge_proxy.activateSensor(...)
     # self.adminbridge_proxy.stopSensor(...)
+
+    ######################
+    # From the RoboCompCarlaSensors you can use this types:
+    # RoboCompCarlaSensors.IMU
+    # RoboCompCarlaSensors.GNSS
