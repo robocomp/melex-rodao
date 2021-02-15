@@ -179,7 +179,6 @@ class SpecificWorker(GenericWorker):
 
             self.cameras_widget_dict[camera_ID][0].setPixmap(QPixmap(qImg))
             self.cameras_widget_dict[camera_ID][1].setText('Cámara ' + str(camera_ID))
-
         self.mutex.release()
         return True
 

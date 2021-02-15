@@ -1,25 +1,21 @@
 from PySide2.QtGui import QPixmap
 
 from src.widgets.lightwidget import LightState
+from src.widgets.mapviewer.mapviewer import MapViewer
 from .uiloader import CustomUiLoader
-from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QWidget
 
 import pathlib
 FILE_PATH = pathlib.Path(__file__).parent.absolute()
-
-BASE_MAP_URL= 'https://www.openstreetmap.org/export/embed.html?bbox=-6.346299648284912%2C39.47831158636391%2C-6.337727308273315%2C39.482013191562885&layer=mapnik'
 
 class ControlWidget(QWidget):
     def __init__(self, parent=None):
         super(ControlWidget, self).__init__()
 
         CustomUiLoader().loadUi(FILE_PATH / '../resources/uis/monitor.ui', self)
-        self.map_widget = QWebEngineView()
+        self.map_widget = MapViewer()
         self.map_layout.addWidget(self.map_widget)
-        self.map_widget.page().load('https://www.openstreetmap.org/export/embed.html?bbox=-6.346299648284912%2C39.47831158636391%2C-6.337727308273315%2C39.482013191562885&layer=mapnik')
-        self.camera1_image.setPixmap(QPixmap(str(FILE_PATH / "../resources/images/camera1.png")))
-        self.camera2_image.setPixmap(QPixmap(str(FILE_PATH / "../resources/images/camera2.png")))
+
         self.state_light1 = LightState("Estado")
         self.state1_layout.addWidget(self.state_light1)
         self.state_light2 = LightState("Estado")
@@ -31,7 +27,6 @@ class ControlWidget(QWidget):
 
         self.ve_camera_state_light = LightState("Cámara VE")
 
-
         self.state_panel.addWidget(self.ve_camera_state_light)
         self.state_panel.addWidget(self.gps_state_light)
         self.state_panel.addWidget(self.imu_state_light)
@@ -40,8 +35,9 @@ class ControlWidget(QWidget):
 
 
     def update_map_position(self, coords):
-        new_url = f"{BASE_MAP_URL}&marker={','.join(str(s) for s in coords)}"
-        self.map_widget.page().load(new_url)
+        self.map_widget.update_map_position(coords[0], coords[1])
+
+
 
 
 
