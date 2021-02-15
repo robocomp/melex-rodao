@@ -40,13 +40,13 @@ class MapViewer(QtWidgets.QWidget):
         self.label.setText("Lng: {:.5f}, Lat: {:.5f}".format(lng, lat))
 
 
-    def panMap(self, lng, lat):
+    def panMap(self, lat, lng):
         page = self.view.page()
         page.runJavaScript("map.panTo(L.latLng({}, {}));".format(lat, lng))
-        page.runJavaScript("var marker = L.marker(map.getCenter()).addTo(map); marker.bindPopup(\"Car is here!\").openPopup();")
-
-    def update_map_position(self, lng, lat):
-        self.panMap(lng, lat)
+        # page.runJavaScript("var marker = L.marker(map.getCenter()).addTo(map); marker.bindPopup(\"Car is here!\").openPopup();")
+        page.runJavaScript(f"var newLatLng = new L.LatLng({lat}, {lng});marker.setLatLng(newLatLng);")
+    def update_map_position(self, lat, lng):
+        self.panMap(lat, lng)
 
 
 if __name__ == "__main__":

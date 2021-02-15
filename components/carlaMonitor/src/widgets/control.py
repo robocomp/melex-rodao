@@ -35,6 +35,7 @@ class ControlWidget(QWidget):
 
 
     def update_map_position(self, coords):
+        print(coords)
         self.map_widget.update_map_position(coords[0], coords[1])
 
 
