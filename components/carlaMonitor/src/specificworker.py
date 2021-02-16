@@ -63,16 +63,13 @@ class SpecificWorker(GenericWorker):
             7: [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
         }
 
-        self.is_sensor_active = {
-            5: True,
-            7: True,
-        }
+        self.is_sensor_active = { }
 
         self.camera_timer_dict = {}
         self.camera_data_received = {}
 
         self.sensor_downtime = 1000
-        self.Period = 0
+        self.Period = 1000/24
         if startup_check:
             self.startup_check()
         else:
@@ -143,11 +140,11 @@ class SpecificWorker(GenericWorker):
             self.gps_timer.start(self.sensor_downtime)
             self.gps_data_received = False
 
-        for id, data_received in self.camera_data_received.items():
-            if data_received:
-                self.cameras_widget_dict[id][2].turn_on()
-                self.camera_timer_dict[id].start(self.sensor_downtime)
-                self.camera_data_received[id] = False
+        # for id, data_received in self.camera_data_received.items():
+        #     if data_received:
+        #         self.cameras_widget_dict[id][2].turn_on()
+        #         self.camera_timer_dict[id].start(self.sensor_downtime)
+        #         self.camera_data_received[id] = False
 
 
     def __del__(self):
@@ -156,7 +153,14 @@ class SpecificWorker(GenericWorker):
     def setParams(self, params):
         return True
 
+    def show_img_opencv(self, data):
+        array = np.frombuffer(data.image, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (data.height, data.width, 4))
+        array = array[:, :, :3]
 
+        window_name = "camera" + str(data.cameraID)
+        cv2.imshow(window_name, array)
+        cv2.waitKey(1)
 
     @QtCore.Slot()
     def compute(self):
@@ -165,21 +169,25 @@ class SpecificWorker(GenericWorker):
         self.admin_sensor_state_lights()
 
         for camera_ID, camera_data in self.images_received.items():
-            if camera_data is None:
-                continue
+            self.show_img_opencv(camera_data)
 
-            if self.is_sensor_active[camera_ID]:
-                array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
-                array = np.reshape(array, (camera_data.height, camera_data.width, 4))
-                qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
+            # if camera_data is None:
+            #     continue
+            #
+            # if self.is_sensor_active[camera_ID]:
+            #     array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
+            #     array = np.reshape(array, (camera_data.height, camera_data.width, 4))
+            #     qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
+            #
+            # else:
+            #     qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
+            #     qImg.fill(qRgb(0, 0, 0))
+            #
+            # # self.cameras_widget_dict[camera_ID][0].setPixmap(QPixmap(qImg))
+            # # self.cameras_widget_dict[camera_ID][1].setText('Cámara ' + str(camera_ID))
 
-            else:
-                qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
-                qImg.fill(qRgb(0, 0, 0))
-
-            self.cameras_widget_dict[camera_ID][0].setPixmap(QPixmap(qImg))
-            self.cameras_widget_dict[camera_ID][1].setText('Cámara ' + str(camera_ID))
         self.mutex.release()
+
         return True
 
     def startup_check(self):
@@ -194,6 +202,7 @@ class SpecificWorker(GenericWorker):
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
         self.mutex.acquire()
 
+        self.is_sensor_active[im.cameraID] = True
         self.camera_data_received[im.cameraID] = True
 
         if im.cameraID != 0:

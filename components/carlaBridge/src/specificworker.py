@@ -35,7 +35,7 @@ import random
 import time
 
 try:
-    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -52,7 +52,7 @@ print('Client version ', client.get_client_version())
 print('Server version ', client.get_server_version())
 client.set_timeout(30.0)
 print('Loading world...')
-world = client.load_world('CampusV3')
+world = client.load_world('CampusV4')
 # world = client.get_world()
 print('Done')
 
@@ -113,7 +113,7 @@ class SpecificWorker(GenericWorker):
         # car_blueprints = self.blueprint_library.filter('vehicle.*')
         # for car in car_blueprints:
         #     print(car)
-        blueprint = self.blueprint_library.filter('vehicle.posicion.*')[0]
+        blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
         # blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
         # Spawn the player.
         if self.vehicle is not None:
@@ -124,12 +124,12 @@ class SpecificWorker(GenericWorker):
             self.destroy()
             self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
         while self.vehicle is None:
-            # spawn_points = self.carla_map.get_spawn_points()
-            # spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
-            # self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+            spawn_points = self.carla_map.get_spawn_points()
+            spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+            self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
 
-            spawn_point = carla.Transform(carla.Location(x=52.64, y=27.21))
-            self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
+            # spawn_point = carla.Transform(carla.Location(x=-131.50, y=-28.76))
+            # self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         # Set up the sensors.
         # self.collision_sensor = CollisionSensor(self.player, self.hud)

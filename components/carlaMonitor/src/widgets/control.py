@@ -6,7 +6,9 @@ from .uiloader import CustomUiLoader
 from PySide2.QtWidgets import QWidget
 
 import pathlib
+
 FILE_PATH = pathlib.Path(__file__).parent.absolute()
+
 
 class ControlWidget(QWidget):
     def __init__(self, parent=None):
@@ -33,13 +35,8 @@ class ControlWidget(QWidget):
         self.camera1_switch.setChecked(True)
         self.camera2_switch.setChecked(True)
 
-
     def update_map_position(self, coords):
-        print(coords)
         self.map_widget.update_map_position(coords[0], coords[1])
-
-
-
 
 
 if __name__ == '__main__':
