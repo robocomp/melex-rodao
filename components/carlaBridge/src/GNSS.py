@@ -24,7 +24,7 @@ class GnssSensor(object):
         # We need to pass the lambda a weak reference to self to avoid circular
         # reference.
         weak_self = weakref.ref(self)
-        self.sensor.listen(lambda event: GnssSensor._GNSS_callback(weak_self, event))
+        self.sensor.listen(lambda event: self._GNSS_callback(weak_self, event))
 
     @staticmethod
     def _GNSS_callback(weak_self, sensor_data):
@@ -34,12 +34,6 @@ class GnssSensor(object):
         self = weak_self()
         if not self:
             return
-
-        self.lat = sensor_data.latitude
-        self.lon = sensor_data.longitude
-        self.frame = sensor_data.frame
-        self.timestamp = sensor_data.timestamp
-        # self.gnss_queue.put((sensor_data.timestamp, sensor_data.frame, sensor_data.latitude, sensor_data.longitude))
 
         ###################
         ## PUBLISH DATA ##

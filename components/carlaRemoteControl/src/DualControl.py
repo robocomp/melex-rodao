@@ -171,6 +171,8 @@ class DualControl(object):
             self._parse_vehicle_wheel()
             self._control_reverse = self._control_gear < 0
             self._control_hand_brake = self.handbrake_on
+            if self._control_hand_brake:
+                self._control_throttle = 0
 
 
     def publish_vehicle_control(self):
