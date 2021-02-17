@@ -18,6 +18,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
+import math
 import random
 import time
 from threading import Lock
@@ -55,6 +56,22 @@ class SpecificWorker(GenericWorker):
         self.compass = 0
         self.imu_data_received = False
 
+        self.cameras_GNSS_localization = {
+            1: (39.47951795840331, -6.343213688035427),
+            2: (39.4794451943053, -6.3425991738366045),
+            3: (39.479349972033106, -6.341949744036231),
+            4: (39.47914156049626, -6.3412211722981695),
+            5: (39.4797560132987, -6.339405446028102),
+            6: (39.4797560132987, -6.339619710987503),
+            7: (39.48029769743266, -6.342937854949663),
+            8: (39.48029051094454, -6.343020488491904),
+            9: (39.480330934969174, -6.343118252109651),
+            10: (39.47996532127118, -6.344649882084023),
+            11: (39.48011893315282, -6.344228567462022),
+            12: (39.480092882041475, -6.344149425535433),
+            13: (39.480092882041475, -6.344149425535433)
+        }
+
         self.init_ui()
 
         self.cameras_widget_dict = {
@@ -63,13 +80,13 @@ class SpecificWorker(GenericWorker):
             7: [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
         }
 
-        self.is_sensor_active = { }
+        self.is_sensor_active = {}
 
         self.camera_timer_dict = {}
         self.camera_data_received = {}
 
         self.sensor_downtime = 1000
-        self.Period = 1000/24
+        self.Period = 1000 / 24
         if startup_check:
             self.startup_check()
         else:
@@ -146,6 +163,18 @@ class SpecificWorker(GenericWorker):
         #         self.camera_timer_dict[id].start(self.sensor_downtime)
         #         self.camera_data_received[id] = False
 
+    def compute_coord_distance(self, lat1, lon1, lat2, lon2):
+        R = 6373.0
+        lat1 = math.radians(lat1)
+        lon1 = math.radians(lon1)
+        lat2 = math.radians(lat2)
+        lon2 = math.radians(lon2)
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        distance = R * c
+        print(distance)
 
     def __del__(self):
         print('SpecificWorker destructor')
