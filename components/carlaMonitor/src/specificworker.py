@@ -190,20 +190,6 @@ class SpecificWorker(GenericWorker):
         cv2.imshow(window_name, array)
         cv2.waitKey(1)
 
-    def compute_coord_distance(self, cameraID, camera_pose):
-        R = 6373.0
-        lat1, lon1 = camera_pose
-        lat1 = math.radians(lat1)
-        lon1 = math.radians(lon1)
-        lat2 = math.radians(self.latitude)
-        lon2 = math.radians(self.longitude)
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        distance = R * c
-
-        self.cameras_GNSS_localization[cameraID][1] = distance
 
     def get_nearest_cameras(self):
         for cameraID, pose in self.cameras_GNSS_localization.items():
