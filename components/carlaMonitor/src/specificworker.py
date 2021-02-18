@@ -46,8 +46,8 @@ class SpecificWorker(GenericWorker):
 
         self.images_received = {}
 
-        self.latitude = 39.47978558137163
-        self.longitude = -6.3421153169747795
+        self.latitude = 0
+        self.longitude = 0
         self.altitude = 0
         self.gps_data_received = False
 
@@ -57,19 +57,20 @@ class SpecificWorker(GenericWorker):
         self.imu_data_received = False
 
         self.cameras_GNSS_localization = {
-            1: (39.47951795840331, -6.343213688035427),
-            2: (39.4794451943053, -6.3425991738366045),
-            3: (39.479349972033106, -6.341949744036231),
-            4: (39.47914156049626, -6.3412211722981695),
-            5: (39.4797560132987, -6.339405446028102),
-            6: (39.4797560132987, -6.339619710987503),
-            7: (39.48029769743266, -6.342937854949663),
-            8: (39.48029051094454, -6.343020488491904),
-            9: (39.480330934969174, -6.343118252109651),
-            10: (39.47996532127118, -6.344649882084023),
-            11: (39.48011893315282, -6.344228567462022),
-            12: (39.480092882041475, -6.344149425535433),
-            13: (39.480092882041475, -6.344149425535433)
+            # id : [(latitude, longitude), dist_to_car]
+            1: [(39.47951795840331, -6.343213688035427), 0],
+            2: [(39.4794451943053, -6.3425991738366045), 0],
+            3: [(39.479349972033106, -6.341949744036231), 0],
+            4: [(39.47914156049626, -6.3412211722981695), 0],
+            5: [(39.4797560132987, -6.339405446028102), 0],
+            6: [(39.4797560132987, -6.339619710987503), 0],
+            7: [(39.48029769743266, -6.342937854949663), 0],
+            8: [(39.48029051094454, -6.343020488491904), 0],
+            9: [(39.480330934969174, -6.343118252109651), 0],
+            10: [(39.47996532127118, -6.344649882084023), 0],
+            11: [(39.48011893315282, -6.344228567462022), 0],
+            12: [(39.480092882041475, -6.344149425535433), 0],
+            13: [(39.480092882041475, -6.34414942553543), 0]
         }
 
         self.init_ui()
@@ -146,7 +147,7 @@ class SpecificWorker(GenericWorker):
                     self.adminbridge_proxy.stopSensor(id)
                     self.is_sensor_active[id] = False
 
-    def admin_sensor_state_lights(self):
+    def admin_sensor_state_lights(self, nearest_camera_ids):
         if self.imu_data_received:
             self.main_widget.imu_state_light.turn_on()
             self.imu_timer.start(self.sensor_downtime)
@@ -157,24 +158,13 @@ class SpecificWorker(GenericWorker):
             self.gps_timer.start(self.sensor_downtime)
             self.gps_data_received = False
 
-        # for id, data_received in self.camera_data_received.items():
-        #     if data_received:
-        #         self.cameras_widget_dict[id][2].turn_on()
-        #         self.camera_timer_dict[id].start(self.sensor_downtime)
-        #         self.camera_data_received[id] = False
-
-    def compute_coord_distance(self, lat1, lon1, lat2, lon2):
-        R = 6373.0
-        lat1 = math.radians(lat1)
-        lon1 = math.radians(lon1)
-        lat2 = math.radians(lat2)
-        lon2 = math.radians(lon2)
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        distance = R * c
-        print(distance)
+        for id, data_received in self.camera_data_received.items():
+            if id not in nearest_camera_ids and id != 0:
+                continue
+            if data_received:
+                self.cameras_widget_dict[id][2].turn_on()
+                self.camera_timer_dict[id].start(self.sensor_downtime)
+                self.camera_data_received[id] = False
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -191,29 +181,70 @@ class SpecificWorker(GenericWorker):
         cv2.imshow(window_name, array)
         cv2.waitKey(1)
 
+    def compute_coord_distance(self, cameraID, camera_pose):
+        R = 6373.0
+        lat1, lon1 = camera_pose
+        lat1 = math.radians(lat1)
+        lon1 = math.radians(lon1)
+        lat2 = math.radians(self.latitude)
+        lon2 = math.radians(self.longitude)
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        distance = R * c
+
+        self.cameras_GNSS_localization[cameraID][1] = distance
+
+    def get_nearest_cameras(self):
+        for cameraID, pose in self.cameras_GNSS_localization.items():
+            self.compute_coord_distance(cameraID, pose[0])
+        cameras_sorted = sorted(self.cameras_GNSS_localization.items(), key=lambda x: x[1][1])
+
+        id1 = cameras_sorted[0][0]
+        id2 = cameras_sorted[1][0]
+        ids = [id1, id2]
+
+        self.cameras_widget_dict = {
+            0: [None, None, self.main_widget.ve_camera_state_light],
+            ids[0]: [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
+            ids[1]: [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
+        }
+
+        self.camera_timer_dict = {
+            0: self.ve_camera_timer,
+            ids[0]: self.camera1_timer,
+            ids[1]: self.camera2_timer,
+        }
+
+        return ids
+
     @QtCore.Slot()
     def compute(self):
         self.mutex.acquire()
 
-        self.admin_sensor_state_lights()
+        nearest_camera_ids = self.get_nearest_cameras()
+        self.admin_sensor_state_lights(nearest_camera_ids)
 
         for camera_ID, camera_data in self.images_received.items():
-            self.show_img_opencv(camera_data)
+            # self.show_img_opencv(camera_data)
+            if camera_ID not in nearest_camera_ids:
+                continue
 
-            # if camera_data is None:
-            #     continue
-            #
-            # if self.is_sensor_active[camera_ID]:
-            #     array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
-            #     array = np.reshape(array, (camera_data.height, camera_data.width, 4))
-            #     qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
-            #
-            # else:
-            #     qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
-            #     qImg.fill(qRgb(0, 0, 0))
-            #
-            # # self.cameras_widget_dict[camera_ID][0].setPixmap(QPixmap(qImg))
-            # # self.cameras_widget_dict[camera_ID][1].setText('Cámara ' + str(camera_ID))
+            if camera_data is None:
+                continue
+
+            if self.is_sensor_active[camera_ID]:
+                array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
+                array = np.reshape(array, (camera_data.height, camera_data.width, 4))
+                qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
+
+            else:
+                qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
+                qImg.fill(qRgb(0, 0, 0))
+
+            self.cameras_widget_dict[camera_ID][0].setPixmap(QPixmap(qImg))
+            self.cameras_widget_dict[camera_ID][1].setText('Cámara ' + str(camera_ID))
 
         self.mutex.release()
 
