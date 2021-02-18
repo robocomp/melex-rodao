@@ -30,6 +30,7 @@ from PySide2.QtGui import QImage
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
 from genericworker import *
+import yaml
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # sys.path.append('/opt/robocomp/lib')
@@ -56,22 +57,27 @@ class SpecificWorker(GenericWorker):
         self.compass = 0
         self.imu_data_received = False
 
-        self.cameras_GNSS_localization = {
-            # id : [(latitude, longitude), dist_to_car]
-            1: [(39.47951795840331, -6.343213688035427), 0],
-            2: [(39.4794451943053, -6.3425991738366045), 0],
-            3: [(39.479349972033106, -6.341949744036231), 0],
-            4: [(39.47914156049626, -6.3412211722981695), 0],
-            5: [(39.4797560132987, -6.339405446028102), 0],
-            6: [(39.4797560132987, -6.339619710987503), 0],
-            7: [(39.48029769743266, -6.342937854949663), 0],
-            8: [(39.48029051094454, -6.343020488491904), 0],
-            9: [(39.480330934969174, -6.343118252109651), 0],
-            10: [(39.47996532127118, -6.344649882084023), 0],
-            11: [(39.48011893315282, -6.344228567462022), 0],
-            12: [(39.480092882041475, -6.344149425535433), 0],
-            13: [(39.480092882041475, -6.34414942553543), 0]
-        }
+        yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
+        self.pose_cameras_dict = yaml.load(yaml_file)
+
+        self.car_cameras_dist = {}
+
+        # self.cameras_GNSS_localization = {
+        #     # id : [(latitude, longitude), dist_to_car]
+        #     1: [(39.47951795840331, -6.343213688035427), 0],
+        #     2: [(39.4794451943053, -6.3425991738366045), 0],
+        #     3: [(39.479349972033106, -6.341949744036231), 0],
+        #     4: [(39.47914156049626, -6.3412211722981695), 0],
+        #     5: [(39.4797560132987, -6.339405446028102), 0],
+        #     6: [(39.4797560132987, -6.339619710987503), 0],
+        #     7: [(39.48029769743266, -6.342937854949663), 0],
+        #     8: [(39.48029051094454, -6.343020488491904), 0],
+        #     9: [(39.480330934969174, -6.343118252109651), 0],
+        #     10: [(39.47996532127118, -6.344649882084023), 0],
+        #     11: [(39.48011893315282, -6.344228567462022), 0],
+        #     12: [(39.480092882041475, -6.344149425535433), 0],
+        #     13: [(39.480092882041475, -6.34414942553543), 0]
+        # }
 
         self.init_ui()
 
@@ -85,7 +91,8 @@ class SpecificWorker(GenericWorker):
             [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
             [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
         ]
-
+        # This relates the index of cameras widgets with
+        self.current_cams_ids = [-1] * len(self.cameras_widget_array)
         self.is_sensor_active = {}
         self.timers = {}
         self.camera_timer_dict = {}
@@ -160,9 +167,8 @@ class SpecificWorker(GenericWorker):
         #         self.camera_timer_dict[id].start(self.sensor_downtime)
         #         self.camera_data_received[id] = False
 
-    def compute_coord_distance(self, cameraID, camera_pose):
+    def compute_coord_distance(self, cameraID, lat1,lon1):
         R = 6373.0
-        lat1, lon1 = camera_pose
         lat1 = math.radians(lat1)
         lon1 = math.radians(lon1)
         lat2 = math.radians(self.latitude)
@@ -173,7 +179,8 @@ class SpecificWorker(GenericWorker):
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         distance = R * c
 
-        self.cameras_GNSS_localization[cameraID][1] = distance
+        self.car_cameras_dist[1] = distance
+        #self.cameras_GNSS_localization[cameraID][1] = distance
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -198,7 +205,7 @@ class SpecificWorker(GenericWorker):
         nearest_camera_ids = self.get_nearest_cameras()
         self.admin_sensor_state_lights(nearest_camera_ids)
 
-        for camera_widget, camera_label, _ in self.cameras_widget_array:
+        for index, (camera_widget, camera_label, _) in enumerate(self.cameras_widget_array):
             for cam_id in nearest_camera_ids:
                 if cam_id in self.images_received:
                     camera_data = self.images_received[cam_id]
@@ -213,6 +220,8 @@ class SpecificWorker(GenericWorker):
                     if cam_id not in self.current_cams_ids:
                         camera_widget.setPixmap(QPixmap(qImg))
                         camera_label.setText('Cámara ' + str(cam_id))
+                        self.current_cams_ids[cam_id] = index
+                        
 
         # for camera_ID, camera_data in self.images_received.items():
         #     # self.show_img_opencv(camera_data)
@@ -239,11 +248,13 @@ class SpecificWorker(GenericWorker):
         return True
 
     def get_nearest_cameras(self):
-        for cameraID, pose in self.cameras_GNSS_localization.items():
-            self.compute_coord_distance(cameraID, pose[0])
-        cameras_sorted = sorted(self.cameras_GNSS_localization.items(), key=lambda x: x[1][1])
-
-        ids = [x[0] for x in cameras_sorted]
+        for cameraID, pose in self.pose_cameras_dict.items():
+            latitude = pose['latitude']
+            self.compute_coord_distance(cameraID, pose['latitude'], pose['longitude'])
+        cameras_sorted = dict(sorted(self.car_cameras_dist.items(), key=lambda item: item[1]))
+        
+        #Revisar
+        ids = [x for x in cameras_sorted.keys()]
 
         return ids
 
