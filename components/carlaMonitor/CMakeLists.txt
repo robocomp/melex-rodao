@@ -1,8 +1,12 @@
-cmake_minimum_required(VERSION 2.6)
-PROJECT(  carlaMonitor )
+cmake_minimum_required(VERSION 3.10)
+PROJECT(  carlaMonitor
+        VERSION 2021.2.1
+		DESCRIPTION "RoboComp CarlaMonitor component"
+		LANGUAGES CXX
+		)
 
-SET(RC_COMPONENT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "component base path")
-SET(RC_COMPONENT_DEVEL_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "component binary path")
+# SET(RC_COMPONENT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "component base path")
+# SET(RC_COMPONENT_DEVEL_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "component binary path")
 ADD_SUBDIRECTORY( src )
 
 MACRO( WRAP_PYTHON_UI )
