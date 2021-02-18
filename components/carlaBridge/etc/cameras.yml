@@ -1,106 +1,160 @@
 # Civil
 1:
+  name: 'Civil'
   pitch: 0
   roll: 0
   x: -40.7
   y: 57
   yaw: -75
   z: 9.4
+  latitude: 39.47951795840331
+  longitude: -6.343213688035427
 
 # Arquitectura
 2:
+  name: 'Arquitectura'
   pitch: 0
   roll: 0
   x: 12.1
   y: 65.1
   yaw: -75
   z: 9.4
+  latitude: 39.4794451943053
+  longitude: -6.3425991738366045
+
 # Informatica
 3:
+  name: 'Informatica'
   pitch: 0
   roll: 0
   x: 67.9
   y: 75.7
   yaw: -75
   z: 9.4
+  latitude: 39.479349972033106
+  longitude: -6.341949744036231
+
 # Teleco
 4:
+  name: 'Teleco'
   pitch: 0
   roll: 0
   x: 130.5
   y: 98.9
   yaw: -75
   z: 9.4
-# Magisterio(derecha)
+  latitude:  39.47914156049626
+  longitude: -6.3412211722981695
+
+
+# Magisterioderecha)
 5:
+  name: 'Magisterio (derecha)'
   pitch: 0
   roll: 0
   x: 286.51
   y: 30.5
   yaw: 80
   z: 8.6
-# Magisterio(izquierda)
+  latitude:  39.4797560132987
+  longitude: -6.339405446028102
+
+
+# Magisterioizquierda)
 6:
+  name: 'Magisterio (izquierda)'
   pitch: 0
   roll: 0
   x: 268.1
   y: 30.5
   yaw: 150
   z: 8.6
-# VCentenario(Derecha)
+  latitude: 39.4797560132987
+  longitude: -6.339619710987503
+
+# VCentenarioDerecha)
 7:
+  name: 'VCentenario (Derecha)'
   pitch: 0
   roll: 0
   x: -17
   y: -29.8
   yaw: 45
   z: 7.6
-# VCentenario(Centro)
+  latitude: 39.48029769743266
+  longitude: -6.342937854949663
+
+# VCentenarioCentro)
 8:
+  name: 'VCentenario (Centro)'
   pitch: -20
   roll: 0
   x: -24.1
   y: -29
   yaw: 110
   z: 7.6
-# VCentenario(izq)
+  latitude: 39.48029051094454
+  longitude: -6.343020488491904
+
+# VCentenarioizq)
 9:
+  name: 'VCentenario (izq)'
   pitch: 0
   roll: 0
   x: -32.5
   y: -33.5
   yaw: 160
   z: 7.6
-# Investigación(izq)
+  latitude: 39.480330934969174
+  longitude: -6.343118252109651
+
+
+# Investigaciónizq)
 10:
+  name: 'Investigación (izq)'
   pitch: 0
   roll: 0
   x: -164.1
   y: 7.2
   yaw: 160
   z: 12.9
-# Investigación(rotonda)
+  latitude:  39.47996532127118
+  longitude: -6.344649882084023
+
+# Investigaciónrotonda)
 11:
+  name: 'Investigación (rotonda)'
   pitch: -15
   roll: 0
   x: -127.9
   y: -9.9
   yaw: -140
   z: 11.8
-# Investigación(paso de peatones)
+  latitude:  39.48011893315282
+  longitude: -6.344228567462022
+
+# Investigaciónpaso de peatones)
 12:
+  name: 'Investigación (paso de peatones)'
   pitch: -25
   roll: 0
   x: -121.1
   y: -7
   yaw: -90
   z: 11.8
-# Investigación(derecha)
+  latitude:  39.480092882041475
+  longitude: -6.344149425535433
+
+
+# Investigaciónderecha)
 13:
+  name: 'Investigación (derecha)'
   pitch: -15
   roll: 0
   x: -121.1
   y: -7
   yaw: -15
   z: 11.8
+  latitude: 39.480092882041475
+  longitude: -6.34414942553543
 
