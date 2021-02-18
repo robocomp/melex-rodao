@@ -57,31 +57,37 @@ class SpecificWorker(GenericWorker):
         self.imu_data_received = False
 
         self.cameras_GNSS_localization = {
-            1: (39.47951795840331, -6.343213688035427),
-            2: (39.4794451943053, -6.3425991738366045),
-            3: (39.479349972033106, -6.341949744036231),
-            4: (39.47914156049626, -6.3412211722981695),
-            5: (39.4797560132987, -6.339405446028102),
-            6: (39.4797560132987, -6.339619710987503),
-            7: (39.48029769743266, -6.342937854949663),
-            8: (39.48029051094454, -6.343020488491904),
-            9: (39.480330934969174, -6.343118252109651),
-            10: (39.47996532127118, -6.344649882084023),
-            11: (39.48011893315282, -6.344228567462022),
-            12: (39.480092882041475, -6.344149425535433),
-            13: (39.480092882041475, -6.344149425535433)
+            # id : [(latitude, longitude), dist_to_car]
+            1: [(39.47951795840331, -6.343213688035427), 0],
+            2: [(39.4794451943053, -6.3425991738366045), 0],
+            3: [(39.479349972033106, -6.341949744036231), 0],
+            4: [(39.47914156049626, -6.3412211722981695), 0],
+            5: [(39.4797560132987, -6.339405446028102), 0],
+            6: [(39.4797560132987, -6.339619710987503), 0],
+            7: [(39.48029769743266, -6.342937854949663), 0],
+            8: [(39.48029051094454, -6.343020488491904), 0],
+            9: [(39.480330934969174, -6.343118252109651), 0],
+            10: [(39.47996532127118, -6.344649882084023), 0],
+            11: [(39.48011893315282, -6.344228567462022), 0],
+            12: [(39.480092882041475, -6.344149425535433), 0],
+            13: [(39.480092882041475, -6.34414942553543), 0]
         }
 
         self.init_ui()
 
-        self.cameras_widget_dict = {
-            0: [None, None, self.main_widget.ve_camera_state_light],
-            5: [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
-            7: [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
-        }
+        # self.cameras_widget_dict = [
+        #     0: [None, None, self.main_widget.ve_camera_state_light],
+        #     5: [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
+        #     7: [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
+        # ]
+
+        self.cameras_widget_array = [
+            [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
+            [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
+        ]
 
         self.is_sensor_active = {}
-
+        self.timers = {}
         self.camera_timer_dict = {}
         self.camera_data_received = {}
 
@@ -96,34 +102,23 @@ class SpecificWorker(GenericWorker):
             self.timer.start(self.Period)
 
     def initialize_sensor_timers(self):
-        self.stimer = QTimer()
-        self.stimer.timeout.connect(lambda: self.main_widget.update_map_position((self.latitude, self.longitude)))
-        self.stimer.start(self.sensor_downtime)
-
-        self.imu_timer = QTimer()
-        self.imu_timer.timeout.connect(lambda: self.main_widget.imu_state_light.turn_off())
-        self.imu_timer.start(self.sensor_downtime)
-
-        self.gps_timer = QTimer()
-        self.gps_timer.timeout.connect(lambda: self.main_widget.gps_state_light.turn_off())
-        self.gps_timer.start(self.sensor_downtime)
-
-        self.camera1_timer = QTimer()
-        self.camera1_timer.timeout.connect(lambda: self.main_widget.state_light1.turn_off())
-        self.camera1_timer.start(self.sensor_downtime)
-
-        self.camera2_timer = QTimer()
-        self.camera2_timer.timeout.connect(lambda: self.main_widget.state_light2.turn_off())
-        self.camera2_timer.start(self.sensor_downtime)
-
-        self.ve_camera_timer = QTimer()
-        self.ve_camera_timer.timeout.connect(lambda: self.main_widget.ve_camera_state_light.turn_off())
-        self.ve_camera_timer.start(self.sensor_downtime)
+        timeout_lambdas = {
+            "stimer": lambda: self.main_widget.update_map_position((self.latitude, self.longitude)),
+            "imu_timer": lambda: self.main_widget.imu_state_light.turn_off(),
+            "gps_timer": lambda: self.main_widget.gps_state_light.turn_off(),
+            "camera1_timer": lambda: self.main_widget.state_light1.turn_off(),
+            "camera2_timer": lambda: self.main_widget.state_light2.turn_off(),
+            "ve_camera_timer": lambda: self.main_widget.ve_camera_state_light.turn_off(),
+        }
+        for timer_name, timer_lambda in timeout_lambdas.items():
+            self.timers[timer_name] = QTimer()
+            self.timers[timer_name].timeout.connect(timer_lambda)
+            self.timers[timer_name].start(self.sensor_downtime)
 
         self.camera_timer_dict = {
-            0: self.ve_camera_timer,
-            5: self.camera1_timer,
-            7: self.camera2_timer,
+            0: self.timers["ve_camera_timer"],
+            5: self.timers["camera1_timer"],
+            7: self.timers["camera2_timer"],
         }
 
     def init_ui(self):
@@ -163,18 +158,20 @@ class SpecificWorker(GenericWorker):
         #         self.camera_timer_dict[id].start(self.sensor_downtime)
         #         self.camera_data_received[id] = False
 
-    def compute_coord_distance(self, lat1, lon1, lat2, lon2):
+    def compute_coord_distance(self, cameraID, camera_pose):
         R = 6373.0
+        lat1, lon1 = camera_pose
         lat1 = math.radians(lat1)
         lon1 = math.radians(lon1)
-        lat2 = math.radians(lat2)
-        lon2 = math.radians(lon2)
+        lat2 = math.radians(self.latitude)
+        lon2 = math.radians(self.longitude)
         dlon = lon2 - lon1
         dlat = lat2 - lat1
         a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         distance = R * c
-        print(distance)
+
+        self.cameras_GNSS_localization[cameraID][1] = distance
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -197,6 +194,24 @@ class SpecificWorker(GenericWorker):
 
         self.admin_sensor_state_lights()
 
+        nearest_camera_ids = self.get_nearest_cameras()
+
+        for camera_widget,camera_label,_ in self.cameras_widget_array:
+            for cam_id in nearest_camera_ids:
+                if cam_id in self.images_received:
+                    camera_data = self.images_received[cam_id]
+                    if cam_id in self.is_sensor_active and self.is_sensor_active[cam_id]:
+                            array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
+                            array = np.reshape(array, (camera_data.height, camera_data.width, 4))
+                            qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
+                    else:
+                        qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
+                        qImg.fill(qRgb(0, 0, 0))
+
+                    if cam_id not in self.current_cams_ids:
+                        camera_widget.setPixmap(QPixmap(qImg))
+                        camera_label.setText('Cámara ' + str(cam_id))
+
         for camera_ID, camera_data in self.images_received.items():
             self.show_img_opencv(camera_data)
 
@@ -218,6 +233,15 @@ class SpecificWorker(GenericWorker):
         self.mutex.release()
 
         return True
+
+    def get_nearest_cameras(self):
+        for cameraID, pose in self.cameras_GNSS_localization.items():
+            self.compute_coord_distance(cameraID, pose[0])
+        cameras_sorted = sorted(self.cameras_GNSS_localization.items(), key=lambda x: x[1][1])
+
+        ids = [x[0] for x in cameras_sorted]
+
+        return ids
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
