@@ -5,10 +5,8 @@ from threading import Lock
 
 import RoboCompCameraRGBDSimple
 import carla
-import cv2
-import numpy as np
-import pygame
 from carla import ColorConverter as cc
+import yaml
 
 mutex = Lock()
 
@@ -21,13 +19,14 @@ class CameraManager(object):
     def __init__(self, bp_library, parent_actor, camerargbdsimplepub_proxy):
         self.surface = None
         self.contFPS = 0
+        self.countGNSS = 0
         self.start = time.time()
         self.sensor_width = 1280
         self.sensor_height = 720
-        # self.sensor_width_low = 480
-        # self.sensor_height_low = 360
-        self.sensor_width_low = 360
-        self.sensor_height_low = 280
+        self.sensor_width_low = 480
+        self.sensor_height_low = 360
+        # self.sensor_width_low = 360
+        # self.sensor_height_low = 280
         self._parent = parent_actor
         self.blueprint_library = bp_library
         self.camerargbdsimplepub_proxy = camerargbdsimplepub_proxy
@@ -43,6 +42,8 @@ class CameraManager(object):
         ###############
         ##CAR SENSORS##
         ###############
+
+
         cam_bp = self.blueprint_library.find('sensor.camera.rgb')
         cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
         cam_bp.set_attribute('image_size_y', f'{self.sensor_height}')
@@ -62,6 +63,7 @@ class CameraManager(object):
         # ###################
         # # STREET SENSORS ##
         # ###################
+
         cam_bp_low = self.blueprint_library.find('sensor.camera.rgb')
         cam_bp_low.set_attribute('image_size_x', f'{self.sensor_width_low}')
         cam_bp_low.set_attribute('image_size_y', f'{self.sensor_height_low}')
@@ -69,48 +71,13 @@ class CameraManager(object):
         cam_bp_low.set_attribute('sensor_tick', '0.2')
 
         parent = None
-        # Civil
-        spawn_point_c1 = carla.Transform(carla.Location(x=-40.70, y=57, z=9.4), carla.Rotation(yaw=-75))
-        self.sensor_attrs[1] = [spawn_point_c1, parent, cam_bp_low, cc.Raw]
+        yaml_file = open("/etc/cameras.yml")
+        pose_cameras = yaml.load(yaml_file)
 
-        # Arquitectura
-        spawn_point_c2 = carla.Transform(carla.Location(x=12.10, y=65.10, z=9.4), carla.Rotation(yaw=-75))
-        self.sensor_attrs[2] = [spawn_point_c2, parent, cam_bp_low, cc.Raw]
-
-        # Informatica
-        spawn_point_c3 = carla.Transform(carla.Location(x=67.90, y=75.70, z=9.4), carla.Rotation(yaw=-75))
-        self.sensor_attrs[3] = [spawn_point_c3, parent, cam_bp_low, cc.Raw]
-        # Teleco
-        spawn_point_c4 = carla.Transform(carla.Location(x=130.50, y=98.90, z=9.4), carla.Rotation(yaw=-75))
-        self.sensor_attrs[4] = [spawn_point_c4, parent, cam_bp_low, cc.Raw]
-        # Magisterio(derecha)
-        spawn_point_c5 = carla.Transform(carla.Location(x=286.510, y=30.50, z=8.60), carla.Rotation(yaw=80))
-        self.sensor_attrs[5] = [spawn_point_c5, parent, cam_bp_low, cc.Raw]
-        # Magisterio(izquierda)
-        spawn_point_c6 = carla.Transform(carla.Location(x=268.10, y=30.50, z=8.60), carla.Rotation(yaw=150))
-        self.sensor_attrs[6] = [spawn_point_c6, parent, cam_bp_low, cc.Raw]
-        # VCentenario(Derecha)
-        spawn_point_c7 = carla.Transform(carla.Location(x=-17, y=-29.80, z=7.60), carla.Rotation(yaw=45))
-        self.sensor_attrs[7] = [spawn_point_c7, parent, cam_bp_low, cc.Raw]
-        # VCentenario(Centro)
-        spawn_point_c8 = carla.Transform(carla.Location(x=-24.10, y=-29, z=7.60), carla.Rotation(yaw=110, pitch=-20))
-        self.sensor_attrs[8] = [spawn_point_c8, parent, cam_bp_low, cc.Raw]
-        # VCentenario(izq)
-        spawn_point_c9 = carla.Transform(carla.Location(x=-32.50, y=-33.50, z=7.60), carla.Rotation(yaw=160))
-        self.sensor_attrs[9] = [spawn_point_c9, parent, cam_bp_low, cc.Raw]
-        # Investigación(izq)
-        spawn_point_c10 = carla.Transform(carla.Location(x=-164.10, y=7.2, z=12.90), carla.Rotation(yaw=160))
-        self.sensor_attrs[10] = [spawn_point_c10, parent, cam_bp_low, cc.Raw]
-        # Investigación(rotonda)
-        spawn_point_c11 = carla.Transform(carla.Location(x=-127.90, y=-9.90, z=11.80),
-                                          carla.Rotation(yaw=-140, pitch=-15))
-        self.sensor_attrs[11] = [spawn_point_c11, parent, cam_bp_low, cc.Raw]
-        # Investigación(paso de peatones)
-        spawn_point_c12 = carla.Transform(carla.Location(x=-121.10, y=-7, z=11.80), carla.Rotation(yaw=-90, pitch=-25))
-        self.sensor_attrs[12] = [spawn_point_c12, parent, cam_bp_low, cc.Raw]
-        # Investigación(derecha)
-        spawn_point_c13 = carla.Transform(carla.Location(x=-121.10, y=-7, z=11.80), carla.Rotation(yaw=-15, pitch=-15))
-        self.sensor_attrs[13] = [spawn_point_c13, parent, cam_bp_low, cc.Raw]
+        for camera_id, pose in pose_cameras.items():
+            spawn_point = carla.Transform(carla.Location(x=pose['x'], y=pose['y'], z=pose['z']),
+                                          carla.Rotation(yaw=pose['yaw'], pitch=pose['pitch'], roll=pose['roll']))
+            self.sensor_attrs[camera_id] = [spawn_point, parent, cam_bp_low, cc.Raw]
 
         # Spawn sensors
         for s in self.sensor_attrs.keys():
@@ -136,6 +103,7 @@ class CameraManager(object):
         self.sensorID_dict[sensorID] = None
         print(f'Sensor {sensorID} deleted {deleted}')
         return True
+
 
     @staticmethod
     def sensor_callback(weak_self, img, sensorID):

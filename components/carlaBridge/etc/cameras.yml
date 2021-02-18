@@ -1,0 +1,106 @@
+# Civil
+1:
+  pitch: 0
+  roll: 0
+  x: -40.7
+  y: 57
+  yaw: -75
+  z: 9.4
+
+# Arquitectura
+2:
+  pitch: 0
+  roll: 0
+  x: 12.1
+  y: 65.1
+  yaw: -75
+  z: 9.4
+# Informatica
+3:
+  pitch: 0
+  roll: 0
+  x: 67.9
+  y: 75.7
+  yaw: -75
+  z: 9.4
+# Teleco
+4:
+  pitch: 0
+  roll: 0
+  x: 130.5
+  y: 98.9
+  yaw: -75
+  z: 9.4
+# Magisterio(derecha)
+5:
+  pitch: 0
+  roll: 0
+  x: 286.51
+  y: 30.5
+  yaw: 80
+  z: 8.6
+# Magisterio(izquierda)
+6:
+  pitch: 0
+  roll: 0
+  x: 268.1
+  y: 30.5
+  yaw: 150
+  z: 8.6
+# VCentenario(Derecha)
+7:
+  pitch: 0
+  roll: 0
+  x: -17
+  y: -29.8
+  yaw: 45
+  z: 7.6
+# VCentenario(Centro)
+8:
+  pitch: -20
+  roll: 0
+  x: -24.1
+  y: -29
+  yaw: 110
+  z: 7.6
+# VCentenario(izq)
+9:
+  pitch: 0
+  roll: 0
+  x: -32.5
+  y: -33.5
+  yaw: 160
+  z: 7.6
+# Investigación(izq)
+10:
+  pitch: 0
+  roll: 0
+  x: -164.1
+  y: 7.2
+  yaw: 160
+  z: 12.9
+# Investigación(rotonda)
+11:
+  pitch: -15
+  roll: 0
+  x: -127.9
+  y: -9.9
+  yaw: -140
+  z: 11.8
+# Investigación(paso de peatones)
+12:
+  pitch: -25
+  roll: 0
+  x: -121.1
+  y: -7
+  yaw: -90
+  z: 11.8
+# Investigación(derecha)
+13:
+  pitch: -15
+  roll: 0
+  x: -121.1
+  y: -7
+  yaw: -15
+  z: 11.8
+
