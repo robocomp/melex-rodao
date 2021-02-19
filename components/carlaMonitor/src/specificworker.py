@@ -62,37 +62,14 @@ class SpecificWorker(GenericWorker):
 
         self.car_cameras_dist = {}
 
-        # self.cameras_GNSS_localization = {
-        #     # id : [(latitude, longitude), dist_to_car]
-        #     1: [(39.47951795840331, -6.343213688035427), 0],
-        #     2: [(39.4794451943053, -6.3425991738366045), 0],
-        #     3: [(39.479349972033106, -6.341949744036231), 0],
-        #     4: [(39.47914156049626, -6.3412211722981695), 0],
-        #     5: [(39.4797560132987, -6.339405446028102), 0],
-        #     6: [(39.4797560132987, -6.339619710987503), 0],
-        #     7: [(39.48029769743266, -6.342937854949663), 0],
-        #     8: [(39.48029051094454, -6.343020488491904), 0],
-        #     9: [(39.480330934969174, -6.343118252109651), 0],
-        #     10: [(39.47996532127118, -6.344649882084023), 0],
-        #     11: [(39.48011893315282, -6.344228567462022), 0],
-        #     12: [(39.480092882041475, -6.344149425535433), 0],
-        #     13: [(39.480092882041475, -6.34414942553543), 0]
-        # }
-
         self.init_ui()
 
-        # self.cameras_widget_dict = [
-        #     0: [None, None, self.main_widget.ve_camera_state_light],
-        #     5: [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
-        #     7: [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
-        # ]
-
-        self.cameras_widget_array = [
-            [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
-            [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
-        ]
+        self.cameras_widget_dict = {
+            'widget1': [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
+            'widget2': [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
+        }
         # This relates the index of cameras widgets with
-        self.current_cams_ids = [-1] * len(self.cameras_widget_array)
+        self.current_cams_ids = dict.fromkeys(self.cameras_widget_dict.keys())
         self.is_sensor_active = {}
         self.timers = {}
         self.camera_timer_dict = {}
@@ -122,6 +99,7 @@ class SpecificWorker(GenericWorker):
             self.timers[timer_name].timeout.connect(timer_lambda)
             self.timers[timer_name].start(self.sensor_downtime)
 
+        # TODO asignar de forma dinámica
         self.camera_timer_dict = {
             0: self.timers["ve_camera_timer"],
             5: self.timers["camera1_timer"],
@@ -167,7 +145,7 @@ class SpecificWorker(GenericWorker):
         #         self.camera_timer_dict[id].start(self.sensor_downtime)
         #         self.camera_data_received[id] = False
 
-    def compute_coord_distance(self, cameraID, lat1,lon1):
+    def compute_coord_distance(self, cameraID, lat1, lon1):
         R = 6373.0
         lat1 = math.radians(lat1)
         lon1 = math.radians(lon1)
@@ -179,8 +157,7 @@ class SpecificWorker(GenericWorker):
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         distance = R * c
 
-        self.car_cameras_dist[1] = distance
-        #self.cameras_GNSS_localization[cameraID][1] = distance
+        self.car_cameras_dist[cameraID] = distance
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -197,7 +174,6 @@ class SpecificWorker(GenericWorker):
         cv2.imshow(window_name, array)
         cv2.waitKey(1)
 
-
     @QtCore.Slot()
     def compute(self):
         self.mutex.acquire()
@@ -205,55 +181,48 @@ class SpecificWorker(GenericWorker):
         nearest_camera_ids = self.get_nearest_cameras()
         self.admin_sensor_state_lights(nearest_camera_ids)
 
-        for index, (camera_widget, camera_label, _) in enumerate(self.cameras_widget_array):
+        for widget_name, (camera_widget, camera_label, _) in sorted(self.cameras_widget_dict.items()):
             for cam_id in nearest_camera_ids:
                 if cam_id in self.images_received:
-                    camera_data = self.images_received[cam_id]
-                    if cam_id in self.is_sensor_active and self.is_sensor_active[cam_id]:
-                        array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
-                        array = np.reshape(array, (camera_data.height, camera_data.width, 4))
-                        qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
+
+                    if cam_id not in self.current_cams_ids.values():
+                        self.current_cams_ids[widget_name] = cam_id
+                        self.update_widgets(cam_id, camera_widget, camera_label)
+                        break
+
+                    elif self.current_cams_ids[widget_name] == cam_id:
+                        self.update_widgets(cam_id, camera_widget, camera_label)
+                        break
+
                     else:
-                        qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
-                        qImg.fill(qRgb(0, 0, 0))
+                        continue
 
-                    if cam_id not in self.current_cams_ids:
-                        camera_widget.setPixmap(QPixmap(qImg))
-                        camera_label.setText('Cámara ' + str(cam_id))
-                        self.current_cams_ids[cam_id] = index
-                        
-
-        # for camera_ID, camera_data in self.images_received.items():
-        #     # self.show_img_opencv(camera_data)
-        #     if camera_ID not in nearest_camera_ids:
-        #         continue
-        #
-        #     if camera_data is None:
-        #         continue
-        #
-        #     if self.is_sensor_active[camera_ID]:
-        #         array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
-        #         array = np.reshape(array, (camera_data.height, camera_data.width, 4))
-        #         qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
-        #
-        #     else:
-        #         qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
-        #         qImg.fill(qRgb(0, 0, 0))
-        #
-        #     self.cameras_widget_dict[camera_ID][0].setPixmap(QPixmap(qImg))
-        #     self.cameras_widget_dict[camera_ID][1].setText('Cámara ' + str(camera_ID))
 
         self.mutex.release()
 
         return True
+
+    def update_widgets(self, cam_id, camera_widget, camera_label):
+        camera_data = self.images_received[cam_id]
+
+        array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (camera_data.height, camera_data.width, 4))
+        qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
+        # else:
+        #     qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
+        #     qImg.fill(qRgb(0, 0, 0))
+
+        camera_widget.setPixmap(QPixmap(qImg))
+        camera_label.setText(self.pose_cameras_dict[cam_id]['name'])
+        # camera_label.setText('camera ' + str(cam_id))
 
     def get_nearest_cameras(self):
         for cameraID, pose in self.pose_cameras_dict.items():
             latitude = pose['latitude']
             self.compute_coord_distance(cameraID, pose['latitude'], pose['longitude'])
         cameras_sorted = dict(sorted(self.car_cameras_dist.items(), key=lambda item: item[1]))
-        
-        #Revisar
+
+        # Revisar
         ids = [x for x in cameras_sorted.keys()]
 
         return ids
