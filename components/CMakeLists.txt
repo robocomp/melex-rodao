@@ -19,5 +19,5 @@ ENDIF(NOT EXISTS $ENV{ROBOCOMP}/cmake)
 # INCLUDE( $ENV{ROBOCOMP}/cmake/modules/qt.cmake )
 # 
 
-# add_subdirectory(carlaBridge)
-# add_subdirectory(carlaMonitor)
+add_subdirectory(carlaBridge)
+add_subdirectory(carlaMonitor)

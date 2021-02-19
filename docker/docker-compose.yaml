@@ -1,0 +1,40 @@
+version: '3'
+services:
+    carla-server:
+        runtime: nvidia
+        #network_mode: host
+        image: carlasim/carla:0.9.11
+        entrypoint: ./CarlaUE4.sh -carla-world-port=2000 -ResX=800 -ResY=600 -nosound -windowed
+
+        environment: 
+            - SDL_VIDEODRIVER=offscreen 
+            - SDL_HINT_CUDA_DEVICE=0 
+            - NVIDIA_VISIBLE_DEVICES=0
+        volumes:
+            - /tmp/.X11-unix:/tmp/.X11-unix
+            #- /home/robolab/CARLA_0.9.11-dirty/CarlaUE4/Content:/home/carla/CarlaUE4/Content
+        ports:
+            - 2000-2002:2000-2002
+
+    carlaBridge:
+        #network_mode: host
+        image: robocomp/robocomp:focal-melex
+        entrypoint: sh -c "cd carlaBridge && cmake . && make && (./src/carlaBridge.py)"
+        environment: 
+            - DISPLAY=$DISPLAY
+        volumes:
+            - /tmp/.X11-unix:/tmp/.X11-unix
+            - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
+        user: robolab
+        depends_on:
+            - rcnode
+            - carla-server
+
+    rcnode:
+        #network_mode: host
+        image: robocomp/robocomp:focal_dsr
+        entrypoint: sh -c "rcnode"
+        ports:
+            - 9999:9999
+            - 9998:9998
+            

@@ -1,7 +1,6 @@
 from PySide2 import  QtCore, QtUiTools
 
-from src.widgets.lightwidget import LightState
-
+from .lightwidget import LightState
 
 class CustomUiLoader(QtUiTools.QUiLoader):
     _baseinstance = None

@@ -5,8 +5,8 @@ project ( melex_rodaor
         LANGUAGES CXX
 		)
 		
-# add_subdirectory(components)		
+add_subdirectory(components)		
 install(DIRECTORY interfaces/IDSLs/
             DESTINATION /opt/robocomp/interfaces/IDSLs/
-            FILES_MATCHING PATTERN "*.ice"
+            FILES_MATCHING PATTERN "*.idsl"
             )

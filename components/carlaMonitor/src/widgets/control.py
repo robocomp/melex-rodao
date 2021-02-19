@@ -1,7 +1,7 @@
 from PySide2.QtGui import QPixmap
 
-from src.widgets.lightwidget import LightState
-from src.widgets.mapviewer.mapviewer import MapViewer
+from .lightwidget import LightState
+from .mapviewer.mapviewer import MapViewer
 from .uiloader import CustomUiLoader
 from PySide2.QtWidgets import QWidget
 

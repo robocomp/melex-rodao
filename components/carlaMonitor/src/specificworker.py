@@ -37,7 +37,7 @@ import yaml
 # import librobocomp_qmat
 # import librobocomp_osgviewer
 # import librobocomp_innermodel
-from src.widgets.control import ControlWidget
+from widgets.control import ControlWidget
 
 
 class SpecificWorker(GenericWorker):
