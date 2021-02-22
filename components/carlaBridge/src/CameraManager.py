@@ -23,10 +23,11 @@ class CameraManager(object):
         self.start = time.time()
         self.sensor_width = 1280
         self.sensor_height = 720
-        self.sensor_width_low = 480
-        self.sensor_height_low = 360
-        # self.sensor_width_low = 360
-        # self.sensor_height_low = 280
+        self.sensor_width_low = 640
+        self.sensor_height_low = 480
+        # self.sensor_width_low = 800
+        # self.sensor_height_low = 600
+
         self._parent = parent_actor
         self.blueprint_library = bp_library
         self.camerargbdsimplepub_proxy = camerargbdsimplepub_proxy
@@ -35,6 +36,11 @@ class CameraManager(object):
         self.sensorID_dict = {}
 
         self.cm_queue = SimpleQueue()
+
+        num_cams = 13
+        self.is_sensor_active = {}
+        for n in range(num_cams):
+            self.is_sensor_active[n] = False
 
         self.world = self._parent.get_world()
         self.weak_self = weakref.ref(self)
@@ -47,9 +53,11 @@ class CameraManager(object):
         cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
         cam_bp.set_attribute('image_size_y', f'{self.sensor_height}')
         cam_bp.set_attribute('fov', '110')
-        cam_bp.set_attribute('sensor_tick', str(1 / 30))
+        # cam_bp.set_attribute('sensor_tick', str(1 / 30))
         spawn_point_car = carla.Transform(carla.Location(x=0.0, y=-0.25, z=1.0))  # Carrito de golf
-        self.sensor_attrs[0] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
+        sensor_id = 0
+        self.sensor_attrs[sensor_id] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
+        self.create_sensor(sensor_id)
 
         # depth_bp = self.blueprint_library.find('sensor.camera.depth')
         # cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
@@ -77,19 +85,22 @@ class CameraManager(object):
                                           carla.Rotation(yaw=pose['yaw'], pitch=pose['pitch'], roll=pose['roll']))
             self.sensor_attrs[camera_id] = [spawn_point, parent, cam_bp_low, cc.Raw]
 
-        # Spawn sensors
-        for s in self.sensor_attrs.keys():
-            self.create_sensor(s)
+        # # Spawn sensors
+        # for s in self.sensor_attrs.keys():
+        #     self.create_sensor(s)
 
     def create_sensor(self, sensorID):
-        print('Creating sensor')
+        print('Creating sensor ',sensorID)
         created = False
         spawn_point_car, parent_actor, cam_bp, _ = self.sensor_attrs[sensorID]
         sensor = self.world.try_spawn_actor(cam_bp, spawn_point_car, attach_to=parent_actor)
         if sensor is not None:
             created = True
+
         sensor.listen(lambda data: self.sensor_callback(self.weak_self, data, sensorID))
         self.sensorID_dict[sensorID] = sensor
+        self.is_sensor_active[sensorID] = True
+
         return created
 
     def delete_sensor(self, sensorID):
@@ -98,7 +109,8 @@ class CameraManager(object):
             return False
         sensor.stop()
         deleted = sensor.destroy()
-        self.sensorID_dict[sensorID] = None
+        self.is_sensor_active[sensorID] = False
+
         print(f'Sensor {sensorID} deleted {deleted}')
         return True
 

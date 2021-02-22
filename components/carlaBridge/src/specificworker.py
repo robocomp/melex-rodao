@@ -50,11 +50,13 @@ from CameraManager import CameraManager
 client = carla.Client('localhost', 2000)
 print('Client version ', client.get_client_version())
 print('Server version ', client.get_server_version())
-client.set_timeout(30.0)
+client.set_timeout(10.0)
+init_time = time.time()
 print('Loading world...')
 world = client.load_world('CampusV4')
 # world = client.get_world()
 print('Done')
+print(f'Loading world took {round(time.time() - init_time)} seconds')
 
 carla_map = world.get_map()
 blueprint_library = world.get_blueprint_library()
@@ -89,6 +91,8 @@ class SpecificWorker(GenericWorker):
         self.camera_manager = None
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
+
+
 
         self.server_fps = 0
         self._server_clock = pygame.time.Clock()
@@ -127,8 +131,8 @@ class SpecificWorker(GenericWorker):
             spawn_points = self.carla_map.get_spawn_points()
             spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
             self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
-
-            # spawn_point = carla.Transform(carla.Location(x=-131.50, y=-28.76))
+            #
+            # spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774))
             # self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         # Set up the sensors.
@@ -202,18 +206,18 @@ class SpecificWorker(GenericWorker):
     # IMPLEMENTATION of activateSensor method from AdminBridge interface
     #
     def AdminBridge_activateSensor(self, IDSensor):
-        print('AdminBridge_activateSensor')
-        ret = self.camera_manager.create_sensor(IDSensor)
-        return ret
+        if not self.camera_manager.is_sensor_active[IDSensor] :
+            ret = self.camera_manager.create_sensor(IDSensor)
+            return ret
 
     #
     # IMPLEMENTATION of stopSensor method from AdminBridge interface
     #
     def AdminBridge_stopSensor(self, IDSensor):
-        print('AdminBridge_stopSensor')
-        ret = self.camera_manager.delete_sensor(IDSensor)
-        print('Returning ', ret)
-        return True
+        if self.camera_manager.is_sensor_active[IDSensor]:
+            ret = self.camera_manager.delete_sensor(IDSensor)
+            print('Returning ', ret)
+            return True
     # ===================================================================
     # ===================================================================
 

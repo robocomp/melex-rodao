@@ -66,7 +66,11 @@ class SpecificWorker(GenericWorker):
         # This relates the index of cameras widgets with
         self.current_cams_ids = dict.fromkeys(self.cameras_widget_dict.keys())
         self.current_cams_ids['vehicle'] = 0
+        num_cams = 13
         self.is_sensor_active = {}
+        for n in range(num_cams):
+            self.is_sensor_active[n] = False
+
         self.timers = {}
         self.camera_timer_dict = {}
         self.camera_data_received = {}
@@ -108,7 +112,7 @@ class SpecificWorker(GenericWorker):
         self.main_widget.camera2_switch.stateChanged.connect(self.change_camera_state)
         self.main_widget.update_map_position((self.latitude, self.longitude))
 
-    #TODO ¿Hay que pasar por aqui cada vez que se cambie automáticamente de cámara?
+    # TODO ¿Hay que pasar por aqui cada vez que se cambie automáticamente de cámara?
     def change_camera_state(self):
         for widget_name, (_, switch, _) in self.cameras_widget_dict.items():
             if switch is None:
@@ -135,11 +139,10 @@ class SpecificWorker(GenericWorker):
             self.gps_data_received = False
 
         for widget, camID in self.current_cams_ids.items():
-            if self.camera_data_received[camID]:
+            if camID in self.camera_data_received.keys() and self.camera_data_received[camID]:
                 self.cameras_widget_dict[widget][2].turn_on()
                 self.camera_timer_dict[widget].start(self.sensor_downtime)
                 self.camera_data_received[camID] = False
-
 
     def compute_coord_distance(self, cameraID, lat1, lon1):
         R = 6373.0
@@ -175,13 +178,13 @@ class SpecificWorker(GenericWorker):
         self.mutex.acquire()
 
         nearest_camera_ids = self.get_nearest_cameras()
+        self.admin_cameras(nearest_camera_ids)
 
         for widget_name, (camera_widget, camera_label, _) in sorted(self.cameras_widget_dict.items()):
             if camera_widget is None:
                 continue
             for cam_id in nearest_camera_ids:
                 if cam_id in self.images_received:
-
                     if cam_id not in self.current_cams_ids.values():
                         self.current_cams_ids[widget_name] = cam_id
                         self.update_widgets(cam_id, camera_widget, camera_label)
@@ -202,7 +205,7 @@ class SpecificWorker(GenericWorker):
     def update_widgets(self, cam_id, camera_widget, camera_label):
         camera_data = self.images_received[cam_id]
 
-        if self.is_sensor_active[cam_id]:
+        if cam_id in self.is_sensor_active.keys() and self.is_sensor_active[cam_id]:
             array = np.frombuffer(camera_data.image, dtype=np.dtype("uint8"))
             array = np.reshape(array, (camera_data.height, camera_data.width, 4))
             qImg = QImage(array, array.shape[1], array.shape[0], array.strides[0], QImage.Format_ARGB32)
@@ -222,6 +225,17 @@ class SpecificWorker(GenericWorker):
 
         return ids
 
+    def admin_cameras(self, nearest_camera_ids):
+        for camID in nearest_camera_ids[:2]:
+            if not self.is_sensor_active[camID]:
+                self.adminbridge_proxy.activateSensor(camID)
+                self.is_sensor_active[camID] = True
+
+        for camID in nearest_camera_ids[2:]:
+            if self.is_sensor_active[camID]:
+                self.is_sensor_active[camID] = False
+                self.adminbridge_proxy.stopSensor(camID)
+
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
@@ -234,7 +248,7 @@ class SpecificWorker(GenericWorker):
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
         self.mutex.acquire()
 
-        self.is_sensor_active[im.cameraID] = True
+        # self.is_sensor_active[im.cameraID] = True
         self.camera_data_received[im.cameraID] = True
 
         if im.cameraID != 0:
