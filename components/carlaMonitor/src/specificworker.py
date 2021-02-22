@@ -134,14 +134,12 @@ class SpecificWorker(GenericWorker):
             self.timers['gps_timer'].start(self.sensor_downtime)
             self.gps_data_received = False
 
-        for camID, data_received in self.camera_data_received.items():
-            if camID not in self.current_cams_ids.values() and camID != 0:
-                continue
-            if data_received:
-                widget = list(self.current_cams_ids.keys())[list(self.current_cams_ids.values()).index(camID)]
+        for widget, camID in self.current_cams_ids.items():
+            if self.camera_data_received[camID]:
                 self.cameras_widget_dict[widget][2].turn_on()
                 self.camera_timer_dict[widget].start(self.sensor_downtime)
                 self.camera_data_received[camID] = False
+
 
     def compute_coord_distance(self, cameraID, lat1, lon1):
         R = 6373.0
