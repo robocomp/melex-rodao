@@ -47,7 +47,7 @@ class CameraManager(object):
         cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
         cam_bp.set_attribute('image_size_y', f'{self.sensor_height}')
         cam_bp.set_attribute('fov', '110')
-        cam_bp.set_attribute('sensor_tick', str(1/30))
+        cam_bp.set_attribute('sensor_tick', str(1 / 30))
         spawn_point_car = carla.Transform(carla.Location(x=0.0, y=-0.25, z=1.0))  # Carrito de golf
         self.sensor_attrs[0] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
 
@@ -59,9 +59,9 @@ class CameraManager(object):
         #         self.sensor_attrs'[2] = [spawn_point_car, parent_actor, depth_bp, cc.Depth]
         #         self.sensor_attrs'[3] = [spawn_point_car, parent_actor, depth_bp, cc.LogarithmicDepth]
 
-        # ###################
-        # # STREET SENSORS ##
-        # ###################
+        ####################
+        ## STREET SENSORS ##
+        ####################
         cam_bp_low = self.blueprint_library.find('sensor.camera.rgb')
         cam_bp_low.set_attribute('image_size_x', f'{self.sensor_width_low}')
         cam_bp_low.set_attribute('image_size_y', f'{self.sensor_height_low}')
@@ -69,7 +69,7 @@ class CameraManager(object):
         cam_bp_low.set_attribute('sensor_tick', '0.2')
 
         parent = None
-        yaml_file = open('etc/cameras.yml')
+        yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
         pose_cameras = yaml.load(yaml_file)
 
         for camera_id, pose in pose_cameras.items():
@@ -101,7 +101,6 @@ class CameraManager(object):
         self.sensorID_dict[sensorID] = None
         print(f'Sensor {sensorID} deleted {deleted}')
         return True
-
 
     @staticmethod
     def sensor_callback(weak_self, img, sensorID):
