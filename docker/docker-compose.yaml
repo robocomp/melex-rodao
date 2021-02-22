@@ -12,24 +12,24 @@ services:
             - NVIDIA_VISIBLE_DEVICES=0
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
-        ports:
-            - 2000-2002:2000-2002
+            - /home/robolab/CARLA_0.9.11-dirty/CarlaUE4/Content:/home/carla/CarlaUE4/Content
+        expose:
+            - 2000-2002
 
     carlaBridge:
         image: robocomp/robocomp:focal-melex
-        entrypoint: sh -c "echo $PATH && cd carlaBridge && cmake . && make && (./src/carlaBridge.py)" #nc -vz carla-server 2000 #
+        entrypoint:  bash #sh -c "echo $PATH && cd carlaBridge && cmake . && make && (./src/carlaBridge.py)" #nc -vz carla-server 2000 #
         environment: 
             - DISPLAY=$DISPLAY
             - PATH=$PATH
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
             - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
+            - ./etc/carlaBridge/:/home/robolab/robocomp/components/melex-rodao/components/carlaBridge/etc/
         depends_on:
             - rcnode
             - carla-server
-
     rcnode:
-        network_mode: host
         image: robocomp/robocomp:focal_dsr
         entrypoint: sh -c "rcnode"
         ports:
