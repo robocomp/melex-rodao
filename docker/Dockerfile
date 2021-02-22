@@ -14,7 +14,9 @@ RUN sudo apt update && sudo apt install -y libopencv-dev python3-opencv python3-
 WORKDIR components
 RUN git clone https://github.com/robocomp/melex-rodao.git
 RUN cd melex-rodao && git fetch && git checkout SplitComponent && git pull
-RUN cd melex-rodao && mkdir build && cd build && cmake .. && make && sudo make install
+ENV PATH $PATH:/opt/robocomp/bin/
+RUN cd melex-rodao && mkdir build && cd build && cmake .. && sudo PATH=$PATH make install
+COPY --from=carlasim/carla:0.9.11 /home/carla/PythonAPI /home/robolab/CARLA_0.9.11-dirty/PythonAPI
 WORKDIR melex-rodao/components/
 
 # compile
