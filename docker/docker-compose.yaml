@@ -3,10 +3,12 @@ services:
     carla-server:
         runtime: nvidia
         image: carlasim/carla:0.9.11
-        entrypoint: ./CarlaUE4.sh -carla-world-port=2000 -ResX=800 -ResY=600 -nosound -windowed
-        environment: 
-            - SDL_VIDEODRIVER=offscreen 
-            - SDL_HINT_CUDA_DEVICE=0 
+#        entrypoint: ./CarlaUE4.sh -carla-world-port=2000 -ResX=800 -ResY=600 -nosound -windowed
+#        entrypoint: sh -c "chmod +x ./CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping.debug && ./CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping CarlaUE4 " #-carla-world-port=2000 -ResX=800 -ResY=600    -windowed
+        entrypoint: bash ./CarlaUE4.sh -carla-world-port=2000 -ResX=800 -ResY=600 -nosound -windowed
+        environment:
+            - SDL_VIDEODRIVER=offscreen
+            - SDL_HINT_CUDA_DEVICE=0
             - NVIDIA_VISIBLE_DEVICES=0
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
@@ -15,14 +17,13 @@ services:
 
     carlaBridge:
         image: robocomp/robocomp:focal-melex
-        entrypoint: sh -c "echo $PATH && cd carlaBridge && cmake . && make && (./src/carlaBridge.py)"
+        entrypoint: sh -c "echo $PATH && cd carlaBridge && cmake . && make && (./src/carlaBridge.py)" #nc -vz carla-server 2000 #
         environment: 
             - DISPLAY=$DISPLAY
             - PATH=$PATH
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
             - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
-            - ~/software/carla/PythonAPI/carla/dist/:/home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/
         depends_on:
             - rcnode
             - carla-server
