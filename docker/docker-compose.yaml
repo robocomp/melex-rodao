@@ -12,7 +12,6 @@ services:
             - NVIDIA_VISIBLE_DEVICES=0
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
-#            - /home/robolab/CARLA_0.9.11-dirty/CarlaUE4/Content:/home/carla/CarlaUE4/Content
         expose:
             - 2000-2002
 
@@ -39,7 +38,7 @@ services:
     carlaMonitor:
       image: robocomp/robocomp:focal-melex
       runtime: nvidia
-      entrypoint: sh -c "sleep 10 && echo $PATH && cd carlaMonitor && cmake . && make && (./src/carlaMonitor.py etc/config)" #nc -vz carla-server 2000 #
+      entrypoint: sh -c "sleep 12 && echo $PATH && cd carlaMonitor && cmake . && make && (./src/carlaMonitor.py etc/config)" #nc -vz carla-server 2000 #
       restart: always
       environment:
         - DISPLAY=$DISPLAY
