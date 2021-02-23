@@ -19,25 +19,33 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 import math
-import random
 import time
 from threading import Lock
-from PySide2.QtGui import QPixmap, qRgb
+
 import cv2
 import numpy as np
-from PySide2.QtGui import QImage
-
-from PySide2.QtCore import QTimer
-from PySide2.QtWidgets import QApplication
-from genericworker import *
 import yaml
+from PySide2.QtCore import QTimer
+from PySide2.QtGui import QImage
+from PySide2.QtGui import QPixmap, qRgb
+from PySide2.QtWidgets import QApplication
+from PySide2.QtCore import Signal
+
+from SaveResults import SaveResults
+from genericworker import *
 from widgets.control import ControlWidget
 
 
 class SpecificWorker(GenericWorker):
+    save_signal = Signal(str, object)
+
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.mutex = Lock()
+
+        self.results = SaveResults()
+
+        self.save_signal.connect(self.results.save_data)
 
         self.images_received = {}
 
@@ -267,6 +275,8 @@ class SpecificWorker(GenericWorker):
 
         self.mutex.release()
 
+        self.save_signal.emit('gnss', [time.time(), self.latitude, self.longitude, self.altitude])
+
     #
     # SUBSCRIPTION to updateSensorIMU method from CarlaSensors interface
     #
@@ -279,6 +289,7 @@ class SpecificWorker(GenericWorker):
         self.imu_data_received = True
 
         self.mutex.release()
+        self.save_signal.emit('imu', [time.time(), self.accelerometer, self.gyroscope, self.compass])
 
     # ===================================================================
     # ===================================================================
