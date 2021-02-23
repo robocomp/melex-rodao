@@ -21,13 +21,14 @@
 import time
 import traceback
 
-from PySide2.QtCore import QTimer
+from PySide2.QtCore import QTimer, Signal
 from PySide2.QtWidgets import QApplication
 from genericworker import *
 from multiprocessing import SimpleQueue
 import numpy as np
 import cv2
 import pygame
+from SaveResults import SaveResults
 
 from SensorManager import CameraManager, GNSSSensor, IMUSensor
 from DualControl import DualControl
@@ -41,8 +42,11 @@ from HUD import HUD
 # import librobocomp_innermodel
 
 class SpecificWorker(GenericWorker):
+    save_signal = Signal(str, object)
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
+        self.results = SaveResults()
+        self.save_signal.connect(self.results.save_data)
         self.Period = 0
         self.contFPS = 0
         self.start = time.time()
@@ -92,6 +96,9 @@ class SpecificWorker(GenericWorker):
             exit(-1)
 
         control = self.controller.publish_vehicle_control()
+        self.save_signal.emit('control', [time.time(), control.throttle, control.steer, control.brake, control.gear,
+                                          control.handbrake, control.reverse, control.manualgear])
+
         self.hud.tick(self, self.clock, control)
         self.camera_manager.render(self.display)
         self.hud.render(self.display)

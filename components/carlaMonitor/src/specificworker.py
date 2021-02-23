@@ -44,7 +44,6 @@ class SpecificWorker(GenericWorker):
         self.mutex = Lock()
 
         self.results = SaveResults()
-
         self.save_signal.connect(self.results.save_data)
 
         self.images_received = {}
