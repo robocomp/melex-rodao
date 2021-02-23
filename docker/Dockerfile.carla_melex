@@ -4,5 +4,7 @@ RUN apt update && apt install -y curl
 USER carla
 RUN curl -L http://cloudiepcc.unex.es/index.php/s/m2wkfoTtc4aT9So/download --output /home/carla/Import/map.tar.gz
 RUN cd /home/carla/ && sh ImportAssets.sh
-COPY CarlaMelexCar.tar.gz /home/carla/
-RUN tar -xvzf CarlaMelex.tar.gz
+RUN rm /home/carla/Import/map.tar.gz
+RUN curl -L  http://cloudiepcc.unex.es/index.php/s/f5HzNsLFQNSQ5pa/download --output  /home/carla/CarlaMelexCar.tar.gz
+RUN tar -xvzf CarlaMelexCar.tar.gz
+RUN rm /home/carla/CarlaMelexCar.tar.gz
