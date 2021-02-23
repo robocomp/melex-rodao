@@ -1,0 +1,6 @@
+FROM  carlasim/carla:0.9.11
+USER root
+RUN apt update && apt install -y curl
+USER carla
+RUN curl -L http://cloudiepcc.unex.es/index.php/s/m2wkfoTtc4aT9So/download --output /home/carla/Import/map.tar.gz
+RUN cd /home/carla/ && sh ImportAssets.sh

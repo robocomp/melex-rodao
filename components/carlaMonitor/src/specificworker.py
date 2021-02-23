@@ -51,7 +51,7 @@ class SpecificWorker(GenericWorker):
         self.compass = 0
         self.imu_data_received = False
 
-        yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
+        yaml_file = open('/home/robolab/robocomp/components/melex-rodao/etc/cameras.yml')
         self.pose_cameras_dict = yaml.load(yaml_file)
 
         self.car_cameras_dist = {}

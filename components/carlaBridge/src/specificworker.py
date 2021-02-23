@@ -117,6 +117,10 @@ class SpecificWorker(GenericWorker):
         # car_blueprints = self.blueprint_library.filter('vehicle.*')
         # for car in car_blueprints:
         #     print(car)
+        try:
+            blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
+        except:
+            blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
         blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
         # blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
         # Spawn the player.
@@ -149,6 +153,8 @@ class SpecificWorker(GenericWorker):
     def on_world_tick(self, timestamp):
         self._server_clock.tick()
         self.server_fps = self._server_clock.get_fps()
+        if self.server_fps in [float("-inf"), float("inf")]:
+            self.server_fps = -1
         print('Server FPS', int(self.server_fps))
 
     def next_weather(self, reverse=False):
