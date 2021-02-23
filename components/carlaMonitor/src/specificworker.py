@@ -61,7 +61,7 @@ class SpecificWorker(GenericWorker):
         self.cameras_widget_dict = {
             'widget1': [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
             'widget2': [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
-            'vehicle': [None, None, self.main_widget.ve_camera_state_light],
+
         }
         # This relates the index of cameras widgets with
         self.current_cams_ids = dict.fromkeys(self.cameras_widget_dict.keys())
@@ -100,7 +100,6 @@ class SpecificWorker(GenericWorker):
             self.timers[timer_name].start(self.sensor_downtime)
 
         self.camera_timer_dict = {
-            'vehicle': self.timers["ve_camera_timer"],
             'widget1': self.timers["camera1_timer"],
             'widget2': self.timers["camera2_timer"],
         }
@@ -115,8 +114,6 @@ class SpecificWorker(GenericWorker):
     # TODO ¿Hay que pasar por aqui cada vez que se cambie automáticamente de cámara?
     def change_camera_state(self):
         for widget_name, (_, switch, _) in self.cameras_widget_dict.items():
-            if switch is None:
-                continue
             camID = self.current_cams_ids[widget_name]
             if switch.isChecked():
                 if not self.is_sensor_active[camID]:
@@ -140,8 +137,12 @@ class SpecificWorker(GenericWorker):
 
         for widget, camID in self.current_cams_ids.items():
             if camID in self.camera_data_received.keys() and self.camera_data_received[camID]:
-                self.cameras_widget_dict[widget][2].turn_on()
-                self.camera_timer_dict[widget].start(self.sensor_downtime)
+                if camID == 0:
+                    self.main_widget.ve_camera_state_light.turn_on()
+                    self.timers['ve_camera_timer'].start(self.sensor_downtime)
+                else:
+                    self.cameras_widget_dict[widget][2].turn_on()
+                    self.camera_timer_dict[widget].start(self.sensor_downtime)
                 self.camera_data_received[camID] = False
 
     def compute_coord_distance(self, cameraID, lat1, lon1):
@@ -181,8 +182,6 @@ class SpecificWorker(GenericWorker):
         self.admin_cameras(nearest_camera_ids)
 
         for widget_name, (camera_widget, camera_label, _) in sorted(self.cameras_widget_dict.items()):
-            if camera_widget is None:
-                continue
             for cam_id in nearest_camera_ids:
                 if cam_id in self.images_received:
                     if cam_id not in self.current_cams_ids.values():
