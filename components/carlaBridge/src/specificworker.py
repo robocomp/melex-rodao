@@ -26,16 +26,17 @@ from queue import Empty
 
 import cv2
 import pygame
-from PySide2.QtCore import QTimer
+from PySide2.QtCore import QTimer, Signal
 from PySide2.QtWidgets import QApplication
 from genericworker import *
 from numpy import random
 import re
 import random
 import time
+from SaveResults import SaveResults
 
 try:
-    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -75,10 +76,13 @@ def get_actor_display_name(actor, truncate=250):
 
 
 class SpecificWorker(GenericWorker):
+    save_signal = Signal(str, object)
+
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         global world, carla_map, blueprint_library
-
+        self.results = SaveResults()
+        self.save_signal.connect(self.results.save_data)
         self.Period = 0
         self.world = world
         self.carla_map = carla_map
@@ -156,6 +160,7 @@ class SpecificWorker(GenericWorker):
         if self.server_fps in [float("-inf"), float("inf")]:
             self.server_fps = -1
         print('Server FPS', int(self.server_fps))
+        self.save_signal.emit('fps', [time.time(), int(self.server_fps)])
 
     def next_weather(self, reverse=False):
         self._weather_index += -1 if reverse else 1
@@ -212,7 +217,7 @@ class SpecificWorker(GenericWorker):
     # IMPLEMENTATION of activateSensor method from AdminBridge interface
     #
     def AdminBridge_activateSensor(self, IDSensor):
-        if not self.camera_manager.is_sensor_active[IDSensor] :
+        if not self.camera_manager.is_sensor_active[IDSensor]:
             ret = self.camera_manager.create_sensor(IDSensor)
             return ret
 

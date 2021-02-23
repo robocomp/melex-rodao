@@ -2,6 +2,7 @@ import pygame
 import math
 import sys
 import time
+from PySide2.QtCore import Signal
 
 if sys.version_info >= (3, 0):
     from configparser import ConfigParser
@@ -54,8 +55,11 @@ import RoboCompCarlaVehicleControl
 
 
 class DualControl(object):
+
+
     def __init__(self, camera_manager, hud, proxy):
-    # def __init__(self, camera_manager, proxy):
+        # def __init__(self, camera_manager, proxy):
+
         self.carlavehiclecontrol_proxy = proxy
         self.camera_manager = camera_manager
         self.hud = hud
@@ -174,7 +178,6 @@ class DualControl(object):
             if self._control_hand_brake:
                 self._control_throttle = 0
 
-
     def publish_vehicle_control(self):
         control = RoboCompCarlaVehicleControl.VehicleControl()
         control.throttle = self._control_throttle
@@ -185,12 +188,12 @@ class DualControl(object):
         control.reverse = self._control_reverse
         control.manualgear = self._control_manual_gear_shift
 
-
         try:
             self.carlavehiclecontrol_proxy.updateVehicleControl(control)
 
         except Exception as e:
             print(e)
+
 
         return control
 
@@ -239,7 +242,6 @@ class DualControl(object):
         self._control_steer = steerCmd
         self._control_brake = brakeCmd
         self._control_throttle = throttleCmd
-
 
     @staticmethod
     def _is_quit_shortcut(key):
