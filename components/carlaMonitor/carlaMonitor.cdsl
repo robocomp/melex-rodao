@@ -1,12 +1,14 @@
 import "CameraRGBDSimplePub.idsl";
 import "AdminBridge.idsl";
 import "CarlaSensors.idsl";
+import "MelexLogger.idsl";
 
 Component carlaMonitor
 {
     Communications
     {
 	requires AdminBridge;
+	publishes MelexLogger;
         subscribesTo CameraRGBDSimplePub, CarlaSensors; 
     };
 
