@@ -1,8 +1,8 @@
 from PySide2.QtGui import QPixmap, QKeySequence
 
-from lightwidget import LightState
-from mapviewer.mapviewer import MapViewer
-from uiloader import CustomUiLoader
+from widgets.lightwidget import LightState
+from widgets.mapviewer.mapviewer import MapViewer
+from widgets.uiloader import CustomUiLoader
 from PySide2.QtWidgets import QWidget, QShortcut
 
 import pathlib
