@@ -1,12 +1,8 @@
 from PySide2 import  QtCore, QtUiTools
 
-from .lightwidget import LightState
 
 class CustomUiLoader(QtUiTools.QUiLoader):
     _baseinstance = None
-    def __init__(self):
-        super(CustomUiLoader, self).__init__()
-        self.registerCustomWidget(LightState)
 
     def createWidget(self, classname, parent=None, name=''):
         if parent is None and self._baseinstance is not None:
