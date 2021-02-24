@@ -139,6 +139,25 @@ if __name__ == '__main__':
         print('Cannot get AdminBridgeProxy property.')
         status = 1
 
+
+    # Create a proxy to publish a MelexLogger topic
+    topic = False
+    try:
+        topic = topicManager.retrieve("MelexLogger")
+    except:
+        pass
+    while not topic:
+        try:
+            topic = topicManager.retrieve("MelexLogger")
+        except IceStorm.NoSuchTopic:
+            try:
+                topic = topicManager.create("MelexLogger")
+            except:
+                print('Another client created the MelexLogger topic? ...')
+    pub = topic.getPublisher().ice_oneway()
+    melexloggerTopic = RoboCompMelexLogger.MelexLoggerPrx.uncheckedCast(pub)
+    mprx["MelexLoggerPub"] = melexloggerTopic
+
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)
