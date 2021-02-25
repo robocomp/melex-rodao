@@ -28,7 +28,7 @@ from multiprocessing import SimpleQueue
 import numpy as np
 import cv2
 import pygame
-from SaveResults import SaveResults
+from Logger import Logger
 
 from SensorManager import CameraManager, GNSSSensor, IMUSensor
 from DualControl import DualControl
@@ -42,11 +42,11 @@ from HUD import HUD
 # import librobocomp_innermodel
 
 class SpecificWorker(GenericWorker):
-    save_signal = Signal(str, object)
+    logger_signal = Signal(str, str, str)
+
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
-        self.results = SaveResults()
-        self.save_signal.connect(self.results.save_data)
+
         self.Period = 0
         self.contFPS = 0
         self.start = time.time()
@@ -69,6 +69,12 @@ class SpecificWorker(GenericWorker):
         self.controller = DualControl(self.camera_manager, self.hud,
                                       self.carlavehiclecontrol_proxy)
         self.clock = pygame.time.Clock()
+
+        data_to_save = {
+            'control': ['Time', 'Throttle', 'Steer', 'Brake', 'Gear', 'Handbrake', 'Reverse', 'Manualgear']
+        }
+        self.logger = Logger(self.melexlogger_proxy, 'carlaRemoteControl', data_to_save)
+        self.logger_signal.connect(self.logger.publish_to_logger)
 
         if startup_check:
             self.startup_check()
@@ -96,8 +102,11 @@ class SpecificWorker(GenericWorker):
             exit(-1)
 
         control = self.controller.publish_vehicle_control()
-        self.save_signal.emit('control', [time.time(), control.throttle, control.steer, control.brake, control.gear,
-                                          control.handbrake, control.reverse, control.manualgear])
+        control_array = [control.throttle, control.steer, control.brake, control.gear, control.handbrake,
+                         control.reverse,
+                         control.manualgear]
+        data = ';'.join(map(str, control_array))
+        self.logger_signal.emit('control', 'compute', data)
 
         self.hud.tick(self, self.clock, control)
         self.camera_manager.render(self.display)
@@ -138,6 +147,7 @@ class SpecificWorker(GenericWorker):
 
     # ===================================================================
     # ===================================================================
+
     ######################
     # From the RoboCompCarlaVehicleControl you can publish calling this methods:
     # self.carlavehiclecontrol_proxy.updateVehicleControl(...)
@@ -145,3 +155,18 @@ class SpecificWorker(GenericWorker):
     ######################
     # From the RoboCompCarlaVehicleControl you can use this types:
     # RoboCompCarlaVehicleControl.VehicleControl
+
+    ######################
+    # From the RoboCompMelexLogger you can publish calling this methods:
+    # self.melexlogger_proxy.createNamespace(...)
+    # self.melexlogger_proxy.sendMessage(...)
+
+    ######################
+    # From the RoboCompMelexLogger you can use this types:
+    # RoboCompMelexLogger.LogMessage
+    # RoboCompMelexLogger.LogNamespace
+
+    ######################
+    # From the RoboCompCarlaSensors you can use this types:
+    # RoboCompCarlaSensors.IMU
+    # RoboCompCarlaSensors.GNSS

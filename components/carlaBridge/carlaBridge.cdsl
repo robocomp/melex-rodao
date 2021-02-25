@@ -2,13 +2,14 @@ import "CameraRGBDSimplePub.idsl";
 import "CarlaVehicleControl.idsl";
 import "CarlaSensors.idsl";
 import "AdminBridge.idsl";
+import "MelexLogger.idsl";
 
 Component carlaBridge
 {
     Communications
     {
 	implements AdminBridge;
-	publishes CameraRGBDSimplePub, CarlaSensors;
+	publishes CameraRGBDSimplePub, CarlaSensors, MelexLogger;
 	subscribesTo CarlaVehicleControl;
     };
     language python;

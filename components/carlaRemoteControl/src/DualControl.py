@@ -56,7 +56,6 @@ import RoboCompCarlaVehicleControl
 
 class DualControl(object):
 
-
     def __init__(self, camera_manager, hud, proxy):
         # def __init__(self, camera_manager, proxy):
 
@@ -193,7 +192,6 @@ class DualControl(object):
 
         except Exception as e:
             print(e)
-
 
         return control
 

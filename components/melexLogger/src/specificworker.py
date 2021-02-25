@@ -19,6 +19,7 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 import csv
+import json
 from datetime import datetime
 
 from PySide2.QtCore import QTimer, Signal
@@ -33,12 +34,12 @@ from genericworker import *
 # import librobocomp_innermodel
 
 class SpecificWorker(GenericWorker):
-    save_signal = Signal(str, object)
+    save_signal = Signal(object)
 
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.headers_dict = {}
-        self.save_signal.connect(self.save_data)
+        self.save_signal.connect(self.save_data_to_csv)
 
         # Create directory to store the results
         results_directory = '/home/robocomp/robocomp/components/melex-rodao/files/results'
@@ -56,21 +57,20 @@ class SpecificWorker(GenericWorker):
         else:
             self.timer.start(self.Period)
 
-    def save_data(self, namespace, data_list):
-
-        file_name = namespace + '.csv'
+    def save_data_to_csv(self, m):
+        sender_namespace = m.sender + '_' + m.namespace
+        file_name = sender_namespace + '.csv'
         file_dir = os.path.join(self.directory, file_name)
 
         if not os.path.isfile(file_dir):
-            if namespace in self.headers_dict.keys():
+            if sender_namespace in self.headers_dict.keys():
                 with open(file_dir, 'w') as csvFile:
                     writer = csv.writer(csvFile, delimiter=';')
                     writer.writerow(
-                        self.headers_dict[namespace])
+                        self.headers_dict[sender_namespace])
                 csvFile.close()
         with open(file_dir, 'a') as csvFile:
-            writer = csv.writer(csvFile, delimiter=';')
-            writer.writerow(data_list)
+            csvFile.write(m.timeStamp + ';' + m.message +'\n')
         csvFile.close()
 
     def __del__(self):
@@ -102,10 +102,7 @@ class SpecificWorker(GenericWorker):
     # SUBSCRIPTION to sendMessage method from MelexLogger interface
     #
     def MelexLogger_sendMessage(self, m):
-        filename = m.sender + '_' + m.namespace
-        data = m.message.split(';')
-        data.insert(0, m.timeStamp)
-        self.save_signal.emit(filename, data)
+        self.save_signal.emit(m)
 
     # ===================================================================
     # ===================================================================

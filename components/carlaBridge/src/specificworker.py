@@ -33,7 +33,6 @@ from numpy import random
 import re
 import random
 import time
-from SaveResults import SaveResults
 
 try:
     sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
@@ -47,6 +46,7 @@ import carla
 from IMU import IMUSensor
 from GNSS import GnssSensor
 from CameraManager import CameraManager
+from Logger import Logger
 
 client = carla.Client('localhost', 2000)
 print('Client version ', client.get_client_version())
@@ -76,13 +76,12 @@ def get_actor_display_name(actor, truncate=250):
 
 
 class SpecificWorker(GenericWorker):
-    save_signal = Signal(str, object)
+    logger_signal = Signal(str, str, str)
 
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         global world, carla_map, blueprint_library
-        self.results = SaveResults()
-        self.save_signal.connect(self.results.save_data)
+
         self.Period = 0
         self.world = world
         self.carla_map = carla_map
@@ -97,9 +96,16 @@ class SpecificWorker(GenericWorker):
         self._weather_index = 0
 
 
-
         self.server_fps = 0
         self._server_clock = pygame.time.Clock()
+
+        data_to_save = {
+            'fps': ['Time', 'FPS']
+        }
+        self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
+        self.logger_signal.connect(self.logger.publish_to_logger)
+
+
         self.restart()
 
         if startup_check:
@@ -107,6 +113,7 @@ class SpecificWorker(GenericWorker):
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -136,12 +143,12 @@ class SpecificWorker(GenericWorker):
             self.destroy()
             self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
         while self.vehicle is None:
-            spawn_points = self.carla_map.get_spawn_points()
-            spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
-            self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+            # spawn_points = self.carla_map.get_spawn_points()
+            # spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+            # self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
             #
-            # spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774))
-            # self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
+            spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774, z=2))
+            self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         # Set up the sensors.
         # self.collision_sensor = CollisionSensor(self.player, self.hud)
@@ -160,7 +167,8 @@ class SpecificWorker(GenericWorker):
         if self.server_fps in [float("-inf"), float("inf")]:
             self.server_fps = -1
         print('Server FPS', int(self.server_fps))
-        self.save_signal.emit('fps', [time.time(), int(self.server_fps)])
+
+        self.logger_signal.emit('fps', 'on_world_tick', str(int(self.server_fps)))
 
     def next_weather(self, reverse=False):
         self._weather_index += -1 if reverse else 1
@@ -186,6 +194,7 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
+        # print(f'Camaras activas { sum(self.camera_manager.is_sensor_active.values())}')
         return True
 
     def startup_check(self):
@@ -227,10 +236,12 @@ class SpecificWorker(GenericWorker):
     def AdminBridge_stopSensor(self, IDSensor):
         if self.camera_manager.is_sensor_active[IDSensor]:
             ret = self.camera_manager.delete_sensor(IDSensor)
+            ret = self.camera_manager.delete_sensor(IDSensor)
             print('Returning ', ret)
             return True
     # ===================================================================
     # ===================================================================
+
 
     ######################
     # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
@@ -245,6 +256,16 @@ class SpecificWorker(GenericWorker):
     # From the RoboCompCarlaSensors you can use this types:
     # RoboCompCarlaSensors.IMU
     # RoboCompCarlaSensors.GNSS
+
+    ######################
+    # From the RoboCompMelexLogger you can publish calling this methods:
+    # self.melexlogger_proxy.createNamespace(...)
+    # self.melexlogger_proxy.sendMessage(...)
+
+    ######################
+    # From the RoboCompMelexLogger you can use this types:
+    # RoboCompMelexLogger.LogMessage
+    # RoboCompMelexLogger.LogNamespace
 
     ######################
     # From the RoboCompCarlaVehicleControl you can use this types:

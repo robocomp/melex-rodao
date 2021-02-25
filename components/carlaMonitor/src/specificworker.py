@@ -29,22 +29,18 @@ from PySide2.QtCore import QTimer
 from PySide2.QtGui import QImage
 from PySide2.QtGui import QPixmap, qRgb
 from PySide2.QtWidgets import QApplication
-from PySide2.QtCore import Signal
 
-from SaveResults import SaveResults
 from genericworker import *
 from widgets.control import ControlWidget
+from Logger import Logger
 
 
 class SpecificWorker(GenericWorker):
-    logger_signal = Signal(str, str, object)
+    logger_signal = Signal(str, str, str)
 
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.mutex = Lock()
-
-        self.init_logger()
-
         self.images_received = {}
 
         self.latitude = 0
@@ -81,6 +77,14 @@ class SpecificWorker(GenericWorker):
         self.camera_timer_dict = {}
         self.camera_data_received = {}
 
+        data_to_save = {
+            'gnss': ['Time', 'Latitude', 'Longitude', 'Altitude'],
+            'imu': ['Time', 'AccelerometerX', 'AccelerometerY', 'AccelerometerZ',
+                    'GyroscopeX', 'GyroscopeY', 'GyroscopeZ', 'Compass']
+        }
+        self.logger = Logger(self.melexlogger_proxy, 'carlaMonitor', data_to_save)
+        self.logger_signal.connect(self.logger.publish_to_logger)
+
         self.sensor_downtime = 1000
         self.Period = 1000 / 24
         if startup_check:
@@ -90,21 +94,6 @@ class SpecificWorker(GenericWorker):
 
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
-
-    def init_logger(self):
-        self.logger_signal.connect(self.publish_to_logger)
-
-        dict_headers = {
-            'gnss': ['Time', 'Latitude', 'Longitude', 'Altitude'],
-            'imu': ['Time', 'Accelerometer', 'Gyroscope', 'Compass']
-        }
-
-        for namespace, headers in dict_headers.items():
-            loggerns = RoboCompMelexLogger.LogNamespace()
-            loggerns.sender = 'carlaMonitor'
-            loggerns.namespace = namespace
-            loggerns.headers = headers
-            self.melexlogger_proxy.createNamespace(loggerns)
 
     def initialize_sensor_timers(self):
         timeout_lambdas = {
@@ -259,19 +248,6 @@ class SpecificWorker(GenericWorker):
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
-    def publish_to_logger(self, namespace, method, data):
-        message = RoboCompMelexLogger.LogMessage()
-        message.sender = 'carlaMonitor'
-        message.namespace = namespace
-        message.method = method
-        message.file = 'specificworker.py'
-        message.line = 0
-        message.timeStamp = str(time.time())
-        message.message = data
-        message.type = 'info'
-        message.fullpath = ''
-        self.melexlogger_proxy.sendMessage(message)
-
     # =============== Methods for Component SubscribesTo ================
     # ===================================================================
 
@@ -301,7 +277,7 @@ class SpecificWorker(GenericWorker):
 
         self.mutex.release()
 
-        data = str(self.latitude) + ';' + str(self.longitude) + ';' + str(self.altitude)
+        data = ';'.join(map(str, [self.latitude, self.longitude, self.altitude]))
         self.logger_signal.emit('gnss', 'CarlaSensors_updateSensorGNSS', data)
 
     #
@@ -316,13 +292,14 @@ class SpecificWorker(GenericWorker):
         self.imu_data_received = True
 
         self.mutex.release()
-        data = str(self.accelerometer) + ';' + str(self.gyroscope) + ';' + str(self.compass)
+        # data = str(self.accelerometer) + ';' + str(self.gyroscope) + ';' + str(self.compass)
+        # data = ";".join((self.accelerometer,self.gyroscope,self.compass))
+        data = ';'.join(map(str, [';'.join(map(str, self.accelerometer)), ';'.join(map(str, self.gyroscope)), self.compass]))
+
         self.logger_signal.emit('imu', 'CarlaSensors_updateSensorIMU', data)
 
     # ===================================================================
     # ===================================================================
-
-
 
     ######################
     # From the RoboCompAdminBridge you can call this methods:
@@ -343,4 +320,3 @@ class SpecificWorker(GenericWorker):
     # From the RoboCompCarlaSensors you can use this types:
     # RoboCompCarlaSensors.IMU
     # RoboCompCarlaSensors.GNSS
-

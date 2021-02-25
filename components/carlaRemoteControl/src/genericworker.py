@@ -39,6 +39,8 @@ Ice.loadSlice("-I ./src/ --all ./src/CarlaSensors.ice")
 import RoboCompCarlaSensors
 Ice.loadSlice("-I ./src/ --all ./src/CarlaVehicleControl.ice")
 import RoboCompCarlaVehicleControl
+Ice.loadSlice("-I ./src/ --all ./src/MelexLogger.ice")
+import RoboCompMelexLogger
 
 class ImgType(list):
     def __init__(self, iterable=list()):
@@ -97,6 +99,25 @@ class CarlaXYZ(list):
 
 setattr(RoboCompCarlaSensors, "CarlaXYZ", CarlaXYZ)
 
+class seqstring(list):
+    def __init__(self, iterable=list()):
+        super(seqstring, self).__init__(iterable)
+
+    def append(self, item):
+        assert isinstance(item, str)
+        super(seqstring, self).append(item)
+
+    def extend(self, iterable):
+        for item in iterable:
+            assert isinstance(item, str)
+        super(seqstring, self).extend(iterable)
+
+    def insert(self, index, item):
+        assert isinstance(item, str)
+        super(seqstring, self).insert(index, item)
+
+setattr(RoboCompMelexLogger, "seqstring", seqstring)
+
 
 import camerargbdsimplepubI
 import carlasensorsI
@@ -112,6 +133,7 @@ class GenericWorker(QtCore.QObject):
         super(GenericWorker, self).__init__()
 
         self.carlavehiclecontrol_proxy = mprx["CarlaVehicleControlPub"]
+        self.melexlogger_proxy = mprx["MelexLoggerPub"]
 
         self.mutex = QtCore.QMutex(QtCore.QMutex.Recursive)
         self.Period = 30

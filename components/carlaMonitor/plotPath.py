@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import pandas as pd
@@ -7,9 +8,12 @@ from geopandas import GeoDataFrame
 import matplotlib.pyplot as plt
 import yaml
 import matplotlib
+
 matplotlib.use('TkAgg')
 
-df = pd.read_csv('/home/robocomp/robocomp/components/melex-rodao/files/results/test_210223_1804/gnss.csv',
+dir = '/home/robocomp/robocomp/components/melex-rodao/files/results/test_210225_1253'
+
+df = pd.read_csv(os.path.join(dir, 'carlaMonitor_gnss.csv'),
                  delimiter=';', skiprows=0, low_memory=False)
 
 geometry = [Point(xy) for xy in zip(df['Longitude'], df['Latitude'])]
@@ -40,9 +44,10 @@ gdf2 = GeoDataFrame(df2, geometry=geometry2)
 gdf2.plot(ax=ax1, marker='o', color='y', markersize=15);
 
 plt.figure()
-df3 = pd.read_csv('/home/robocomp/robocomp/components/melex-rodao/files/results/test_210223_1804/fps.csv',
-                 delimiter=';', skiprows=0, low_memory=False)
+df3 = pd.read_csv(os.path.join(dir, 'carlaBridge_fps.csv'),
+                  delimiter=';', skiprows=0, low_memory=False)
 
+df3 = df3[df3['FPS'] != 0]  # Remove columns with FPS 0 --- bridge not working yet
 df3['Time'] = df3['Time'].apply(lambda x: datetime.fromtimestamp(x))
 plt.plot(df3['Time'], df3['FPS'], c='purple')
 plt.xlabel("Tiempo ")
