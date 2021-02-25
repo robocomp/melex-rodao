@@ -132,7 +132,7 @@ class GenericWorker(QtCore.QObject):
     def __init__(self, mprx):
         super(GenericWorker, self).__init__()
 
-        self.carlavehiclecontrol_proxy = mprx["CarlaVehicleControlPub"]
+        self.carlavehiclecontrol_proxy = mprx["CarlaVehicleControlProxy"]
         self.melexlogger_proxy = mprx["MelexLoggerPub"]
 
         self.mutex = QtCore.QMutex(QtCore.QMutex.Recursive)

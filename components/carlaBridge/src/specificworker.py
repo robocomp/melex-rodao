@@ -101,11 +101,10 @@ class SpecificWorker(GenericWorker):
 
         data_to_save = {
             'fps': ['Time', 'FPS'],
-            'response': ['Time', 'ResponseTime']
+            'response': ['Time', 'ServerResponseTime']
         }
         self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
-
 
         self.restart()
 
@@ -114,7 +113,6 @@ class SpecificWorker(GenericWorker):
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
-
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -172,7 +170,6 @@ class SpecificWorker(GenericWorker):
 
         if self.car_moved:
             response_time = time.time() - self.last_time_car_moved
-            print(response_time)
             self.car_moved = False
             self.logger_signal.emit('response', 'on_world_tick', str(response_time))
 
@@ -208,22 +205,6 @@ class SpecificWorker(GenericWorker):
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
-    # =============== Methods for Component SubscribesTo ================
-    # ===================================================================
-    #
-    # SUBSCRIPTION to updateVehicleControl method from CarlaVehicleControl interface
-    #
-    def CarlaVehicleControl_updateVehicleControl(self, control):
-        controller = carla.VehicleControl()
-        controller.throttle = control.throttle
-        controller.steer = control.steer
-        controller.brake = control.brake
-        controller.gear = control.gear
-        controller.hand_brake = control.handbrake
-        controller.reverse = control.reverse
-        controller.manual_gear_shift = control.manualgear
-        self.move_car(controller)
-
     # ===================================================================
     # ===================================================================
 
@@ -247,6 +228,21 @@ class SpecificWorker(GenericWorker):
             ret = self.camera_manager.delete_sensor(IDSensor)
             print('Returning ', ret)
             return True
+
+    #
+    # IMPLEMENTATION of updateVehicleControl method from CarlaVehicleControl interface
+    #
+    def CarlaVehicleControl_updateVehicleControl(self, control):
+        controller = carla.VehicleControl()
+        controller.throttle = control.throttle
+        controller.steer = control.steer
+        controller.brake = control.brake
+        controller.gear = control.gear
+        controller.hand_brake = control.handbrake
+        controller.reverse = control.reverse
+        controller.manual_gear_shift = control.manualgear
+        self.move_car(controller)
+        return True
     # ===================================================================
     # ===================================================================
 
@@ -278,3 +274,4 @@ class SpecificWorker(GenericWorker):
     ######################
     # From the RoboCompCarlaVehicleControl you can use this types:
     # RoboCompCarlaVehicleControl.VehicleControl
+

@@ -11,7 +11,7 @@ import matplotlib
 
 matplotlib.use('TkAgg')
 
-dir = '/home/robocomp/robocomp/components/melex-rodao/files/results/test_210225_1253'
+dir = '/home/robocomp/robocomp/components/melex-rodao/files/results/test_210225_1650'
 
 df = pd.read_csv(os.path.join(dir, 'carlaMonitor_gnss.csv'),
                  delimiter=';', skiprows=0, low_memory=False)
@@ -53,3 +53,4 @@ plt.plot(df3['Time'], df3['FPS'], c='purple')
 plt.xlabel("Tiempo ")
 plt.ylabel("FPS")
 plt.show()
+

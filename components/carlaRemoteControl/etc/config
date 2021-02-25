@@ -3,6 +3,10 @@ CameraRGBDSimplePubTopic.Endpoints=tcp -p 0
 CarlaSensorsTopic.Endpoints=tcp -p 0
 
 
+# Proxies for required interfaces
+CarlaVehicleControlProxy = carlavehiclecontrol:tcp -h localhost -p 19111
+
+
 
 # This property is used by the clients to connect to IceStorm.
 TopicManager.Proxy=IceStorm/TopicManager:default -p 9999

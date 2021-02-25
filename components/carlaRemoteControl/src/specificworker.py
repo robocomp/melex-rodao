@@ -71,7 +71,8 @@ class SpecificWorker(GenericWorker):
         self.clock = pygame.time.Clock()
 
         data_to_save = {
-            'control': ['Time', 'Throttle', 'Steer', 'Brake', 'Gear', 'Handbrake', 'Reverse', 'Manualgear']
+            'control': ['Time', 'Throttle', 'Steer', 'Brake', 'Gear', 'Handbrake', 'Reverse', 'Manualgear'],
+            'communication' : ['Time', 'CommunicationTime']
         }
         self.logger = Logger(self.melexlogger_proxy, 'carlaRemoteControl', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
@@ -102,12 +103,14 @@ class SpecificWorker(GenericWorker):
             exit(-1)
 
         if self.controller.car_moved():
-            control = self.controller.publish_vehicle_control()
+            control, elapsed_time = self.controller.publish_vehicle_control()
             control_array = [control.throttle, control.steer, control.brake, control.gear, control.handbrake,
                              control.reverse,
                              control.manualgear]
             data = ';'.join(map(str, control_array))
             self.logger_signal.emit('control', 'compute', data)
+            print(elapsed_time)
+            self.logger_signal.emit('communication', 'compute', str(elapsed_time))
 
             self.hud.tick(self, self.clock, control)
         self.camera_manager.render(self.display)
@@ -149,8 +152,10 @@ class SpecificWorker(GenericWorker):
     # ===================================================================
     # ===================================================================
 
+
+
     ######################
-    # From the RoboCompCarlaVehicleControl you can publish calling this methods:
+    # From the RoboCompCarlaVehicleControl you can call this methods:
     # self.carlavehiclecontrol_proxy.updateVehicleControl(...)
 
     ######################
@@ -171,3 +176,4 @@ class SpecificWorker(GenericWorker):
     # From the RoboCompCarlaSensors you can use this types:
     # RoboCompCarlaSensors.IMU
     # RoboCompCarlaSensors.GNSS
+

@@ -179,13 +179,19 @@ class DualControl(object):
 
     def publish_vehicle_control(self):
         try:
-            self.carlavehiclecontrol_proxy.updateVehicleControl(self.current_control)
+            curr_time = time.time()
+
+            result = self.carlavehiclecontrol_proxy.updateVehicleControl(self.current_control)
+
+            if result:
+                time_elapsed = time.time() - curr_time
 
         except Exception as e:
             print(e)
 
 
-        return self.current_control
+
+        return self.current_control, time_elapsed
 
     def car_moved(self):
         self.current_control = RoboCompCarlaVehicleControl.VehicleControl()

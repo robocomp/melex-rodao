@@ -8,9 +8,9 @@ Component carlaBridge
 {
     Communications
     {
-	implements AdminBridge;
+	implements AdminBridge, CarlaVehicleControl;
 	publishes CameraRGBDSimplePub, CarlaSensors, MelexLogger;
-	subscribesTo CarlaVehicleControl;
+
     };
     language python;
 

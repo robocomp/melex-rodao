@@ -122,23 +122,21 @@ if __name__ == '__main__':
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
 
-    # Create a proxy to publish a CarlaVehicleControl topic
-    topic = False
+    # Remote object connection for CarlaVehicleControl
     try:
-        topic = topicManager.retrieve("CarlaVehicleControl")
-    except:
-        pass
-    while not topic:
+        proxyString = ic.getProperties().getProperty('CarlaVehicleControlProxy')
         try:
-            topic = topicManager.retrieve("CarlaVehicleControl")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("CarlaVehicleControl")
-            except:
-                print('Another client created the CarlaVehicleControl topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    carlavehiclecontrolTopic = RoboCompCarlaVehicleControl.CarlaVehicleControlPrx.uncheckedCast(pub)
-    mprx["CarlaVehicleControlPub"] = carlavehiclecontrolTopic
+            basePrx = ic.stringToProxy(proxyString)
+            carlavehiclecontrol_proxy = RoboCompCarlaVehicleControl.CarlaVehicleControlPrx.uncheckedCast(basePrx)
+            mprx["CarlaVehicleControlProxy"] = carlavehiclecontrol_proxy
+        except Ice.Exception:
+            print('Cannot connect to the remote object (CarlaVehicleControl)', proxyString)
+            #traceback.print_exc()
+            status = 1
+    except Ice.Exception as e:
+        print(e)
+        print('Cannot get CarlaVehicleControlProxy property.')
+        status = 1
 
 
     # Create a proxy to publish a MelexLogger topic
