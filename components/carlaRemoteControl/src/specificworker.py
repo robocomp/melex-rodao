@@ -101,14 +101,15 @@ class SpecificWorker(GenericWorker):
         if self.controller.parse_events(self.clock):
             exit(-1)
 
-        control = self.controller.publish_vehicle_control()
-        control_array = [control.throttle, control.steer, control.brake, control.gear, control.handbrake,
-                         control.reverse,
-                         control.manualgear]
-        data = ';'.join(map(str, control_array))
-        self.logger_signal.emit('control', 'compute', data)
+        if self.controller.car_moved():
+            control = self.controller.publish_vehicle_control()
+            control_array = [control.throttle, control.steer, control.brake, control.gear, control.handbrake,
+                             control.reverse,
+                             control.manualgear]
+            data = ';'.join(map(str, control_array))
+            self.logger_signal.emit('control', 'compute', data)
 
-        self.hud.tick(self, self.clock, control)
+            self.hud.tick(self, self.clock, control)
         self.camera_manager.render(self.display)
         self.hud.render(self.display)
         pygame.display.flip()

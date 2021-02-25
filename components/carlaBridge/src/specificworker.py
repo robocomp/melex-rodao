@@ -86,8 +86,6 @@ class SpecificWorker(GenericWorker):
         self.world = world
         self.carla_map = carla_map
         self.blueprint_library = blueprint_library
-        self.contFPS = 0
-        self.start = time.time()
         self.vehicle = None
         self.collision_sensor = None
         self.gnss_sensor = None
@@ -95,12 +93,15 @@ class SpecificWorker(GenericWorker):
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
 
+        self.car_moved = False
+        self.last_time_car_moved = time.time()
 
         self.server_fps = 0
         self._server_clock = pygame.time.Clock()
 
         data_to_save = {
-            'fps': ['Time', 'FPS']
+            'fps': ['Time', 'FPS'],
+            'response': ['Time', 'ResponseTime']
         }
         self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
@@ -166,9 +167,14 @@ class SpecificWorker(GenericWorker):
         self.server_fps = self._server_clock.get_fps()
         if self.server_fps in [float("-inf"), float("inf")]:
             self.server_fps = -1
-        print('Server FPS', int(self.server_fps))
-
+        # print('Server FPS', int(self.server_fps))
         self.logger_signal.emit('fps', 'on_world_tick', str(int(self.server_fps)))
+
+        if self.car_moved:
+            response_time = time.time() - self.last_time_car_moved
+            print(response_time)
+            self.car_moved = False
+            self.logger_signal.emit('response', 'on_world_tick', str(response_time))
 
     def next_weather(self, reverse=False):
         self._weather_index += -1 if reverse else 1
@@ -191,6 +197,8 @@ class SpecificWorker(GenericWorker):
 
     def move_car(self, control):
         self.vehicle.apply_control(control)
+        self.car_moved = True
+        self.last_time_car_moved = time.time()
 
     @QtCore.Slot()
     def compute(self):

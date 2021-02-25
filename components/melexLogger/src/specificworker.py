@@ -38,6 +38,7 @@ class SpecificWorker(GenericWorker):
 
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
+        self.new_namespace = False
         self.headers_dict = {}
         self.save_signal.connect(self.save_data_to_csv)
 
@@ -62,7 +63,8 @@ class SpecificWorker(GenericWorker):
         file_name = sender_namespace + '.csv'
         file_dir = os.path.join(self.directory, file_name)
 
-        if not os.path.isfile(file_dir):
+        if not os.path.isfile(file_dir) or self.new_namespace:
+            self.new_namespace = False
             if sender_namespace in self.headers_dict.keys():
                 with open(file_dir, 'w') as csvFile:
                     writer = csv.writer(csvFile, delimiter=';')
@@ -97,6 +99,7 @@ class SpecificWorker(GenericWorker):
         headers = logn.headers
         print(filename, headers)
         self.headers_dict[filename] = headers
+        self.new_namespace = True
 
     #
     # SUBSCRIPTION to sendMessage method from MelexLogger interface
