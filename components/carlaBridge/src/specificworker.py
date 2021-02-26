@@ -22,6 +22,7 @@
 import glob
 import os
 import sys
+import traceback
 from queue import Empty
 
 import cv2
@@ -35,7 +36,7 @@ import random
 import time
 
 try:
-    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -47,20 +48,6 @@ from IMU import IMUSensor
 from GNSS import GnssSensor
 from CameraManager import CameraManager
 from Logger import Logger
-
-client = carla.Client('localhost', 2000)
-print('Client version ', client.get_client_version())
-print('Server version ', client.get_server_version())
-client.set_timeout(10.0)
-init_time = time.time()
-print('Loading world...')
-world = client.load_world('CampusV4')
-# world = client.get_world()
-print('Done')
-print(f'Loading world took {round(time.time() - init_time)} seconds')
-
-carla_map = world.get_map()
-blueprint_library = world.get_blueprint_library()
 
 
 def find_weather_presets():
@@ -83,14 +70,13 @@ class SpecificWorker(GenericWorker):
         global world, carla_map, blueprint_library
 
         self.Period = 0
-        self.world = world
-        self.carla_map = carla_map
-        self.blueprint_library = blueprint_library
+        self.world = None
+        self.blueprint_library = None
         self.vehicle = None
         self.collision_sensor = None
         self.gnss_sensor = None
         self.camera_manager = None
-        self._weather_presets = find_weather_presets()
+
         self._weather_index = 0
 
         self.car_moved = False
@@ -106,7 +92,6 @@ class SpecificWorker(GenericWorker):
         self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
 
-        self.restart()
 
         if startup_check:
             self.startup_check()
@@ -121,7 +106,37 @@ class SpecificWorker(GenericWorker):
         cv2.destroyAllWindows()
 
     def setParams(self, params):
+        try:
+            host = params["host"]
+            port = int(params["port"])
+            map_name = params["map"]
+            print(type(host), host)
+            print(type(port), port)
+            print(type(map_name), map_name)
+            self.initialize_world(host, port, map_name)
+            self.restart()
+
+        except:
+            traceback.print_exc()
+            print("Error reading config params")
+
         return True
+
+    def initialize_world(self, host, port, map_name):
+        client = carla.Client(host, port)
+        print('Client version ', client.get_client_version())
+        print('Server version ', client.get_server_version())
+        client.set_timeout(10.0)
+        init_time = time.time()
+        print('Loading world...')
+        print('available maps', client.get_available_maps())
+        self.world = client.load_world(map_name)
+        # self.world = client.get_world()
+        print('Done')
+        print(f'Loading world took {round(time.time() - init_time)} seconds')
+
+        # carla_map = world.get_map()
+        self.blueprint_library = self.world.get_blueprint_library()
 
     def restart(self):
         # car_blueprints = self.blueprint_library.filter('vehicle.*')
@@ -246,7 +261,6 @@ class SpecificWorker(GenericWorker):
     # ===================================================================
     # ===================================================================
 
-
     ######################
     # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
     # self.camerargbdsimplepub_proxy.pushRGBD(...)
@@ -274,4 +288,3 @@ class SpecificWorker(GenericWorker):
     ######################
     # From the RoboCompCarlaVehicleControl you can use this types:
     # RoboCompCarlaVehicleControl.VehicleControl
-
