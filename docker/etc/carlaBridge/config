@@ -5,7 +5,7 @@ CarlaVehicleControl.Endpoints=tcp -p 19111
 
 
 # This property is used by the clients to connect to IceStorm.
-TopicManager.Proxy=IceStorm/TopicManager:default -p 9999
+TopicManager.Proxy=IceStorm/TopicManager:default -h rcnode -p 9999
 
 Ice.MessageSizeMax=20004800
 Ice.Warn.Connections=0

@@ -4,7 +4,7 @@ CarlaSensorsTopic.Endpoints=tcp -p 0
 
 
 # Proxies for required interfaces
-CarlaVehicleControlProxy = carlavehiclecontrol:tcp -h localhost -p 19111
+CarlaVehicleControlProxy = carlavehiclecontrol:tcp -h carlaBridge  -p 19111
 
 
 

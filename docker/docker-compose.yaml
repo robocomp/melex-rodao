@@ -21,17 +21,17 @@ services:
         entrypoint:  sh -c "echo $PATH && cd carlaBridge && cmake . && make && (./src/carlaBridge.py)" #nc -vz carla-server 2000 #
         restart: unless-stopped
         environment:
-            - PATH=$PATH
+            - PATH=$PATH:/opt/robocomp/bin/
             - NVIDIA_VISIBLE_DEVICES=all
             - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute.
         volumes:
-            - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
+#            - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
             - ./etc/carlaBridge/:/home/robolab/robocomp/components/melex-rodao/components/carlaBridge/etc/
         depends_on:
             - rcnode
             - carla-server
         healthcheck:
-          test: nc -w 1 carla-server 2000  || kill 1
+          test: nc -w 1 carla-server 2000
           interval: 30s
           timeout: 10s
           start_period: 10s
@@ -44,7 +44,7 @@ services:
       restart: unless-stopped
       environment:
         - DISPLAY=$DISPLAY
-        - PATH=$PATH
+        - PATH=$PATH:/opt/robocomp/bin/
         - QT_X11_NO_MITSHM=1
         - NVIDIA_VISIBLE_DEVICES=all
       volumes:
@@ -56,11 +56,11 @@ services:
         - carla-server
         - carlaBridge
       healthcheck:
-        test: ((nc -w 1 carlaBridge 18111 | grep IceP) && )  || kill 1
+        test: nc -w 1 carlaBridge 18111 | grep IceP
         interval: 30s
-        timeout: 10s
+        timeout: 4s
         retries: 5
-        start_period: 12s
+        start_period: 30s
 
 
     carlaControl:
@@ -70,7 +70,7 @@ services:
       restart: unless-stopped
       environment:
         - DISPLAY=$DISPLAY
-        - PATH=$PATH
+        - PATH=$PATH:/opt/robocomp/bin/
         - QT_X11_NO_MITSHM=1
         - NVIDIA_VISIBLE_DEVICES=all
       volumes:
@@ -78,11 +78,11 @@ services:
 #        - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
         - ./etc/carlaRemoteControl/:/home/robolab/robocomp/components/melex-rodao/components/carlaRemoteControl/etc/
       depends_on:
-        - carlaMonitor
+        - carlaBridge
       devices:
         - /dev/input/js0:/dev/input/js0
       healthcheck:
-        test: nc -w 1 carlaBridge 18111 | grep IceP  || kill 1
+        test: nc -w 1 carlaBridge 18111 | grep IceP
         interval: 30s
         timeout: 10s
         retries: 5
@@ -90,9 +90,17 @@ services:
 
 
     rcnode:
-        image: robocomp/robocomp:focal_dsr
+        image: robocomp/robocomp:focal-melex
         entrypoint: sh -c "rcnode"
         expose:
             - 9999
             - 9998
+
+    autoheal:
+      restart: always
+      image: willfarrell/autoheal
+      environment:
+        - AUTOHEAL_CONTAINER_LABEL=all
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
             

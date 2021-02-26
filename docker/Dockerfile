@@ -19,8 +19,8 @@ RUN git clone https://github.com/robocomp/melex-rodao.git
 RUN cd melex-rodao && git fetch && git checkout SplitComponent && git pull
 ENV PATH $PATH:/opt/robocomp/bin/
 RUN cd melex-rodao && mkdir build && cd build && cmake .. && make && sudo PATH=$PATH make install
-COPY --from=carlasim/carla:0.9.11 /home/carla/PythonAPI /home/robolab/CARLA_0.9.11-dirty/PythonAPI
-RUN ln -s /home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/carla-0.9.11-py3.7-linux-x86_64.egg /home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/carla-0.9.11-py3.8-linux-x86_64.egg
+COPY --from=carlasim/carla:0.9.11 /home/carla/PythonAPI /home/robolab/CARLA_0.9.11/PythonAPI
+RUN ln -s /home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-0.9.11-py3.7-linux-x86_64.egg /home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-0.9.11-py3.8-linux-x86_64.egg
 WORKDIR melex-rodao/components/
 
 # compile
