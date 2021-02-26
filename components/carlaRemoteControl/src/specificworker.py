@@ -109,7 +109,6 @@ class SpecificWorker(GenericWorker):
                              control.manualgear]
             data = ';'.join(map(str, control_array))
             self.logger_signal.emit('control', 'compute', data)
-            print(elapsed_time)
             self.logger_signal.emit('communication', 'compute', str(elapsed_time))
 
             self.hud.tick(self, self.clock, control)

@@ -178,6 +178,9 @@ class DualControl(object):
                 self._control_throttle = 0
 
     def publish_vehicle_control(self):
+
+        time_elapsed = None
+
         try:
             curr_time = time.time()
 
@@ -188,8 +191,6 @@ class DualControl(object):
 
         except Exception as e:
             print(e)
-
-
 
         return self.current_control, time_elapsed
 
