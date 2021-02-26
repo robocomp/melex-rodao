@@ -2,6 +2,7 @@ import pygame
 import math
 import sys
 import time
+from PySide2.QtCore import Signal
 
 if sys.version_info >= (3, 0):
     from configparser import ConfigParser
@@ -54,8 +55,10 @@ import RoboCompCarlaVehicleControl
 
 
 class DualControl(object):
+
     def __init__(self, camera_manager, hud, proxy):
-    # def __init__(self, camera_manager, proxy):
+        # def __init__(self, camera_manager, proxy):
+
         self.carlavehiclecontrol_proxy = proxy
         self.camera_manager = camera_manager
         self.hud = hud
@@ -73,7 +76,7 @@ class DualControl(object):
         self._control_reverse = False
         self.handbrake_on = False
         self._control_manual_gear_shift = False
-
+        self.prev_control = RoboCompCarlaVehicleControl.VehicleControl()
         # initialize steering wheel
         pygame.joystick.init()
 
@@ -174,25 +177,45 @@ class DualControl(object):
             if self._control_hand_brake:
                 self._control_throttle = 0
 
-
     def publish_vehicle_control(self):
-        control = RoboCompCarlaVehicleControl.VehicleControl()
-        control.throttle = self._control_throttle
-        control.steer = self._control_steer
-        control.brake = self._control_brake
-        control.gear = self._control_gear
-        control.handbrake = self._control_hand_brake
-        control.reverse = self._control_reverse
-        control.manualgear = self._control_manual_gear_shift
-
-
         try:
-            self.carlavehiclecontrol_proxy.updateVehicleControl(control)
+            curr_time = time.time()
+
+            result = self.carlavehiclecontrol_proxy.updateVehicleControl(self.current_control)
+
+            if result:
+                time_elapsed = time.time() - curr_time
 
         except Exception as e:
             print(e)
 
-        return control
+
+
+        return self.current_control, time_elapsed
+
+    def car_moved(self):
+        self.current_control = RoboCompCarlaVehicleControl.VehicleControl()
+        self.current_control.throttle = self._control_throttle
+        self.current_control.steer = self._control_steer
+        self.current_control.brake = self._control_brake
+        self.current_control.gear = self._control_gear
+        self.current_control.handbrake = self._control_hand_brake
+        self.current_control.reverse = self._control_reverse
+        self.current_control.manualgear = self._control_manual_gear_shift
+
+        moved = False
+        if self.current_control.throttle != self.prev_control.throttle or \
+                self.current_control.steer != self.prev_control.steer or \
+                self.current_control.brake != self.prev_control.brake or \
+                self.current_control.gear != self.prev_control.gear or \
+                self.current_control.handbrake != self.prev_control.handbrake or \
+                self.current_control.reverse != self.prev_control.reverse or \
+                self.current_control.manualgear != self.prev_control.manualgear:
+            moved = True
+
+
+        self.prev_control = self.current_control
+        return moved
 
     def _parse_vehicle_keys(self, keys, milliseconds):
         self._control_throttle = 1.0 if keys[K_UP] or keys[K_w] else 0.0
@@ -239,7 +262,6 @@ class DualControl(object):
         self._control_steer = steerCmd
         self._control_brake = brakeCmd
         self._control_throttle = throttleCmd
-
 
     @staticmethod
     def _is_quit_shortcut(key):

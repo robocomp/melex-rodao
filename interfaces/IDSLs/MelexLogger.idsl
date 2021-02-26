@@ -1,0 +1,32 @@
+module RoboCompMelexLogger
+{
+  struct LogMessage
+  {
+    string namespace;
+    string sender;
+    string method;
+    string file;
+    int line;
+    string timeStamp;
+    string message;
+    string type;	
+    string fullpath;
+  };
+
+
+sequence<string> seqstring;
+  struct LogNamespace
+ {
+     string sender;
+     string namespace;
+    seqstring headers;
+ };
+  
+
+  interface MelexLogger
+  {
+    void sendMessage(LogMessage m);
+    void createNamespace (LogNamespace logn);	
+  };
+};
+

@@ -15,7 +15,7 @@ module RoboCompCarlaVehicleControl
 
 	interface CarlaVehicleControl
 	{
-		idempotent void updateVehicleControl(VehicleControl control);
+		bool updateVehicleControl(VehicleControl control);
 
 	};
 };

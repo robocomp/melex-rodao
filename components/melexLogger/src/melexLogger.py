@@ -20,7 +20,7 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# \mainpage RoboComp::carlaRemoteControl
+# \mainpage RoboComp::melexLogger
 #
 # \section intro_sec Introduction
 #
@@ -48,7 +48,7 @@
 #
 # \subsection execution_ssec Execution
 #
-# Just: "${PATH_TO_BINARY}/carlaRemoteControl --Ice.Config=${PATH_TO_CONFIG_FILE}"
+# Just: "${PATH_TO_BINARY}/melexLogger --Ice.Config=${PATH_TO_CONFIG_FILE}"
 #
 # \subsection running_ssec Once running
 #
@@ -121,42 +121,6 @@ if __name__ == '__main__':
     except Ice.ConnectionRefusedException as e:
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
-
-    # Remote object connection for CarlaVehicleControl
-    try:
-        proxyString = ic.getProperties().getProperty('CarlaVehicleControlProxy')
-        try:
-            basePrx = ic.stringToProxy(proxyString)
-            carlavehiclecontrol_proxy = RoboCompCarlaVehicleControl.CarlaVehicleControlPrx.uncheckedCast(basePrx)
-            mprx["CarlaVehicleControlProxy"] = carlavehiclecontrol_proxy
-        except Ice.Exception:
-            print('Cannot connect to the remote object (CarlaVehicleControl)', proxyString)
-            #traceback.print_exc()
-            status = 1
-    except Ice.Exception as e:
-        print(e)
-        print('Cannot get CarlaVehicleControlProxy property.')
-        status = 1
-
-
-    # Create a proxy to publish a MelexLogger topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("MelexLogger")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("MelexLogger")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("MelexLogger")
-            except:
-                print('Another client created the MelexLogger topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    melexloggerTopic = RoboCompMelexLogger.MelexLoggerPrx.uncheckedCast(pub)
-    mprx["MelexLoggerPub"] = melexloggerTopic
-
     if status == 0:
         worker = SpecificWorker(mprx, args.startup_check)
         worker.setParams(parameters)
@@ -165,50 +129,27 @@ if __name__ == '__main__':
         sys.exit(-1)
 
 
-    CameraRGBDSimplePub_adapter = ic.createObjectAdapter("CameraRGBDSimplePubTopic")
-    camerargbdsimplepubI_ = camerargbdsimplepubI.CameraRGBDSimplePubI(worker)
-    camerargbdsimplepub_proxy = CameraRGBDSimplePub_adapter.addWithUUID(camerargbdsimplepubI_).ice_oneway()
+    MelexLogger_adapter = ic.createObjectAdapter("MelexLoggerTopic")
+    melexloggerI_ = melexloggerI.MelexLoggerI(worker)
+    melexlogger_proxy = MelexLogger_adapter.addWithUUID(melexloggerI_).ice_oneway()
 
     subscribeDone = False
     while not subscribeDone:
         try:
-            camerargbdsimplepub_topic = topicManager.retrieve("CameraRGBDSimplePub")
+            melexlogger_topic = topicManager.retrieve("MelexLogger")
             subscribeDone = True
         except Ice.Exception as e:
             print("Error. Topic does not exist (creating)")
             time.sleep(1)
             try:
-                camerargbdsimplepub_topic = topicManager.create("CameraRGBDSimplePub")
+                melexlogger_topic = topicManager.create("MelexLogger")
                 subscribeDone = True
             except:
                 print("Error. Topic could not be created. Exiting")
                 status = 0
     qos = {}
-    camerargbdsimplepub_topic.subscribeAndGetPublisher(qos, camerargbdsimplepub_proxy)
-    CameraRGBDSimplePub_adapter.activate()
-
-
-    CarlaSensors_adapter = ic.createObjectAdapter("CarlaSensorsTopic")
-    carlasensorsI_ = carlasensorsI.CarlaSensorsI(worker)
-    carlasensors_proxy = CarlaSensors_adapter.addWithUUID(carlasensorsI_).ice_oneway()
-
-    subscribeDone = False
-    while not subscribeDone:
-        try:
-            carlasensors_topic = topicManager.retrieve("CarlaSensors")
-            subscribeDone = True
-        except Ice.Exception as e:
-            print("Error. Topic does not exist (creating)")
-            time.sleep(1)
-            try:
-                carlasensors_topic = topicManager.create("CarlaSensors")
-                subscribeDone = True
-            except:
-                print("Error. Topic could not be created. Exiting")
-                status = 0
-    qos = {}
-    carlasensors_topic.subscribeAndGetPublisher(qos, carlasensors_proxy)
-    CarlaSensors_adapter.activate()
+    melexlogger_topic.subscribeAndGetPublisher(qos, melexlogger_proxy)
+    MelexLogger_adapter.activate()
 
     signal.signal(signal.SIGINT, sigint_handler)
     app.exec_()

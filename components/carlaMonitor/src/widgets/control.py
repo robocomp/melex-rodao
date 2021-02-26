@@ -1,9 +1,9 @@
-from PySide2.QtGui import QPixmap
+from PySide2.QtGui import QPixmap, QKeySequence
 
-from .lightwidget import LightState
-from .mapviewer.mapviewer import MapViewer
-from .uiloader import CustomUiLoader
-from PySide2.QtWidgets import QWidget
+from widgets.lightwidget import LightState
+from widgets.mapviewer.mapviewer import MapViewer
+from widgets.uiloader import CustomUiLoader
+from PySide2.QtWidgets import QWidget, QShortcut
 
 import pathlib
 
@@ -34,9 +34,19 @@ class ControlWidget(QWidget):
         self.state_panel.addWidget(self.imu_state_light)
         self.camera1_switch.setChecked(True)
         self.camera2_switch.setChecked(True)
+        self.save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self.save_button, lambda: self.save_button.setChecked(not self.save_button.isChecked()))
+        self.save_button.toggled.connect(self.save_clicked)
 
     def update_map_position(self, coords):
         self.map_widget.update_map_position(coords[0], coords[1])
+
+    def save_clicked(self, checked):
+        print(f"saving data {checked}")
+        if checked:
+            self.save_button.setText("Saving...")
+        else:
+            self.save_button.setText("Save data")
+
 
 
 if __name__ == '__main__':

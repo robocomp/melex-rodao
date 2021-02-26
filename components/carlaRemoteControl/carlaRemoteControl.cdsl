@@ -1,12 +1,14 @@
 import "CarlaVehicleControl.idsl";
 import "CameraRGBDSimplePub.idsl";
 import "CarlaSensors.idsl";
+import "MelexLogger.idsl";
 
 Component carlaRemoteControl
 {
     Communications
     {
-	publishes CarlaVehicleControl;
+	requires CarlaVehicleControl;
+	publishes  MelexLogger;
         subscribesTo CameraRGBDSimplePub,CarlaSensors; 
     };
 

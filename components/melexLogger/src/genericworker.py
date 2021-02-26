@@ -31,73 +31,8 @@ except KeyError:
 Ice.loadSlice("-I ./src/ --all ./src/CommonBehavior.ice")
 import RoboCompCommonBehavior
 
-Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimple.ice")
-import RoboCompCameraRGBDSimple
-Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
-import RoboCompCameraRGBDSimplePub
-Ice.loadSlice("-I ./src/ --all ./src/CarlaSensors.ice")
-import RoboCompCarlaSensors
-Ice.loadSlice("-I ./src/ --all ./src/CarlaVehicleControl.ice")
-import RoboCompCarlaVehicleControl
 Ice.loadSlice("-I ./src/ --all ./src/MelexLogger.ice")
 import RoboCompMelexLogger
-
-class ImgType(list):
-    def __init__(self, iterable=list()):
-        super(ImgType, self).__init__(iterable)
-
-    def append(self, item):
-        assert isinstance(item, byte)
-        super(ImgType, self).append(item)
-
-    def extend(self, iterable):
-        for item in iterable:
-            assert isinstance(item, byte)
-        super(ImgType, self).extend(iterable)
-
-    def insert(self, index, item):
-        assert isinstance(item, byte)
-        super(ImgType, self).insert(index, item)
-
-setattr(RoboCompCameraRGBDSimple, "ImgType", ImgType)
-
-class DepthType(list):
-    def __init__(self, iterable=list()):
-        super(DepthType, self).__init__(iterable)
-
-    def append(self, item):
-        assert isinstance(item, byte)
-        super(DepthType, self).append(item)
-
-    def extend(self, iterable):
-        for item in iterable:
-            assert isinstance(item, byte)
-        super(DepthType, self).extend(iterable)
-
-    def insert(self, index, item):
-        assert isinstance(item, byte)
-        super(DepthType, self).insert(index, item)
-
-setattr(RoboCompCameraRGBDSimple, "DepthType", DepthType)
-
-class CarlaXYZ(list):
-    def __init__(self, iterable=list()):
-        super(CarlaXYZ, self).__init__(iterable)
-
-    def append(self, item):
-        assert isinstance(item, float)
-        super(CarlaXYZ, self).append(item)
-
-    def extend(self, iterable):
-        for item in iterable:
-            assert isinstance(item, float)
-        super(CarlaXYZ, self).extend(iterable)
-
-    def insert(self, index, item):
-        assert isinstance(item, float)
-        super(CarlaXYZ, self).insert(index, item)
-
-setattr(RoboCompCarlaSensors, "CarlaXYZ", CarlaXYZ)
 
 class seqstring(list):
     def __init__(self, iterable=list()):
@@ -119,8 +54,7 @@ class seqstring(list):
 setattr(RoboCompMelexLogger, "seqstring", seqstring)
 
 
-import camerargbdsimplepubI
-import carlasensorsI
+import melexloggerI
 
 
 
@@ -132,8 +66,6 @@ class GenericWorker(QtCore.QObject):
     def __init__(self, mprx):
         super(GenericWorker, self).__init__()
 
-        self.carlavehiclecontrol_proxy = mprx["CarlaVehicleControlProxy"]
-        self.melexlogger_proxy = mprx["MelexLoggerPub"]
 
         self.mutex = QtCore.QMutex(QtCore.QMutex.Recursive)
         self.Period = 30

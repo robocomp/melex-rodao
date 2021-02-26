@@ -26,7 +26,7 @@ from queue import Empty
 
 import cv2
 import pygame
-from PySide2.QtCore import QTimer
+from PySide2.QtCore import QTimer, Signal
 from PySide2.QtWidgets import QApplication
 from genericworker import *
 from numpy import random
@@ -35,7 +35,7 @@ import random
 import time
 
 try:
-    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11-dirty/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -46,6 +46,7 @@ import carla
 from IMU import IMUSensor
 from GNSS import GnssSensor
 from CameraManager import CameraManager
+from Logger import Logger
 
 client = carla.Client('localhost', 2000)
 print('Client version ', client.get_client_version())
@@ -75,6 +76,8 @@ def get_actor_display_name(actor, truncate=250):
 
 
 class SpecificWorker(GenericWorker):
+    logger_signal = Signal(str, str, str)
+
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         global world, carla_map, blueprint_library
@@ -83,8 +86,6 @@ class SpecificWorker(GenericWorker):
         self.world = world
         self.carla_map = carla_map
         self.blueprint_library = blueprint_library
-        self.contFPS = 0
-        self.start = time.time()
         self.vehicle = None
         self.collision_sensor = None
         self.gnss_sensor = None
@@ -92,10 +93,19 @@ class SpecificWorker(GenericWorker):
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
 
-
+        self.car_moved = False
+        self.last_time_car_moved = time.time()
 
         self.server_fps = 0
         self._server_clock = pygame.time.Clock()
+
+        data_to_save = {
+            'fps': ['Time', 'FPS'],
+            'response': ['Time', 'ServerResponseTime']
+        }
+        self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
+        self.logger_signal.connect(self.logger.publish_to_logger)
+
         self.restart()
 
         if startup_check:
@@ -132,12 +142,12 @@ class SpecificWorker(GenericWorker):
             self.destroy()
             self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
         while self.vehicle is None:
-            spawn_points = self.carla_map.get_spawn_points()
-            spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
-            self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+            # spawn_points = self.carla_map.get_spawn_points()
+            # spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+            # self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
             #
-            # spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774))
-            # self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
+            spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774, z=2))
+            self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         # Set up the sensors.
         # self.collision_sensor = CollisionSensor(self.player, self.hud)
@@ -155,7 +165,13 @@ class SpecificWorker(GenericWorker):
         self.server_fps = self._server_clock.get_fps()
         if self.server_fps in [float("-inf"), float("inf")]:
             self.server_fps = -1
-        print('Server FPS', int(self.server_fps))
+        # print('Server FPS', int(self.server_fps))
+        self.logger_signal.emit('fps', 'on_world_tick', str(int(self.server_fps)))
+
+        if self.car_moved:
+            response_time = time.time() - self.last_time_car_moved
+            self.car_moved = False
+            self.logger_signal.emit('response', 'on_world_tick', str(response_time))
 
     def next_weather(self, reverse=False):
         self._weather_index += -1 if reverse else 1
@@ -178,29 +194,16 @@ class SpecificWorker(GenericWorker):
 
     def move_car(self, control):
         self.vehicle.apply_control(control)
+        self.car_moved = True
+        self.last_time_car_moved = time.time()
 
     @QtCore.Slot()
     def compute(self):
+        # print(f'Camaras activas { sum(self.camera_manager.is_sensor_active.values())}')
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
-
-    # =============== Methods for Component SubscribesTo ================
-    # ===================================================================
-    #
-    # SUBSCRIPTION to updateVehicleControl method from CarlaVehicleControl interface
-    #
-    def CarlaVehicleControl_updateVehicleControl(self, control):
-        controller = carla.VehicleControl()
-        controller.throttle = control.throttle
-        controller.steer = control.steer
-        controller.brake = control.brake
-        controller.gear = control.gear
-        controller.hand_brake = control.handbrake
-        controller.reverse = control.reverse
-        controller.manual_gear_shift = control.manualgear
-        self.move_car(controller)
 
     # ===================================================================
     # ===================================================================
@@ -212,7 +215,7 @@ class SpecificWorker(GenericWorker):
     # IMPLEMENTATION of activateSensor method from AdminBridge interface
     #
     def AdminBridge_activateSensor(self, IDSensor):
-        if not self.camera_manager.is_sensor_active[IDSensor] :
+        if not self.camera_manager.is_sensor_active[IDSensor]:
             ret = self.camera_manager.create_sensor(IDSensor)
             return ret
 
@@ -222,10 +225,27 @@ class SpecificWorker(GenericWorker):
     def AdminBridge_stopSensor(self, IDSensor):
         if self.camera_manager.is_sensor_active[IDSensor]:
             ret = self.camera_manager.delete_sensor(IDSensor)
+            ret = self.camera_manager.delete_sensor(IDSensor)
             print('Returning ', ret)
             return True
+
+    #
+    # IMPLEMENTATION of updateVehicleControl method from CarlaVehicleControl interface
+    #
+    def CarlaVehicleControl_updateVehicleControl(self, control):
+        controller = carla.VehicleControl()
+        controller.throttle = control.throttle
+        controller.steer = control.steer
+        controller.brake = control.brake
+        controller.gear = control.gear
+        controller.hand_brake = control.handbrake
+        controller.reverse = control.reverse
+        controller.manual_gear_shift = control.manualgear
+        self.move_car(controller)
+        return True
     # ===================================================================
     # ===================================================================
+
 
     ######################
     # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
@@ -242,5 +262,16 @@ class SpecificWorker(GenericWorker):
     # RoboCompCarlaSensors.GNSS
 
     ######################
+    # From the RoboCompMelexLogger you can publish calling this methods:
+    # self.melexlogger_proxy.createNamespace(...)
+    # self.melexlogger_proxy.sendMessage(...)
+
+    ######################
+    # From the RoboCompMelexLogger you can use this types:
+    # RoboCompMelexLogger.LogMessage
+    # RoboCompMelexLogger.LogNamespace
+
+    ######################
     # From the RoboCompCarlaVehicleControl you can use this types:
     # RoboCompCarlaVehicleControl.VehicleControl
+

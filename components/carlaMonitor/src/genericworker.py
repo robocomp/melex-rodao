@@ -39,6 +39,8 @@ Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
 import RoboCompCameraRGBDSimplePub
 Ice.loadSlice("-I ./src/ --all ./src/CarlaSensors.ice")
 import RoboCompCarlaSensors
+Ice.loadSlice("-I ./src/ --all ./src/MelexLogger.ice")
+import RoboCompMelexLogger
 
 class ImgType(list):
     def __init__(self, iterable=list()):
@@ -97,6 +99,25 @@ class CarlaXYZ(list):
 
 setattr(RoboCompCarlaSensors, "CarlaXYZ", CarlaXYZ)
 
+class seqstring(list):
+    def __init__(self, iterable=list()):
+        super(seqstring, self).__init__(iterable)
+
+    def append(self, item):
+        assert isinstance(item, str)
+        super(seqstring, self).append(item)
+
+    def extend(self, iterable):
+        for item in iterable:
+            assert isinstance(item, str)
+        super(seqstring, self).extend(iterable)
+
+    def insert(self, index, item):
+        assert isinstance(item, str)
+        super(seqstring, self).insert(index, item)
+
+setattr(RoboCompMelexLogger, "seqstring", seqstring)
+
 
 import camerargbdsimplepubI
 import carlasensorsI
@@ -118,6 +139,7 @@ class GenericWorker(QtWidgets.QMainWindow):
         super(GenericWorker, self).__init__()
 
         self.adminbridge_proxy = mprx["AdminBridgeProxy"]
+        self.melexlogger_proxy = mprx["MelexLoggerPub"]
 
         self.ui = Ui_guiDlg()
         self.ui.setupUi(self)

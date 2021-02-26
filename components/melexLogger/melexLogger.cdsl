@@ -1,0 +1,14 @@
+
+import "MelexLogger.idsl";
+
+Component melexLogger
+{
+    Communications
+    {
+       
+        subscribesTo MelexLogger;
+   };
+    language python;
+
+};
+
