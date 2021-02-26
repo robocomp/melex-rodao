@@ -1,6 +1,7 @@
-version: '3'
+version: '3.7'
 services:
     carla-server:
+        restart: unless-stopped
         runtime: nvidia
         image: robocomp/carla_melex:latest
 #        entrypoint: ./CarlaUE4.sh -carla-world-port=2000 -ResX=800 -ResY=600 -nosound -windowed
@@ -17,8 +18,8 @@ services:
 
     carlaBridge:
         image: robocomp/robocomp:focal-melex
-        entrypoint:  sh -c "sleep 5 && echo $PATH && cd carlaBridge && cmake . && make && (./src/carlaBridge.py)" #nc -vz carla-server 2000 #
-        restart: always
+        entrypoint:  sh -c "echo $PATH && cd carlaBridge && cmake . && make && (./src/carlaBridge.py)" #nc -vz carla-server 2000 #
+        restart: unless-stopped
         environment:
             - PATH=$PATH
             - NVIDIA_VISIBLE_DEVICES=all
@@ -30,16 +31,17 @@ services:
             - rcnode
             - carla-server
         healthcheck:
-          test: [ "CMD", "curl", "-f", "http://carla-server:2000" ]
+          test: nc -w 1 carla-server 2000  || kill 1
           interval: 30s
           timeout: 10s
+          start_period: 10s
           retries: 5
 
     carlaMonitor:
       image: robocomp/robocomp:focal-melex
       runtime: nvidia
-      entrypoint: sh -c "sleep 12 && echo $PATH && cd carlaMonitor && cmake . && make && (./src/carlaMonitor.py etc/config)" #nc -vz carla-server 2000 #
-      restart: always
+      entrypoint: sh -c "echo $PATH && cd carlaMonitor && cmake . && make && (./src/carlaMonitor.py etc/config)" #nc -vz carla-server 2000 #
+      restart: unless-stopped
       environment:
         - DISPLAY=$DISPLAY
         - PATH=$PATH
@@ -47,24 +49,25 @@ services:
         - NVIDIA_VISIBLE_DEVICES=all
       volumes:
         - /tmp/.X11-unix:/tmp/.X11-unix
-        - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
+#        - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
         - ./etc/carlaMonitor/:/home/robolab/robocomp/components/melex-rodao/components/carlaMonitor/etc/
       depends_on:
         - rcnode
         - carla-server
         - carlaBridge
       healthcheck:
-        test: [ "CMD", "curl", "-f", "http://carlaBridge:18111" ]
+        test: ((nc -w 1 carlaBridge 18111 | grep IceP) && )  || kill 1
         interval: 30s
         timeout: 10s
         retries: 5
+        start_period: 12s
 
 
     carlaControl:
       image: robocomp/robocomp:focal-melex
       runtime: nvidia
-      entrypoint: sh -c "sleep 10 && echo $PATH && cd carlaRemoteControl && cmake . && make && (./src/carlaRemoteControl.py etc/config)" #nc -vz carla-server 2000 #
-      restart: always
+      entrypoint: sh -c "echo $PATH && cd carlaRemoteControl && cmake . && make && (./src/carlaRemoteControl.py etc/config)" #nc -vz carla-server 2000 #
+      restart: unless-stopped
       environment:
         - DISPLAY=$DISPLAY
         - PATH=$PATH
@@ -72,12 +75,18 @@ services:
         - NVIDIA_VISIBLE_DEVICES=all
       volumes:
         - /tmp/.X11-unix:/tmp/.X11-unix
-        - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
+#        - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
         - ./etc/carlaRemoteControl/:/home/robolab/robocomp/components/melex-rodao/components/carlaRemoteControl/etc/
       depends_on:
         - carlaMonitor
       devices:
         - /dev/input/js0:/dev/input/js0
+      healthcheck:
+        test: nc -w 1 carlaBridge 18111 | grep IceP  || kill 1
+        interval: 30s
+        timeout: 10s
+        retries: 5
+        start_period: 12s
 
 
     rcnode:
