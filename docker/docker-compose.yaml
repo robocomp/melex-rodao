@@ -23,7 +23,7 @@ services:
         environment:
             - PATH=$PATH:/opt/robocomp/bin/
             - NVIDIA_VISIBLE_DEVICES=all
-            - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute.
+            - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
         volumes:
 #            - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
             - ./etc/carlaBridge/:/home/robolab/robocomp/components/melex-rodao/components/carlaBridge/etc/
@@ -47,7 +47,7 @@ services:
         environment:
             - PATH=$PATH:/opt/robocomp/bin/
             - NVIDIA_VISIBLE_DEVICES=all
-            - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute.
+            - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
         volumes:
             - /home/robolab/robocomp/components/melex-rodao/files/results:/home/robolab/robocomp/components/melex-rodao//files/results
             - ./etc/melexLogger/:/home/robolab/robocomp/components/melex-rodao/components/melexLogger/etc/
