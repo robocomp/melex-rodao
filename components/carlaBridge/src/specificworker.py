@@ -37,7 +37,7 @@ import time
 
 carla_egg_path = os.path.join('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/', f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
 try:
-
+    print(f"Adding {glob.glob(carla_egg_path)[0]} to path")
     sys.path.append(glob.glob(carla_egg_path)[0])
 except IndexError:
     print(f"Carla API not found in {carla_egg_path}")
