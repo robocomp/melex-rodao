@@ -44,15 +44,13 @@ services:
         restart: unless-stopped
         depends_on:
           - rcnode
-
         environment:
             - PATH=$PATH:/opt/robocomp/bin/
             - NVIDIA_VISIBLE_DEVICES=all
             - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute.
         volumes:
             - /home/robolab/robocomp/components/melex-rodao/files/results:/home/robolab/robocomp/components/melex-rodao//files/results
-
-
+            - ./etc/melexLogger/:/home/robolab/robocomp/components/melex-rodao/components/melexLogger/etc/
         healthcheck:
           test: nc -w 1 carla-server 2000
           interval: 30s
