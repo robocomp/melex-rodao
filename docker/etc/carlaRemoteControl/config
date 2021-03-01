@@ -17,4 +17,4 @@ Ice.Trace.Network=0
 Ice.Trace.Protocol=0
 
 
-
+wheel = /home/robocomp/robocomp/components/melex-rodao/files/carla/wheel_config.ini

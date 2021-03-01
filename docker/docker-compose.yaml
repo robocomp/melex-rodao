@@ -28,8 +28,31 @@ services:
 #            - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
             - ./etc/carlaBridge/:/home/robolab/robocomp/components/melex-rodao/components/carlaBridge/etc/
         depends_on:
+            - melexLogger
             - rcnode
             - carla-server
+        healthcheck:
+          test: nc -w 1 carla-server 2000
+          interval: 30s
+          timeout: 10s
+          start_period: 10s
+          retries: 5
+
+    melexLogger:
+        image: robocomp/robocomp:focal-melex
+        entrypoint:  sh -c "echo $PATH && cd melexLogger && cmake . && make && (./src/melexLogger.py)" #nc -vz carla-server 2000 #
+        restart: unless-stopped
+        depends_on:
+          - rcnode
+
+        environment:
+            - PATH=$PATH:/opt/robocomp/bin/
+            - NVIDIA_VISIBLE_DEVICES=all
+            - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute.
+        volumes:
+            - /home/robolab/robocomp/components/melex-rodao/files/results:/home/robolab/robocomp/components/melex-rodao//files/results
+
+
         healthcheck:
           test: nc -w 1 carla-server 2000
           interval: 30s
@@ -52,6 +75,7 @@ services:
 #        - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
         - ./etc/carlaMonitor/:/home/robolab/robocomp/components/melex-rodao/components/carlaMonitor/etc/
       depends_on:
+        - melexLogger
         - rcnode
         - carla-server
         - carlaBridge
