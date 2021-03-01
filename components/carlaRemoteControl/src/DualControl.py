@@ -56,7 +56,7 @@ import RoboCompCarlaVehicleControl
 
 class DualControl(object):
 
-    def __init__(self, camera_manager, hud, proxy):
+    def __init__(self, camera_manager, hud, wheel_config, proxy):
         # def __init__(self, camera_manager, proxy):
 
         self.carlavehiclecontrol_proxy = proxy
@@ -88,7 +88,7 @@ class DualControl(object):
         self._joystick.init()
 
         self._parser = ConfigParser()
-        self._parser.read("/home/robocomp/robocomp/components/melex-rodao/files/carla/wheel_config.ini")
+        self._parser.read(wheel_config)
         self._steer_idx = int(
             self._parser.get('G29 Racing Wheel', 'steering_wheel'))
         self._throttle_idx = int(
@@ -247,14 +247,14 @@ class DualControl(object):
 
         K2 = 1.6  # 1.6
         throttleCmd = K2 + (2.05 * math.log10(
-            -0.7 * jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.75
+            -0.7 * jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.92
         if throttleCmd <= 0:
             throttleCmd = 0
         elif throttleCmd > 1:
             throttleCmd = 1
 
         brakeCmd = 1.6 + (2.05 * math.log10(
-            -0.7 * -jsInputs[self._brake_idx] + 1.4) - 1.2) / 0.92
+            -0.7 * jsInputs[self._brake_idx] + 1.4) - 1.2) / 0.92
         if brakeCmd <= 0:
             brakeCmd = 0
         elif brakeCmd > 1:

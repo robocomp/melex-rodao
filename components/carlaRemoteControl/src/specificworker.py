@@ -66,13 +66,12 @@ class SpecificWorker(GenericWorker):
         self.gnss_sensor = GNSSSensor()
         self.imu_sensor = IMUSensor()
         self.hud = HUD(self.width, self.height, self.gnss_sensor, self.imu_sensor)
-        self.controller = DualControl(self.camera_manager, self.hud,
-                                      self.carlavehiclecontrol_proxy)
+        self.controller = None
         self.clock = pygame.time.Clock()
 
         data_to_save = {
             'control': ['Time', 'Throttle', 'Steer', 'Brake', 'Gear', 'Handbrake', 'Reverse', 'Manualgear'],
-            'communication' : ['Time', 'CommunicationTime']
+            'communication': ['Time', 'CommunicationTime']
         }
         self.logger = Logger(self.melexlogger_proxy, 'carlaRemoteControl', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
@@ -87,6 +86,14 @@ class SpecificWorker(GenericWorker):
         print('SpecificWorker destructor')
 
     def setParams(self, params):
+        try:
+            wheel_config = params["wheel"]
+            self.controller = DualControl(self.camera_manager, self.hud, wheel_config,
+                                          self.carlavehiclecontrol_proxy)
+
+        except:
+            traceback.print_exc()
+            print("Error reading config params")
         return True
 
     @QtCore.Slot()
@@ -151,8 +158,6 @@ class SpecificWorker(GenericWorker):
     # ===================================================================
     # ===================================================================
 
-
-
     ######################
     # From the RoboCompCarlaVehicleControl you can call this methods:
     # self.carlavehiclecontrol_proxy.updateVehicleControl(...)
@@ -175,4 +180,3 @@ class SpecificWorker(GenericWorker):
     # From the RoboCompCarlaSensors you can use this types:
     # RoboCompCarlaSensors.IMU
     # RoboCompCarlaSensors.GNSS
-
