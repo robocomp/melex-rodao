@@ -35,13 +35,12 @@ import re
 import random
 import time
 
+carla_egg_path = os.path.join('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/', f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
 try:
-    sys.path.append(glob.glob('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
-        sys.version_info.major,
-        sys.version_info.minor,
-        'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
+
+    sys.path.append(glob.glob(carla_egg_path)[0])
 except IndexError:
-    6
+    print(f"Carla API not found in {carla_egg_path}")
 
 import carla
 from IMU import IMUSensor
@@ -146,8 +145,6 @@ class SpecificWorker(GenericWorker):
             blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
         except:
             blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
-        blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
-        # blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
         # Spawn the player.
         if self.vehicle is not None:
             spawn_point = self.vehicle.get_transform()
