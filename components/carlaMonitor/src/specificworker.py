@@ -237,14 +237,19 @@ class SpecificWorker(GenericWorker):
     def admin_cameras(self, nearest_camera_ids):
         for camID in nearest_camera_ids[:2]:
             if not self.is_sensor_active[camID]:
-                self.adminbridge_proxy.activateSensor(camID)
-                self.is_sensor_active[camID] = True
-
+                try:
+                    self.adminbridge_proxy.activateSensor(camID)
+                    self.is_sensor_active[camID] = True
+                except Exception as e:
+                    print(e)
         for camID in nearest_camera_ids[2:]:
             if self.is_sensor_active[camID]:
-                self.is_sensor_active[camID] = False
-                self.adminbridge_proxy.stopSensor(camID)
+                try:
+                    self.adminbridge_proxy.stopSensor(camID)
+                    self.is_sensor_active[camID] = False
 
+                except Exception as e:
+                    print(e)
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
