@@ -60,8 +60,8 @@ class SpecificWorker(GenericWorker):
         self.init_ui()
 
         self.cameras_widget_dict = {
-            'widget1': [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
-            'widget2': [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
+            'widget1': [self.main_widget.camera1_image, self.main_widget.camera1_label, self.main_widget.state_light1],
+            'widget2': [self.main_widget.camera2_image, self.main_widget.camera2_label, self.main_widget.state_light2],
 
         }
         # This relates the index of cameras widgets with
@@ -93,6 +93,13 @@ class SpecificWorker(GenericWorker):
 
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+        self.main_widget.save_button.clicked.connect(self.enable_data_saving)
+
+    def enable_data_saving(self, checked):
+        if checked:
+            self.save_signal.connect(self.results.save_data)
+        else:
+            self.save_signal.disconnect(self.results.save_data)
 
     def initialize_sensor_timers(self):
         timeout_lambdas = {
@@ -116,8 +123,6 @@ class SpecificWorker(GenericWorker):
     def init_ui(self):
         self.main_widget = ControlWidget()
         self.setCentralWidget(self.main_widget)
-        self.main_widget.camera1_switch.stateChanged.connect(self.change_camera_state)
-        self.main_widget.camera2_switch.stateChanged.connect(self.change_camera_state)
         self.main_widget.update_map_position((self.latitude, self.longitude))
 
     def change_camera_state(self):
@@ -229,6 +234,8 @@ class SpecificWorker(GenericWorker):
         cameras_sorted = dict(sorted(self.car_cameras_dist.items(), key=lambda item: item[1]))
 
         ids = [x for x in cameras_sorted.keys()]
+        print(cameras_sorted)
+        print(self.pose_cameras_dict)
 
         return ids
 
