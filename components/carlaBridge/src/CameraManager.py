@@ -17,16 +17,10 @@ mutex = Lock()
 
 class CameraManager(object):
     def __init__(self, bp_library, parent_actor, camerargbdsimplepub_proxy):
-        self.surface = None
-        self.contFPS = 0
-        self.countGNSS = 0
-        self.start = time.time()
         self.sensor_width = 1280
         self.sensor_height = 720
         self.sensor_width_low = 640
         self.sensor_height_low = 480
-        # self.sensor_width_low = 800
-        # self.sensor_height_low = 600
 
         self._parent = parent_actor
         self.blueprint_library = bp_library
@@ -53,19 +47,10 @@ class CameraManager(object):
         cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
         cam_bp.set_attribute('image_size_y', f'{self.sensor_height}')
         cam_bp.set_attribute('fov', '110')
-        # cam_bp.set_attribute('sensor_tick', str(1 / 30))
         spawn_point_car = carla.Transform(carla.Location(x=0.0, y=-0.25, z=1.0))  # Carrito de golf
         sensor_id = 0
         self.sensor_attrs[sensor_id] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
         self.create_sensor(sensor_id)
-
-        # depth_bp = self.blueprint_library.find('sensor.camera.depth')
-        # cam_bp.set_attribute('image_size_x', f'{self.sensor_width}')
-        # cam_bp.set_attribute('image_size_y', f'{self.sensor_height}')
-        #
-        #         self.sensor_attrs'[1] = [spawn_point_car, parent_actor, depth_bp, cc.Raw]
-        #         self.sensor_attrs'[2] = [spawn_point_car, parent_actor, depth_bp, cc.Depth]
-        #         self.sensor_attrs'[3] = [spawn_point_car, parent_actor, depth_bp, cc.LogarithmicDepth]
 
         ####################
         ## STREET SENSORS ##
@@ -85,9 +70,6 @@ class CameraManager(object):
                                           carla.Rotation(yaw=pose['yaw'], pitch=pose['pitch'], roll=pose['roll']))
             self.sensor_attrs[camera_id] = [spawn_point, parent, cam_bp_low, cc.Raw]
 
-        # # Spawn sensors
-        # for s in self.sensor_attrs.keys():
-        #     self.create_sensor(s)
 
     def create_sensor(self, sensorID):
         print('Creating sensor ',sensorID)
@@ -137,7 +119,6 @@ class CameraManager(object):
         depthType = RoboCompCameraRGBDSimple.TDepth()
 
         try:
-            # print('Sending image from camera ', cameraType.cameraID)
             self.camerargbdsimplepub_proxy.pushRGBD(cameraType, depthType)
         except Exception as e:
             print(e)

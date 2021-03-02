@@ -21,20 +21,17 @@
 
 import glob
 import math
-import os
-import sys
+import random
+import time
 import traceback
-from queue import Empty
 
 import cv2
 import pygame
 from PySide2.QtCore import QTimer, Signal
 from PySide2.QtWidgets import QApplication
-from genericworker import *
 from numpy import random
-import re
-import random
-import time
+
+from genericworker import *
 
 carla_egg_path = os.path.join('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/', f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
 try:
@@ -48,18 +45,6 @@ from IMU import IMUSensor
 from GNSS import GnssSensor
 from CameraManager import CameraManager
 from Logger import Logger
-
-
-def find_weather_presets():
-    rgx = re.compile('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)')
-    name = lambda x: ' '.join(m.group(0) for m in rgx.finditer(x))
-    presets = [x for x in dir(carla.WeatherParameters) if re.match('[A-Z].+', x)]
-    return [(getattr(carla.WeatherParameters, x), name(x)) for x in presets]
-
-
-def get_actor_display_name(actor, truncate=250):
-    name = ' '.join(actor.type_id.replace('_', '.').title().split('.')[1:])
-    return (name[:truncate - 1] + u'\u2026') if len(name) > truncate else name
 
 
 class SpecificWorker(GenericWorker):
@@ -76,9 +61,6 @@ class SpecificWorker(GenericWorker):
         self.collision_sensor = None
         self.gnss_sensor = None
         self.camera_manager = None
-
-        self._weather_index = 0
-
         self.car_moved = False
         self.last_time_car_moved = time.time()
 
@@ -129,14 +111,10 @@ class SpecificWorker(GenericWorker):
         self.world = client.load_world(map_name)
         print('Done')
         print(f'Loading world took {round(time.time() - init_time)} seconds')
-
-        # carla_map = world.get_map()
         self.blueprint_library = self.world.get_blueprint_library()
 
     def restart(self):
-        # car_blueprints = self.blueprint_library.filter('vehicle.*')
-        # for car in car_blueprints:
-        #     print(car)
+
         try:
             blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
         except:
@@ -150,15 +128,13 @@ class SpecificWorker(GenericWorker):
             self.destroy()
             self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
         while self.vehicle is None:
-            # spawn_points = self.carla_map.get_spawn_points()
-            # spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
-            # self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
-            #
-            spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774, z=2))
-            self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
-
-        # Set up the sensors.
-        # self.collision_sensor = CollisionSensor(self.player, self.hud)
+            try:
+                spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774, z=2))
+                self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
+            except:
+                spawn_points = self.carla_map.get_spawn_points()
+                spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+                self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
 
         ### SENSORS ###
         self.gnss_sensor = GnssSensor(self.vehicle, self.carlasensors_proxy)
@@ -173,7 +149,7 @@ class SpecificWorker(GenericWorker):
         self.server_fps = self._server_clock.get_fps()
         if self.server_fps in [float("-inf"), float("inf")]:
             self.server_fps = -1
-        # print('Server FPS', int(self.server_fps))
+        print('Server FPS', int(self.server_fps))
         self.logger_signal.emit('fps', 'on_world_tick', str(int(self.server_fps)))
 
         if self.car_moved:
@@ -181,11 +157,6 @@ class SpecificWorker(GenericWorker):
             self.car_moved = False
             self.logger_signal.emit('response', 'on_world_tick', str(response_time))
 
-    def next_weather(self, reverse=False):
-        self._weather_index += -1 if reverse else 1
-        self._weather_index %= len(self._weather_presets)
-        preset = self._weather_presets[self._weather_index]
-        self.vehicle.get_world().set_weather(preset[0])
 
     def destroy(self):
         sensors = [
@@ -207,7 +178,6 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-        # print(f'Camaras activas { sum(self.camera_manager.is_sensor_active.values())}')
         vel = self.vehicle.get_velocity()
         self.logger_signal.emit('velocity', 'compute', str(3.6 * math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)))
 

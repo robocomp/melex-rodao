@@ -14,7 +14,6 @@ class Logger:
             loggerns.headers = headers
             self.melexlogger_proxy.createNamespace(loggerns)
 
-
     def publish_to_logger(self, namespace, method, data):
         message = RoboCompMelexLogger.LogMessage()
         message.sender = self.sender

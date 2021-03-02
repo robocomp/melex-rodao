@@ -1,13 +1,9 @@
-from queue import Queue
-from multiprocessing import SimpleQueue
-
-import weakref
-import carla
 import math
+import weakref
 from threading import Lock
-import RoboCompCarlaSensors
-from Logger import Logger
 
+import RoboCompCarlaSensors
+import carla
 
 
 # ==============================================================================
@@ -20,16 +16,15 @@ class IMUSensor(object):
         self.mutex = Lock()
 
         self.carlasensors_proxy = proxy
-        self.imu_queue = SimpleQueue()
         self.sensor = None
-        self._parent = parent_actor
+
         self.accelerometer = (0.0, 0.0, 0.0)
         self.gyroscope = (0.0, 0.0, 0.0)
         self.compass = 0.0
-        world = self._parent.get_world()
+        world = parent_actor.get_world()
         bp = world.get_blueprint_library().find('sensor.other.imu')
         self.sensor = world.spawn_actor(
-            bp, carla.Transform(), attach_to=self._parent)
+            bp, carla.Transform(), attach_to=parent_actor)
         # We need to pass the lambda a weak reference to self to avoid circular
         # reference.
         weak_self = weakref.ref(self)
@@ -38,7 +33,6 @@ class IMUSensor(object):
 
     @staticmethod
     def _IMU_callback(weak_self, sensor_data):
-        # print('--- IMU callback ---')
         self = weak_self()
         self.mutex.acquire()
         if not self:
@@ -59,7 +53,6 @@ class IMUSensor(object):
         self.compass = math.degrees(sensor_data.compass)
         self.frame = sensor_data.frame
         self.timestamp = sensor_data.timestamp
-        # self.imu_queue.put((self.timestamp, self.frame, self.accelerometer, self.gyroscope, self.compass))
 
         ###################
         ## PUBLISH DATA ##
@@ -72,7 +65,6 @@ class IMUSensor(object):
         dataIMU.compass = self.compass
 
         try:
-            # print('sending IMU data')
             self.carlasensors_proxy.updateSensorIMU(dataIMU)
         except Exception as e:
             print(e)
