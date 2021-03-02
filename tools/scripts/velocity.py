@@ -5,6 +5,7 @@ from math import sin, cos, sqrt, atan2, radians
 
 from matplotlib import pyplot as plt
 import matplotlib
+from sklearn import preprocessing
 
 matplotlib.use('TkAgg')
 
@@ -24,7 +25,7 @@ def getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2):
     rLat2 = radians(lat2)
     a = sin(dLat / 2) * sin(dLat / 2) + cos(rLat1) * cos(rLat2) * sin(dLon / 2) * sin(dLon / 2)
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    d = R * c  # Distance in km
+    d = R * c *1000 # Distance in m
     return d
 
 
@@ -33,14 +34,14 @@ def calc_velocity(dist_km, time_start, time_end):
     # if dist_km == 0:
     #     return 0
 
-    dt = (time_end - time_start).total_seconds() /3600
+    dt = (time_end - time_start).total_seconds()
     if dt == 0:
         return 0
 
     return dist_km /dt if time_end > time_start else 0
 
 
-df = pd.read_csv(os.path.join(dir, 'carlaMonitor_gnss.csv'),
+df = pd.read_csv(os.path.join(dir, 'carlaBridge_gnss.csv'),
                  delimiter=';', skiprows=0, low_memory=False)
 
 df['Time'] = pd.to_datetime(df['Time'], unit='s')
@@ -76,8 +77,10 @@ df['velocity'] = df.apply(
 #To km/h
 df['velocity'] = df['velocity'].apply(lambda x: x * 3.6)
 
+df['prom_velocity'] = df['velocity'].rolling(5).mean()
+
 fig, [ax0, ax1] = plt.subplots(2)
-ax0.plot(df['Time'], df['velocity'], c='purple')
+ax0.plot(df['Time'], df['prom_velocity'], c='purple')
 plt.xlabel("Tiempo ")
 plt.ylabel("Velocidad (Km/h)")
 
