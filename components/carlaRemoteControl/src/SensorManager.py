@@ -1,7 +1,6 @@
+import cv2
 import numpy as np
 import pygame
-from multiprocessing import SimpleQueue
-import cv2
 
 
 class CameraManager(object):
@@ -70,7 +69,6 @@ class GNSSSensor(object):
         self.altitude = 0.0
         self.frame = 0
         self.timestamp = 0
-        self.gnss_queue = SimpleQueue()
 
     def update(self, lat, long, alt, frame, timestamp):
         self.latitude = lat
@@ -78,13 +76,6 @@ class GNSSSensor(object):
         self.altitude = alt
         self.frame = frame
         self.timestamp = timestamp
-
-        # print(f'self.latitude {self.latitude}')
-        # print(f'self.longitude {self.longitude}')
-        # print(f'self.altitude {self.altitude}')
-        # print(f'self.frame {self.frame}')
-        # print(f'self.timestamp {self.timestamp}')
-        # self.gnss_queue.put()
 
 
 class IMUSensor(object):
@@ -94,7 +85,6 @@ class IMUSensor(object):
         self.compass = 0.0
         self.frame = 0
         self.timestamp = 0
-        # self.imu_queue = SimpleQueue()
 
     def update(self, acc, gyro, compass, frame, timestamp):
         self.accelerometer = acc
@@ -102,4 +92,3 @@ class IMUSensor(object):
         self.compass = compass
         self.frame = frame
         self.timestamp = timestamp
-        # self.imu_queue.put(..)

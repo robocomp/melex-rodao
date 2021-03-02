@@ -18,28 +18,18 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
-import time
+from genericworker import *
 import traceback
 
+import pygame
 from PySide2.QtCore import QTimer, Signal
 from PySide2.QtWidgets import QApplication
-from genericworker import *
-from multiprocessing import SimpleQueue
-import numpy as np
-import cv2
-import pygame
-from Logger import Logger
 
-from SensorManager import CameraManager, GNSSSensor, IMUSensor
 from DualControl import DualControl
 from HUD import HUD
+from Logger import Logger
+from SensorManager import CameraManager, GNSSSensor, IMUSensor
 
-
-# If RoboComp was compiled with Python bindings you can use InnerModel in Python
-# sys.path.append('/opt/robocomp/lib')
-# import librobocomp_qmat
-# import librobocomp_osgviewerser
-# import librobocomp_innermodel
 
 class SpecificWorker(GenericWorker):
     logger_signal = Signal(str, str, str)
@@ -47,13 +37,8 @@ class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
 
-        self.Period = 0
-        self.contFPS = 0
-        self.start = time.time()
-
         self.width = 1280
         self.height = 720
-        self.data_queue = SimpleQueue()
 
         pygame.init()
         pygame.font.init()
@@ -75,6 +60,8 @@ class SpecificWorker(GenericWorker):
         }
         self.logger = Logger(self.melexlogger_proxy, 'carlaRemoteControl', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
+
+        self.Period = 0
 
         if startup_check:
             self.startup_check()
@@ -98,13 +85,6 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-
-        # try:
-        #     cm_image, cm_width, cm_height, cm_cameraID = self.data_queue.get()
-        #     self.camera_manager.show_img(cm_image, cm_width, cm_height, cm_cameraID)
-        # except Exception as e:
-        #     print(e)
-
         self.clock.tick_busy_loop(60)
         if self.controller.parse_events(self.clock):
             exit(-1)
@@ -123,8 +103,6 @@ class SpecificWorker(GenericWorker):
         self.hud.render(self.display)
         pygame.display.flip()
 
-        # self.world.tick(self.clock)
-
         return True
 
     def startup_check(self):
@@ -139,7 +117,6 @@ class SpecificWorker(GenericWorker):
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
         if im.cameraID == 0:
             self.camera_manager.images_received[im.cameraID] = im
-        # self.camera_manager.update(im.image, im.width, im.height, im.cameraID)
 
     #
     # SUBSCRIPTION to updateSensorGNSS method from CarlaSensors interface

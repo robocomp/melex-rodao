@@ -1,7 +1,5 @@
 import os
 import pygame
-import datetime
-import math
 
 
 def get_actor_display_name(actor, truncate=250):
@@ -27,7 +25,6 @@ class HUD(object):
         mono = pygame.font.match_font(mono)
         self._font_mono = pygame.font.Font(mono, 12 if os.name == 'nt' else 14)
         self._notifications = FadingText(font, (width, 40), (0, height - 40))
-        # self.help = HelpText(pygame.font.Font(mono, 24), width, height)
         self.server_fps = 0
         self.frame = 0
         self.simulation_time = 0
@@ -45,19 +42,6 @@ class HUD(object):
         self._notifications.tick(world, clock)
         if not self._show_info:
             return
-        # t = world.player.get_transform()
-        # v = world.player.get_velocity()
-        # c = world.player.get_control()
-        # compass = world.imu_sensor.compass
-        # heading = 'N' if abs(t.rotation.yaw) < 89.5 else ''
-        # heading += 'S' if abs(t.rotation.yaw) > 90.5 else ''
-        # heading += 'E' if 179.5 > t.rotation.yaw > 0.5 else ''
-        # heading += 'W' if -0.5 > t.rotation.yaw > -179.5 else ''
-        # colhist = world.collision_sensor.get_collision_history()
-        # collision = [colhist[x + self.frame - 200] for x in range(0, 200)]
-        # max_col = max(1.0, max(collision))
-        # collision = [x / max_col for x in collision]
-        # vehicles = world.world.get_actors().filter('vehicle.*')
 
         self._info_text = [
             ('Throttle:', control.throttle, 0.0, 1.0),
@@ -72,15 +56,6 @@ class HUD(object):
 
         self._info_text += [
             ' ',
-            # 'Server:  % 16.0f FPS' % self.server_fps,
-            # 'Client:  % 16.0f FPS' % clock.get_fps(),
-            # '',
-            # 'Vehicle: % 20s' % get_actor_display_name(world.vehicle, truncate=20),
-            # 'Map:     % 20s' % self.carla_map.name,
-            # 'Simulation time: % 12s' % datetime.timedelta(seconds=int(self.simulation_time)),
-            # '',
-            # 'Speed:   % 15.0f km/h' % (3.6 * math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)),
-            # 'Location:% 20s' % ('(% 5.1f, % 5.1f)' % (t.location.x, t.location.y)),
             'GNSS ',
             'Latitude: %2.6f' % self.gnss.latitude,
             'Longitude: %2.6f ' % self.gnss.longitude,
@@ -92,23 +67,6 @@ class HUD(object):
             'Gyroscop: (%5.1f,%5.1f,%5.1f)' % (self.imu.gyroscope[0],self.imu.gyroscope[1],self.imu.gyroscope[2]),
             ' ',
              ]
-
-        # self._info_text += [
-            # '',
-            # 'Collision:',
-            # collision,
-            # '',
-            # 'Number of vehicles: % 8d' % len(vehicles)]
-        # if len(vehicles) > 1:
-        #     self._info_text += ['Nearby vehicles:']
-        #     distance = lambda l: math.sqrt(
-        #         (l.x - t.location.x) ** 2 + (l.y - t.location.y) ** 2 + (l.z - t.location.z) ** 2)
-        #     vehicles = [(distance(x.get_location()), x) for x in vehicles if x.id != world.player.id]
-        #     for d, vehicle in sorted(vehicles):
-        #         if d > 200.0:
-        #             break
-        #         vehicle_type = get_actor_display_name(vehicle, truncate=22)
-        #         self._info_text.append('% 4dm %s' % (d, vehicle_type))
 
     def toggle_info(self):
         self._show_info = not self._show_info
