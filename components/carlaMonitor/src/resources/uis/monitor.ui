@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="top_layout">
+    <layout class="QHBoxLayout" name="top_layout" stretch="20,10,40">
      <item>
       <layout class="QGridLayout" name="camera1_state_layout">
        <item row="1" column="0">
@@ -34,9 +34,9 @@
           </spacer>
          </item>
          <item>
-          <widget class="QCheckBox" name="camera1_switch">
+          <widget class="QLabel" name="camera1_label">
            <property name="text">
-            <string>Cámara #1</string>
+            <string>TextLabel</string>
            </property>
           </widget>
          </item>
@@ -158,7 +158,7 @@
     </spacer>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="bottom_layout">
+    <layout class="QHBoxLayout" name="bottom_layout" stretch="20,10,40">
      <item>
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="0">
@@ -179,7 +179,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="../resources.qrc">:/images/images/camera1.png</pixmap>
+          <pixmap>:/images/images/camera1.png</pixmap>
          </property>
          <property name="scaledContents">
           <bool>true</bool>
@@ -205,9 +205,9 @@
           </spacer>
          </item>
          <item>
-          <widget class="QCheckBox" name="camera2_switch">
+          <widget class="QLabel" name="camera2_label">
            <property name="text">
-            <string>Cámara #2</string>
+            <string>TextLabel</string>
            </property>
           </widget>
          </item>

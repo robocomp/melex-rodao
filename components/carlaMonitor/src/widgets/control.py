@@ -32,8 +32,6 @@ class ControlWidget(QWidget):
         self.state_panel.addWidget(self.ve_camera_state_light)
         self.state_panel.addWidget(self.gps_state_light)
         self.state_panel.addWidget(self.imu_state_light)
-        self.camera1_switch.setChecked(True)
-        self.camera2_switch.setChecked(True)
         self.save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self.save_button, lambda: self.save_button.setChecked(not self.save_button.isChecked()))
         self.save_button.toggled.connect(self.save_clicked)
 

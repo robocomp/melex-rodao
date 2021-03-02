@@ -61,8 +61,8 @@ class SpecificWorker(GenericWorker):
         self.init_ui()
 
         self.cameras_widget_dict = {
-            'widget1': [self.main_widget.camera1_image, self.main_widget.camera1_switch, self.main_widget.state_light1],
-            'widget2': [self.main_widget.camera2_image, self.main_widget.camera2_switch, self.main_widget.state_light2],
+            'widget1': [self.main_widget.camera1_image, self.main_widget.camera1_label, self.main_widget.state_light1],
+            'widget2': [self.main_widget.camera2_image, self.main_widget.camera2_label, self.main_widget.state_light2],
 
         }
         # This relates the index of cameras widgets with
@@ -124,8 +124,6 @@ class SpecificWorker(GenericWorker):
     def init_ui(self):
         self.main_widget = ControlWidget()
         self.setCentralWidget(self.main_widget)
-        self.main_widget.camera1_switch.stateChanged.connect(self.change_camera_state)
-        self.main_widget.camera2_switch.stateChanged.connect(self.change_camera_state)
         self.main_widget.update_map_position((self.latitude, self.longitude))
 
     # TODO ¿Hay que pasar por aqui cada vez que se cambie automáticamente de cámara?
