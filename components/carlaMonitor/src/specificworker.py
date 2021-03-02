@@ -117,18 +117,6 @@ class SpecificWorker(GenericWorker):
         self.setCentralWidget(self.main_widget)
         self.main_widget.update_map_position((self.latitude, self.longitude))
 
-    def change_camera_state(self):
-        for widget_name, (_, switch, _) in self.cameras_widget_dict.items():
-            camID = self.current_cams_ids[widget_name]
-            if switch.isChecked():
-                if not self.is_sensor_active[camID]:
-                    self.adminbridge_proxy.activateSensor(camID)
-                    self.is_sensor_active[camID] = True
-            else:
-                if self.is_sensor_active[camID]:
-                    self.adminbridge_proxy.stopSensor(camID)
-                    self.is_sensor_active[camID] = False
-
     def admin_sensor_state_lights(self):
         if self.imu_data_received:
             self.main_widget.imu_state_light.turn_on()
@@ -226,9 +214,6 @@ class SpecificWorker(GenericWorker):
         cameras_sorted = dict(sorted(self.car_cameras_dist.items(), key=lambda item: item[1]))
 
         ids = [x for x in cameras_sorted.keys()]
-        print(cameras_sorted)
-        print(self.pose_cameras_dict)
-
         return ids
 
     def admin_cameras(self, nearest_camera_ids):
