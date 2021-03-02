@@ -1,9 +1,0 @@
-image:
-  robocomp_installed_20_04
-matrix:
-  - env: SCRIPT="melex-ci"
-branches:
-  - development
-  - dev/*
-script:
-  - cd components && mkdir build && cd build && cmake .. && make
