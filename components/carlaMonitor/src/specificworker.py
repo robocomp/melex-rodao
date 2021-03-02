@@ -18,8 +18,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
+from genericworker import *
 import math
-import time
 from threading import Lock
 
 import cv2
@@ -30,9 +30,8 @@ from PySide2.QtGui import QImage
 from PySide2.QtGui import QPixmap, qRgb
 from PySide2.QtWidgets import QApplication
 
-from genericworker import *
-from widgets.control import ControlWidget
 from Logger import Logger
+from widgets.control import ControlWidget
 
 
 class SpecificWorker(GenericWorker):
@@ -121,7 +120,6 @@ class SpecificWorker(GenericWorker):
         self.main_widget.camera2_switch.stateChanged.connect(self.change_camera_state)
         self.main_widget.update_map_position((self.latitude, self.longitude))
 
-    # TODO ¿Hay que pasar por aqui cada vez que se cambie automáticamente de cámara?
     def change_camera_state(self):
         for widget_name, (_, switch, _) in self.cameras_widget_dict.items():
             camID = self.current_cams_ids[widget_name]
@@ -261,8 +259,6 @@ class SpecificWorker(GenericWorker):
     #
     def CameraRGBDSimplePub_pushRGBD(self, im, dep):
         self.mutex.acquire()
-
-        # self.is_sensor_active[im.cameraID] = True
         self.camera_data_received[im.cameraID] = True
 
         if im.cameraID != 0:
@@ -297,8 +293,6 @@ class SpecificWorker(GenericWorker):
         self.imu_data_received = True
 
         self.mutex.release()
-        # data = str(self.accelerometer) + ';' + str(self.gyroscope) + ';' + str(self.compass)
-        # data = ";".join((self.accelerometer,self.gyroscope,self.compass))
         data = ';'.join(map(str, [';'.join(map(str, self.accelerometer)), ';'.join(map(str, self.gyroscope)), self.compass]))
 
         self.logger_signal.emit('imu', 'CarlaSensors_updateSensorIMU', data)
