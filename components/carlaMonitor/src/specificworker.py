@@ -30,12 +30,11 @@ from PySide2.QtGui import QImage
 from PySide2.QtGui import QPixmap, qRgb
 from PySide2.QtWidgets import QApplication
 
-from Logger import Logger
+from widgets.control import ControlWidget
 from widgets.control import ControlWidget
 
 
 class SpecificWorker(GenericWorker):
-    logger_signal = Signal(str, str, str)
 
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
@@ -76,13 +75,6 @@ class SpecificWorker(GenericWorker):
         self.camera_timer_dict = {}
         self.camera_data_received = {}
 
-        data_to_save = {
-            'gnss': ['Time', 'Latitude', 'Longitude', 'Altitude'],
-            'imu': ['Time', 'AccelerometerX', 'AccelerometerY', 'AccelerometerZ',
-                    'GyroscopeX', 'GyroscopeY', 'GyroscopeZ', 'Compass']
-        }
-        self.logger = Logger(self.melexlogger_proxy, 'carlaMonitor', data_to_save)
-        self.logger_signal.connect(self.logger.publish_to_logger)
 
         self.sensor_downtime = 1000
         self.Period = 1000 / 24
@@ -284,10 +276,6 @@ class SpecificWorker(GenericWorker):
         self.gps_data_received = True
 
         self.mutex.release()
-
-        data = ';'.join(map(str, [self.latitude, self.longitude, self.altitude]))
-        self.logger_signal.emit('gnss', 'CarlaSensors_updateSensorGNSS', data)
-
     #
     # SUBSCRIPTION to updateSensorIMU method from CarlaSensors interface
     #
@@ -300,9 +288,7 @@ class SpecificWorker(GenericWorker):
         self.imu_data_received = True
 
         self.mutex.release()
-        data = ';'.join(map(str, [';'.join(map(str, self.accelerometer)), ';'.join(map(str, self.gyroscope)), self.compass]))
 
-        self.logger_signal.emit('imu', 'CarlaSensors_updateSensorIMU', data)
 
     # ===================================================================
     # ===================================================================

@@ -33,7 +33,8 @@ from numpy import random
 
 from genericworker import *
 
-carla_egg_path = os.path.join('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/', f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
+carla_egg_path = os.path.join('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/',
+                              f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
 try:
     print(f"Adding {glob.glob(carla_egg_path)[0]} to path")
     sys.path.append(glob.glob(carla_egg_path)[0])
@@ -70,16 +71,30 @@ class SpecificWorker(GenericWorker):
         data_to_save = {
             'fps': ['Time', 'FPS'],
             'response': ['Time', 'ServerResponseTime'],
-            'velocity': ['Time', 'Velocity']
+            'velocity': ['Time', 'Velocity'],
+            'gnss': ['Time', 'Latitude', 'Longitude', 'Altitude'],
+            'imu': ['Time', 'AccelerometerX', 'AccelerometerY', 'AccelerometerZ',
+                    'GyroscopeX', 'GyroscopeY', 'GyroscopeZ', 'Compass']
         }
         self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
+
+
 
         if startup_check:
             self.startup_check()
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+
+            self.save_data_timer = QTimer()
+            self.save_data_timer.timeout.connect(self.save_sensors_data)
+            self.save_data_timer.start(100)
+
+    def save_sensors_data(self):
+        latitude, longitude, altitude = self.gnss_sensor.get_currentData()
+        data = ';'.join(map(str, [latitude, longitude, altitude]))
+        self.logger_signal.emit('gnss', 'CarlaSensors_updateSensorGNSS', data)
 
     def __del__(self):
         print('SpecificWorker destructor')
@@ -156,7 +171,6 @@ class SpecificWorker(GenericWorker):
             response_time = time.time() - self.last_time_car_moved
             self.car_moved = False
             self.logger_signal.emit('response', 'on_world_tick', str(response_time))
-
 
     def destroy(self):
         sensors = [
