@@ -94,6 +94,13 @@ class SpecificWorker(GenericWorker):
 
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+        self.main_widget.save_button.clicked.connect(self.enable_data_saving)
+
+    def enable_data_saving(self, checked):
+        if checked:
+            self.save_signal.connect(self.results.save_data)
+        else:
+            self.save_signal.disconnect(self.results.save_data)
 
     def initialize_sensor_timers(self):
         timeout_lambdas = {
@@ -231,6 +238,8 @@ class SpecificWorker(GenericWorker):
         cameras_sorted = dict(sorted(self.car_cameras_dist.items(), key=lambda item: item[1]))
 
         ids = [x for x in cameras_sorted.keys()]
+        print(cameras_sorted)
+        print(self.pose_cameras_dict)
 
         return ids
 
