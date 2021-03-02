@@ -4,7 +4,7 @@ import weakref
 import carla
 from threading import Lock
 import RoboCompCarlaSensors
-mutex = Lock()
+from Logger import Logger
 
 # ==============================================================================
 # -- GnssSensor ----------------------------------------------------------------
@@ -12,6 +12,7 @@ mutex = Lock()
 
 class GnssSensor(object):
     def __init__(self, parent_actor, proxy):
+        self.mutex = Lock()
         self.carlasensors_proxy = proxy
         self.sensor = None
         self.gnss_queue = SimpleQueue()
@@ -29,9 +30,8 @@ class GnssSensor(object):
     @staticmethod
     def _GNSS_callback(weak_self, sensor_data):
         # print('--- GNSS callback ---')
-        global mutex
-        mutex.acquire()
         self = weak_self()
+        self.mutex.acquire()
         if not self:
             return
 
@@ -51,4 +51,4 @@ class GnssSensor(object):
         except Exception as e:
             print(e)
 
-        mutex.release()
+        self.mutex.release()

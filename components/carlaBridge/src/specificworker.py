@@ -20,6 +20,7 @@
 #
 
 import glob
+import math
 import os
 import sys
 import traceback
@@ -86,11 +87,11 @@ class SpecificWorker(GenericWorker):
 
         data_to_save = {
             'fps': ['Time', 'FPS'],
-            'response': ['Time', 'ServerResponseTime']
+            'response': ['Time', 'ServerResponseTime'],
+            'velocity': ['Time', 'Velocity']
         }
         self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
         self.logger_signal.connect(self.logger.publish_to_logger)
-
 
         if startup_check:
             self.startup_check()
@@ -109,9 +110,6 @@ class SpecificWorker(GenericWorker):
             host = params["host"]
             port = int(params["port"])
             map_name = params["map"]
-            print(type(host), host)
-            print(type(port), port)
-            print(type(map_name), map_name)
             self.initialize_world(host, port, map_name)
             self.restart()
 
@@ -128,9 +126,7 @@ class SpecificWorker(GenericWorker):
         client.set_timeout(10.0)
         init_time = time.time()
         print('Loading world...')
-        print('available maps', client.get_available_maps())
         self.world = client.load_world(map_name)
-        # self.world = client.get_world()
         print('Done')
         print(f'Loading world took {round(time.time() - init_time)} seconds')
 
@@ -212,6 +208,9 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         # print(f'Camaras activas { sum(self.camera_manager.is_sensor_active.values())}')
+        vel = self.vehicle.get_velocity()
+        self.logger_signal.emit('velocity', 'compute', str(3.6 * math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)))
+
         return True
 
     def startup_check(self):

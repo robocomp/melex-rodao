@@ -6,8 +6,8 @@ import carla
 import math
 from threading import Lock
 import RoboCompCarlaSensors
+from Logger import Logger
 
-mutex = Lock()
 
 
 # ==============================================================================
@@ -17,6 +17,8 @@ mutex = Lock()
 
 class IMUSensor(object):
     def __init__(self, parent_actor, proxy):
+        self.mutex = Lock()
+
         self.carlasensors_proxy = proxy
         self.imu_queue = SimpleQueue()
         self.sensor = None
@@ -37,10 +39,8 @@ class IMUSensor(object):
     @staticmethod
     def _IMU_callback(weak_self, sensor_data):
         # print('--- IMU callback ---')
-
-        global mutex
-        mutex.acquire()
         self = weak_self()
+        self.mutex.acquire()
         if not self:
             return
 
@@ -77,4 +77,4 @@ class IMUSensor(object):
         except Exception as e:
             print(e)
 
-        mutex.release()
+        self.mutex.release()
