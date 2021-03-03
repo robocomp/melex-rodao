@@ -244,7 +244,8 @@ class SpecificWorker(GenericWorker):
     def BuildingCameraRGBD_pushRGBD(self, im, dep):
         self.mutex.acquire()
         self.camera_data_received[im.cameraID] = True
-
+        # TODO: Remove FAKE car camera led light activated
+        self.camera_data_received[0] = True
         if im.cameraID != 0:
             self.images_received[im.cameraID] = im
         self.mutex.release()
