@@ -29,14 +29,14 @@ if len(ROBOCOMP)<1:
     raise RuntimeError('ROBOCOMP environment variable not set! Exiting.')
 
 
-Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
+Ice.loadSlice("-I ./src/ --all ./src/CarCameraRGBD.ice")
 
-from RoboCompCameraRGBDSimplePub import *
+from RoboCompCCarCameraRGBD import *
 
-class CameraRGBDSimplePubI(CameraRGBDSimplePub):
+class CarCameraRGBDI(CarCameraRGBD):
     def __init__(self, worker):
         self.worker = worker
 
 
     def pushRGBD(self, im, dep, c):
-        return self.worker.CameraRGBDSimplePub_pushRGBD(im, dep)
+        return self.worker.CarCameraRGBD_pushRGBD(im, dep)
