@@ -114,9 +114,8 @@ class SpecificWorker(GenericWorker):
     #
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
-    def CameraRGBDSimplePub_pushRGBD(self, im, dep):
-        if im.cameraID == 0:
-            self.camera_manager.images_received[im.cameraID] = im
+    def CarCameraRGBD_pushRGBD(self, im, dep):
+        self.camera_manager.images_received[im.cameraID] = im
 
     #
     # SUBSCRIPTION to updateSensorGNSS method from CarlaSensors interface
@@ -134,6 +133,8 @@ class SpecificWorker(GenericWorker):
 
     # ===================================================================
     # ===================================================================
+
+
 
     ######################
     # From the RoboCompCarlaVehicleControl you can call this methods:
@@ -157,3 +158,4 @@ class SpecificWorker(GenericWorker):
     # From the RoboCompCarlaSensors you can use this types:
     # RoboCompCarlaSensors.IMU
     # RoboCompCarlaSensors.GNSS
+

@@ -1,4 +1,4 @@
-import "CameraRGBDSimplePub.idsl";
+import "BuildingCameraRGBD.idsl";
 import "AdminBridge.idsl";
 import "CarlaSensors.idsl";
 import "MelexLogger.idsl";
@@ -9,7 +9,7 @@ Component carlaMonitor
     {
 	requires AdminBridge;
 	publishes MelexLogger;
-        subscribesTo CameraRGBDSimplePub, CarlaSensors; 
+        subscribesTo BuildingCameraRGBD, CarlaSensors; 
     };
 
     language python;

@@ -33,8 +33,8 @@ import RoboCompCommonBehavior
 
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimple.ice")
 import RoboCompCameraRGBDSimple
-Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
-import RoboCompCameraRGBDSimplePub
+Ice.loadSlice("-I ./src/ --all ./src/CarCameraRGBD.ice")
+import RoboCompCCarCameraRGBD
 Ice.loadSlice("-I ./src/ --all ./src/CarlaSensors.ice")
 import RoboCompCarlaSensors
 Ice.loadSlice("-I ./src/ --all ./src/CarlaVehicleControl.ice")
@@ -119,7 +119,7 @@ class seqstring(list):
 setattr(RoboCompMelexLogger, "seqstring", seqstring)
 
 
-import camerargbdsimplepubI
+import carcamerargbdI
 import carlasensorsI
 
 

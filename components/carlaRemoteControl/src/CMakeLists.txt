@@ -3,4 +3,4 @@ PROJECT(  carlaRemoteControl )
 
 INCLUDE( /opt/robocomp/cmake/robocomp.cmake )
 
-ROBOCOMP_IDSL_TO_ICE( CommonBehavior CameraRGBDSimple CameraRGBDSimplePub CarlaSensors CarlaVehicleControl MelexLogger )
+ROBOCOMP_IDSL_TO_ICE( CommonBehavior CameraRGBDSimple CarCameraRGBD CarlaSensors CarlaVehicleControl MelexLogger )

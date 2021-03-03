@@ -1,5 +1,5 @@
 import "CarlaVehicleControl.idsl";
-import "CameraRGBDSimplePub.idsl";
+import "CarCameraRGBD.idsl";
 import "CarlaSensors.idsl";
 import "MelexLogger.idsl";
 
@@ -9,7 +9,7 @@ Component carlaRemoteControl
     {
 	requires CarlaVehicleControl;
 	publishes  MelexLogger;
-        subscribesTo CameraRGBDSimplePub,CarlaSensors; 
+        subscribesTo CarCameraRGBD,CarlaSensors; 
     };
 
     language python;

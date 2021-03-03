@@ -16,7 +16,7 @@ mutex = Lock()
 # # ==============================================================================
 
 class CameraManager(object):
-    def __init__(self, bp_library, parent_actor, camerargbdsimplepub_proxy):
+    def __init__(self, bp_library, parent_actor, buildingcamerargbd_proxy, carcamerargbd_proxy):
         self.sensor_width = 1280
         self.sensor_height = 720
         self.sensor_width_low = 640
@@ -24,7 +24,8 @@ class CameraManager(object):
 
         self._parent = parent_actor
         self.blueprint_library = bp_library
-        self.camerargbdsimplepub_proxy = camerargbdsimplepub_proxy
+        self.buildingcamerargbd_proxy = buildingcamerargbd_proxy
+        self.carcamerargbd_proxy = carcamerargbd_proxy
 
         self.sensor_attrs = {}
         self.sensorID_dict = {}
@@ -69,7 +70,6 @@ class CameraManager(object):
             spawn_point = carla.Transform(carla.Location(x=pose['x'], y=pose['y'], z=pose['z']),
                                           carla.Rotation(yaw=pose['yaw'], pitch=pose['pitch'], roll=pose['roll']))
             self.sensor_attrs[camera_id] = [spawn_point, parent, cam_bp_low, cc.Raw]
-
 
     def create_sensor(self, sensorID):
         print('Creating sensor ',sensorID)
@@ -119,7 +119,10 @@ class CameraManager(object):
         depthType = RoboCompCameraRGBDSimple.TDepth()
 
         try:
-            self.camerargbdsimplepub_proxy.pushRGBD(cameraType, depthType)
+            if cameraType.cameraID == 0:
+                self.carcamerargbd_proxy.pushRGBD(cameraType, depthType)
+            else:
+                self.buildingcamerargbd_proxy.pushRGBD(cameraType, depthType)
         except Exception as e:
             print(e)
 
