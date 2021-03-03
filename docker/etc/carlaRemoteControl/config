@@ -1,5 +1,5 @@
 # Endpoints for subscriptions interfaces
-CameraRGBDSimplePubTopic.Endpoints=tcp -p 0
+CarCameraRGBDTopic.Endpoints=tcp -p 0
 CarlaSensorsTopic.Endpoints=tcp -p 0
 
 
@@ -15,6 +15,7 @@ Ice.MessageSizeMax=20004800
 Ice.Warn.Connections=0
 Ice.Trace.Network=0
 Ice.Trace.Protocol=0
+
 
 
 wheel = /home/robocomp/robocomp/components/melex-rodao/files/carla/wheel_config.ini
