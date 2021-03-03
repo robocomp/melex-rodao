@@ -154,7 +154,7 @@ class SpecificWorker(GenericWorker):
         ### SENSORS ###
         self.gnss_sensor = GnssSensor(self.vehicle, self.carlasensors_proxy)
         self.imu_sensor = IMUSensor(self.vehicle, self.carlasensors_proxy)
-        self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.camerargbdsimplepub_proxy)
+        self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.buildingcamerargbd_proxy, self.carcamerargbd_proxy)
 
         # Connect to the callback to get server fps
         self.world.on_tick(self.on_world_tick)
@@ -241,9 +241,14 @@ class SpecificWorker(GenericWorker):
     # ===================================================================
     # ===================================================================
 
+
     ######################
-    # From the RoboCompCameraRGBDSimplePub you can publish calling this methods:
-    # self.camerargbdsimplepub_proxy.pushRGBD(...)
+    # From the RoboCompBuildingCameraRGBD you can publish calling this methods:
+    # self.buildingcamerargbd_proxy.pushRGBD(...)
+
+    ######################
+    # From the RoboCompCCarCameraRGBD you can publish calling this methods:
+    # self.carcamerargbd_proxy.pushRGBD(...)
 
     ######################
     # From the RoboCompCarlaSensors you can publish calling this methods:
@@ -268,3 +273,4 @@ class SpecificWorker(GenericWorker):
     ######################
     # From the RoboCompCarlaVehicleControl you can use this types:
     # RoboCompCarlaVehicleControl.VehicleControl
+

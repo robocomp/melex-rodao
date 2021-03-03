@@ -62,7 +62,6 @@ import time
 import os
 import copy
 import argparse
-from termcolor import colored
 # Ctrl+c handling
 import signal
 
@@ -122,23 +121,42 @@ if __name__ == '__main__':
         print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
         exit(1)
 
-    # Create a proxy to publish a CameraRGBDSimplePub topic
+    # Create a proxy to publish a BuildingCameraRGBD topic
     topic = False
     try:
-        topic = topicManager.retrieve("CameraRGBDSimplePub")
+        topic = topicManager.retrieve("BuildingCameraRGBD")
     except:
         pass
     while not topic:
         try:
-            topic = topicManager.retrieve("CameraRGBDSimplePub")
+            topic = topicManager.retrieve("BuildingCameraRGBD")
         except IceStorm.NoSuchTopic:
             try:
-                topic = topicManager.create("CameraRGBDSimplePub")
+                topic = topicManager.create("BuildingCameraRGBD")
             except:
-                print('Another client created the CameraRGBDSimplePub topic? ...')
+                print('Another client created the BuildingCameraRGBD topic? ...')
     pub = topic.getPublisher().ice_oneway()
-    camerargbdsimplepubTopic = RoboCompCameraRGBDSimplePub.CameraRGBDSimplePubPrx.uncheckedCast(pub)
-    mprx["CameraRGBDSimplePubPub"] = camerargbdsimplepubTopic
+    buildingcamerargbdTopic = RoboCompBuildingCameraRGBD.BuildingCameraRGBDPrx.uncheckedCast(pub)
+    mprx["BuildingCameraRGBDPub"] = buildingcamerargbdTopic
+
+
+    # Create a proxy to publish a CarCameraRGBD topic
+    topic = False
+    try:
+        topic = topicManager.retrieve("CarCameraRGBD")
+    except:
+        pass
+    while not topic:
+        try:
+            topic = topicManager.retrieve("CarCameraRGBD")
+        except IceStorm.NoSuchTopic:
+            try:
+                topic = topicManager.create("CarCameraRGBD")
+            except:
+                print('Another client created the CarCameraRGBD topic? ...')
+    pub = topic.getPublisher().ice_oneway()
+    carcamerargbdTopic = RoboCompCCarCameraRGBD.CarCameraRGBDPrx.uncheckedCast(pub)
+    mprx["CarCameraRGBDPub"] = carcamerargbdTopic
 
 
     # Create a proxy to publish a CarlaSensors topic

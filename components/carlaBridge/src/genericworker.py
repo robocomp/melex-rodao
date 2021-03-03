@@ -33,10 +33,12 @@ import RoboCompCommonBehavior
 
 Ice.loadSlice("-I ./src/ --all ./src/AdminBridge.ice")
 import RoboCompAdminBridge
+Ice.loadSlice("-I ./src/ --all ./src/BuildingCameraRGBD.ice")
+import RoboCompBuildingCameraRGBD
 Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimple.ice")
 import RoboCompCameraRGBDSimple
-Ice.loadSlice("-I ./src/ --all ./src/CameraRGBDSimplePub.ice")
-import RoboCompCameraRGBDSimplePub
+Ice.loadSlice("-I ./src/ --all ./src/CarCameraRGBD.ice")
+import RoboCompCCarCameraRGBD
 Ice.loadSlice("-I ./src/ --all ./src/CarlaSensors.ice")
 import RoboCompCarlaSensors
 Ice.loadSlice("-I ./src/ --all ./src/CarlaVehicleControl.ice")
@@ -134,7 +136,8 @@ class GenericWorker(QtCore.QObject):
     def __init__(self, mprx):
         super(GenericWorker, self).__init__()
 
-        self.camerargbdsimplepub_proxy = mprx["CameraRGBDSimplePubPub"]
+        self.buildingcamerargbd_proxy = mprx["BuildingCameraRGBDPub"]
+        self.carcamerargbd_proxy = mprx["CarCameraRGBDPub"]
         self.carlasensors_proxy = mprx["CarlaSensorsPub"]
         self.melexlogger_proxy = mprx["MelexLoggerPub"]
 

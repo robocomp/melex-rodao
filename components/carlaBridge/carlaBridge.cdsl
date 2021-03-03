@@ -1,4 +1,5 @@
-import "CameraRGBDSimplePub.idsl";
+import "BuildingCameraRGBD.idsl";
+import "CarCameraRGBD.idsl";
 import "CarlaVehicleControl.idsl";
 import "CarlaSensors.idsl";
 import "AdminBridge.idsl";
@@ -8,9 +9,8 @@ Component carlaBridge
 {
     Communications
     {
-	implements AdminBridge, CarlaVehicleControl;
-	publishes CameraRGBDSimplePub, CarlaSensors, MelexLogger;
-
+        implements AdminBridge, CarlaVehicleControl;
+        publishes BuildingCameraRGBD, CarCameraRGBD, CarlaSensors, MelexLogger;
     };
     language python;
 

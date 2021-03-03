@@ -1,0 +1,9 @@
+import "CameraRGBDSimple.idsl";
+
+module RoboCompCCarCameraRGBD
+{
+  interface CarCameraRGBD
+  {
+    idempotent void pushRGBD(RoboCompCameraRGBDSimple::TImage im, RoboCompCameraRGBDSimple::TDepth dep);
+  };
+};

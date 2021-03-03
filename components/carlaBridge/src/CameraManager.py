@@ -16,7 +16,7 @@ mutex = Lock()
 # # ==============================================================================
 
 class CameraManager(object):
-    def __init__(self, bp_library, parent_actor, camerargbdsimplepub_proxy):
+    def __init__(self, bp_library, parent_actor, buildingcamerargbd_proxy, carcamerargbd_proxy):
         self.sensor_width = 1280
         self.sensor_height = 720
         self.sensor_width_low = 640
@@ -24,7 +24,8 @@ class CameraManager(object):
 
         self._parent = parent_actor
         self.blueprint_library = bp_library
-        self.camerargbdsimplepub_proxy = camerargbdsimplepub_proxy
+        self.buildingcamerargbd_proxy = buildingcamerargbd_proxy
+        self.carcamerargbd_proxy = carcamerargbd_proxy
 
         self.sensor_attrs = {}
         self.sensorID_dict = {}
@@ -119,7 +120,10 @@ class CameraManager(object):
         depthType = RoboCompCameraRGBDSimple.TDepth()
 
         try:
-            self.camerargbdsimplepub_proxy.pushRGBD(cameraType, depthType)
+            if(algo_que_indique_que_es_del_coche):
+                self.carcamerargbd_proxy.pushRGBD(cameraType, depthType)
+            else:
+                self.buildingcamerargbd_proxy.pushRGBD(cameraType, depthType)
         except Exception as e:
             print(e)
 
