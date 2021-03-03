@@ -1,6 +1,6 @@
 import os
-from datetime import datetime
 
+import numpy as np
 import pandas as pd
 from shapely.geometry import Point
 import geopandas as gpd
@@ -9,25 +9,57 @@ import matplotlib.pyplot as plt
 import yaml
 import matplotlib
 
+
+def set_color(value):
+    if value == np.nan:
+        value = 0
+    if value < 5:
+        color = 'greenyellow'
+    elif value < 10:
+        color = 'yellow'
+    elif value < 15:
+        color = 'gold'
+    elif value < 20:
+        color = 'darkorange'
+    elif value >= 20:
+        color = 'red'
+    return color
+
+
 matplotlib.use('TkAgg')
 
-dir = '/home/robocomp/robocomp/components/melex-rodao/files/results/test_210225_1650'
+# Read last directory
+directory = '/home/robocomp/robocomp/components/melex-rodao/files/results/'
+dir = max([os.path.join(directory, d) for d in os.listdir(directory)], key=os.path.getmtime)
 
-df = pd.read_csv(os.path.join(dir, 'carlaMonitor_gnss.csv'),
+# Read gnss file
+df = pd.read_csv(os.path.join(dir, 'carlaBridge_gnss.csv'),
                  delimiter=';', skiprows=0, low_memory=False)
 
+# Read velocity file generated with velocity.py script
+df2 = pd.read_csv(os.path.join(dir, 'velocity.csv'),
+                  delimiter=';', skiprows=0, low_memory=False)
+# Merge dataframes
+df_merge_result = pd.merge_ordered(df, df2, on='Time', fill_method="ffill")
+
+# Create column color depending of the velocity
+df['Color'] = df_merge_result['prom_velocity'].apply(lambda value: set_color(value))
+
+# Create geodataframe to plot latitude and loingitude
 geometry = [Point(xy) for xy in zip(df['Longitude'], df['Latitude'])]
 gdf = GeoDataFrame(df, geometry=geometry)
-fig, ax1 = plt.subplots(figsize=(10, 6))
 
-# this is a simple map that goes with geopandas
+fig, ax1 = plt.subplots(figsize=(10, 6))
+gdf.plot(ax=ax1, marker='o', color=gdf['Color'], markersize=8);
+
+# Read roads map
 roads = gpd.read_file('/home/robolab/robocomp/components/melex-rodao/files/campus/roads.geojson')
 roads.plot(ax=ax1)
+# Buildings map
 buildings = gpd.read_file('/home/robolab/robocomp/components/melex-rodao/files/campus/buildings.geojson')
 buildings.plot(ax=ax1, color='darkslateblue')
 
-gdf.plot(ax=ax1, marker='.', color='red', markersize=1);
-
+# Read and plot cameras location
 yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
 pose_cameras_dict = yaml.load(yaml_file)
 
@@ -41,16 +73,6 @@ df2 = pd.DataFrame({'Latitude': cam_lat, 'Longitude': cam_lon})
 geometry2 = [Point(xy) for xy in zip(cam_lon, cam_lat)]
 gdf2 = GeoDataFrame(df2, geometry=geometry2)
 
-gdf2.plot(ax=ax1, marker='o', color='y', markersize=15);
+gdf2.plot(ax=ax1, marker='o', color='y', markersize=20);
 
-plt.figure()
-df3 = pd.read_csv(os.path.join(dir, 'carlaBridge_fps.csv'),
-                  delimiter=';', skiprows=0, low_memory=False)
-
-df3 = df3[df3['FPS'] != 0]  # Remove columns with FPS 0 --- bridge not working yet
-df3['Time'] = df3['Time'].apply(lambda x: datetime.fromtimestamp(x))
-plt.plot(df3['Time'], df3['FPS'], c='purple')
-plt.xlabel("Tiempo ")
-plt.ylabel("FPS")
 plt.show()
-

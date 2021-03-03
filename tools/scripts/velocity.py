@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 from math import sin, cos, sqrt, atan2, radians
 
@@ -16,7 +17,6 @@ print(dir)
 
 # dir = '/home/robocomp/robocomp/components/melex-rodao/files/results/prueba'
 
-
 def getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2):
     R = 6373.0  # Radius of the earth in km
     dLat = radians(lat2 - lat1)
@@ -31,9 +31,6 @@ def getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2):
 
 def calc_velocity(dist_km, time_start, time_end):
     """Return 0 if time_start == time_end, avoid dividing by 0"""
-    # if dist_km == 0:
-    #     return 0
-
     dt = (time_end - time_start).total_seconds()
     if dt == 0:
         return 0
@@ -44,14 +41,11 @@ def calc_velocity(dist_km, time_start, time_end):
 df = pd.read_csv(os.path.join(dir, 'carlaBridge_gnss.csv'),
                  delimiter=';', skiprows=0, low_memory=False)
 
-df['Time'] = pd.to_datetime(df['Time'], unit='s')
+df['datetime'] = pd.to_datetime(df['Time'], unit='s')
 
 df['prevLat'] = df['Latitude'].shift(1)
 df['prevLon'] = df['Longitude'].shift(1)
-df['prevTime'] = df['Time'].shift(1)
-
-
-df.to_csv('velocity.csv')
+df['prevTime'] = df['datetime'].shift(1)
 
 # create a new column for distance
 df['dist_km'] = df.apply(
@@ -69,7 +63,7 @@ df['velocity'] = df.apply(
     lambda row: calc_velocity(
         dist_km=row['dist_km'],
         time_start=row['prevTime'],
-        time_end=row['Time']
+        time_end=row['datetime']
     ),
     axis=1
 )
@@ -79,20 +73,25 @@ df['velocity'] = df['velocity'].apply(lambda x: x * 3.6)
 
 df['prom_velocity'] = df['velocity'].rolling(5).mean()
 
-fig, [ax0, ax1] = plt.subplots(2)
-ax0.plot(df['Time'], df['prom_velocity'], c='purple')
-plt.xlabel("Tiempo ")
-plt.ylabel("Velocidad (Km/h)")
 
+fig, [ax0, ax1] = plt.subplots(2)
+ax0.plot(df['datetime'], df['prom_velocity'], c='purple')
+ax0.set_xlabel("Tiempo ")
+ax0.set_ylabel("Velocidad  (Km/h)")
+
+##Plot carla velocity
 df2 = pd.read_csv(os.path.join(dir, 'carlaBridge_velocity.csv'),
                   delimiter=';', skiprows=0, low_memory=False)
 
-df2['Time'] = pd.to_datetime(df2['Time'], unit='s')
+df2['datetime'] = pd.to_datetime(df2['Time'], unit='s')
 
-ax1.plot(df2['Time'], df2['Velocity'], c='turquoise')
-plt.xlabel("Tiempo ")
-plt.ylabel("Velocidad Carla (Km/h)")
+ax1.plot(df2['datetime'], df2['Velocity'], c='turquoise')
+ax1.set_xlabel("Tiempo ")
+ax1.set_ylabel("Velocidad Carla (Km/h)")
 
 # ax1.xlabel("Tiempo ")
 # ax1.ylabel("Velocidad (Km/h)")
+df['prom_velocity']= df['prom_velocity'].fillna(0)
+df[['Time','prom_velocity']].to_csv(os.path.join(dir,'velocity.csv'), index=False,sep=';' )
+
 plt.show()
