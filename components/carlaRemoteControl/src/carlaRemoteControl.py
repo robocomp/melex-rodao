@@ -165,27 +165,27 @@ if __name__ == '__main__':
         sys.exit(-1)
 
 
-    CameraRGBDSimplePub_adapter = ic.createObjectAdapter("CameraRGBDSimplePubTopic")
-    camerargbdsimplepubI_ = camerargbdsimplepubI.CameraRGBDSimplePubI(worker)
-    camerargbdsimplepub_proxy = CameraRGBDSimplePub_adapter.addWithUUID(camerargbdsimplepubI_).ice_oneway()
+    CarCameraRGBD_adapter = ic.createObjectAdapter("CarCameraRGBDTopic")
+    carcamerargbdI_ = carcamerargbdI.CarCameraRGBDI(worker)
+    carcamerargbd_proxy = CarCameraRGBD_adapter.addWithUUID(carcamerargbdI_).ice_oneway()
 
     subscribeDone = False
     while not subscribeDone:
         try:
-            camerargbdsimplepub_topic = topicManager.retrieve("CameraRGBDSimplePub")
+            carcamerargbd_topic = topicManager.retrieve("CarCameraRGBD")
             subscribeDone = True
         except Ice.Exception as e:
             print("Error. Topic does not exist (creating)")
             time.sleep(1)
             try:
-                camerargbdsimplepub_topic = topicManager.create("CameraRGBDSimplePub")
+                carcamerargbd_topic = topicManager.create("CarCameraRGBD")
                 subscribeDone = True
             except:
                 print("Error. Topic could not be created. Exiting")
                 status = 0
     qos = {}
-    camerargbdsimplepub_topic.subscribeAndGetPublisher(qos, camerargbdsimplepub_proxy)
-    CameraRGBDSimplePub_adapter.activate()
+    carcamerargbd_topic.subscribeAndGetPublisher(qos, carcamerargbd_proxy)
+    CarCameraRGBD_adapter.activate()
 
 
     CarlaSensors_adapter = ic.createObjectAdapter("CarlaSensorsTopic")

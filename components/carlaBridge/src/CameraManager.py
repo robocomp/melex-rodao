@@ -71,7 +71,6 @@ class CameraManager(object):
                                           carla.Rotation(yaw=pose['yaw'], pitch=pose['pitch'], roll=pose['roll']))
             self.sensor_attrs[camera_id] = [spawn_point, parent, cam_bp_low, cc.Raw]
 
-
     def create_sensor(self, sensorID):
         print('Creating sensor ',sensorID)
         created = False
@@ -120,7 +119,7 @@ class CameraManager(object):
         depthType = RoboCompCameraRGBDSimple.TDepth()
 
         try:
-            if(algo_que_indique_que_es_del_coche):
+            if cameraType.cameraID == 0:
                 self.carcamerargbd_proxy.pushRGBD(cameraType, depthType)
             else:
                 self.buildingcamerargbd_proxy.pushRGBD(cameraType, depthType)

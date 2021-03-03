@@ -241,7 +241,7 @@ class SpecificWorker(GenericWorker):
     #
     # SUBSCRIPTION to pushRGBD method from CameraRGBDSimplePub interface
     #
-    def CameraRGBDSimplePub_pushRGBD(self, im, dep):
+    def BuildingCameraRGBD_pushRGBD(self, im, dep):
         self.mutex.acquire()
         self.camera_data_received[im.cameraID] = True
 
@@ -277,6 +277,8 @@ class SpecificWorker(GenericWorker):
 
     # ===================================================================
     # ===================================================================
+
+
 
     ######################
     # From the RoboCompAdminBridge you can call this methods:
