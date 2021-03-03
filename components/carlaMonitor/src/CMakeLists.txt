@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
-PROJECT(  carlaMonitor )
+cmake_minimum_required(VERSION 3.10)
 
 INCLUDE( /opt/robocomp/cmake/robocomp.cmake )
 
