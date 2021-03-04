@@ -92,6 +92,6 @@ ax1.set_ylabel("Velocidad Carla (Km/h)")
 # ax1.xlabel("Tiempo ")
 # ax1.ylabel("Velocidad (Km/h)")
 df['prom_velocity']= df['prom_velocity'].fillna(0)
-df[['Time','prom_velocity']].to_csv(os.path.join(dir,'velocity.csv'), index=False,sep=';' )
+df[['Time','prom_velocity']].to_csv(os.path.join(dir,'velocity.csv'), index=False, sep=';' )
 
 plt.show()

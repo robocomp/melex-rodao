@@ -23,7 +23,7 @@ df4 = pd.merge_ordered(df1, df2, on='Time', fill_method="ffill")
 #
 df4['TotalTime'] = df4['CommunicationTime'] + df4['ServerResponseTime']
 
-df4.to_csv(os.path.join(dir, 'responsetime.csv'))
+df4.to_csv(os.path.join(dir, 'responsetime.csv'), index=False, sep=';')
 
 std = df4['TotalTime'].std()
 mean = df4['TotalTime'].mean()

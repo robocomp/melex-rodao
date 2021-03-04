@@ -30,7 +30,8 @@ matplotlib.use('TkAgg')
 
 # Read last directory
 directory = '/home/robocomp/robocomp/components/melex-rodao/files/results/'
-dir = max([os.path.join(directory, d) for d in os.listdir(directory)], key=os.path.getmtime)
+# dir = max([os.path.join(directory, d) for d in os.listdir(directory)], key=os.path.getmtime)
+dir = '/home/robocomp/robocomp/components/melex-rodao/files/results/pruebaCampusV4'
 
 # Read gnss file
 df = pd.read_csv(os.path.join(dir, 'carlaBridge_gnss.csv'),
