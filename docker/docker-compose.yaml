@@ -110,6 +110,21 @@ services:
         retries: 5
         start_period: 12s
 
+    melexStatistics:
+      image: robocomp/robocomp:focal-melex
+      runtime: nvidia
+      entrypoint: sh -c "echo $PATH && cd .. && cd tools && cd MelexStatistics && python3 melexstatistics.py" #nc -vz carla-server 2000 #
+      environment:
+        - DISPLAY=$DISPLAY
+        - PATH=$PATH:/opt/robocomp/bin/
+        - QT_X11_NO_MITSHM=1
+        - NVIDIA_VISIBLE_DEVICES=all
+      volumes:
+        - /tmp/.X11-unix:/tmp/.X11-unix
+        - /home/robolab/robocomp/components/melex-rodao/files/results:/home/robolab/robocomp/components/melex-rodao/files/results
+#        - /home/robolab/robocomp/components/melex-rodao/tools/MelexStatistics:/home/robolab/robocomp/components/melex-rodao/tools/MelexStatistics
+      depends_on:
+        - carlaControl
 
     rcnode:
         image: robocomp/robocomp:focal-melex
