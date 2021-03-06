@@ -14,6 +14,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: ${{ github.repository }}
           dockerfile: docker/Dockerfile
-          tag_with_ref: true
-          tag_with_sha: true
           tags: robocomp-melex
