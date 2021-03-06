@@ -19,11 +19,15 @@ RUN sudo apt update && sudo apt install -y \
     libopencv-dev \
     make \
     netcat \
+    python3-geopandas \
     python3-opencv \
+    python3-opengl
+    python3-pandas  \
     python3-pygame \
     python3-yaml \
     python3-zeroc-ice \
     && sudo rm -rf /var/lib/apt/lists/*
+RUN sudo pip3 install pyqtgraph
 # get melex-rodao repository
 USER robolab
 RUN mkdir -p robocomp/components
@@ -35,7 +39,5 @@ RUN cd melex-rodao && mkdir build && cd build && cmake .. && make && sudo PATH=$
 COPY --from=carlasim/carla:0.9.11 /home/carla/PythonAPI /home/robolab/CARLA_0.9.11/PythonAPI
 RUN ln -s /home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-0.9.11-py3.7-linux-x86_64.egg /home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-0.9.11-py3.8-linux-x86_64.egg
 WORKDIR melex-rodao/components/
-
-# compile
 
 
