@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pathlib
 from datetime import datetime
 import os
 import sys
@@ -7,15 +8,89 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
+import yaml
 from PySide2 import QtGui, QtCore, QtWidgets
 from PySide2.QtCore import QCoreApplication, Qt
-from PySide2.QtWidgets import QApplication, QMainWindow
+from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton
 from pyqtgraph import GraphicsLayoutWidget, DateAxisItem
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
+import pandas as pd
+import geopandas as gpd
 
-RESULTS_DIR = '/home/robocomp/robocomp/components/melex-rodao/files/results/'
+FILE_PATH = pathlib.Path(__file__).parent.absolute()
+RESULTS_DIR = os.path.join(FILE_PATH, "..", "..", 'files/results/')
 
 web_colors = ["Red", "Yellow", "Cyan", "Blue", "Magenta"]
 qt_colors = ["r", "y", "g", "b", "m"]
+
+
+def set_color(value):
+    if value == np.nan:
+        value = 0
+    if value < 5:
+        color = 'greenyellow'
+    elif value < 10:
+        color = 'yellow'
+    elif value < 15:
+        color = 'gold'
+    elif value < 20:
+        color = 'darkorange'
+    elif value >= 20:
+        color = 'red'
+    return color
+
+
+class GeoDataPlotWidget(Canvas):
+    def __init__(self, file_dir):
+        self.df1 = pd.read_csv(os.path.join(file_dir, 'carlaBridge_gnss.csv'),
+                               delimiter=';', skiprows=0, low_memory=False)
+
+        # Read gnss file
+        df = pd.read_csv(os.path.join(file_dir, 'carlaBridge_gnss.csv'),
+                         delimiter=';', skiprows=0, low_memory=False)
+
+        # Read velocity file generated with velocity.py script
+        df2 = pd.read_csv(os.path.join(file_dir, 'velocity.csv'),
+                          delimiter=';', skiprows=0, low_memory=False)
+        # Merge dataframes
+        df_merge_result = pd.merge_ordered(df, df2, on='Time', fill_method="ffill")
+
+        # Create column color depending of the velocity
+        df['Color'] = df_merge_result['prom_velocity'].apply(lambda value: set_color(value))
+
+        # Create geodataframe to plot latitude and loingitude
+        geometry = gpd.points_from_xy(df['Longitude'], df['Latitude'])
+        gdf = gpd.GeoDataFrame(df, geometry=geometry)
+        self.fig = Figure()
+        ax1 = self.fig.add_subplot(111)
+        gdf.plot(ax=ax1, marker='o', color=gdf['Color'], markersize=8)
+
+        CAMPUS_DIR_PATH = os.path.join(FILE_PATH, "..", "..", "files", "campus")
+        # Read roads map
+        roads = gpd.read_file(os.path.join(CAMPUS_DIR_PATH, 'roads.geojson'))
+        roads.plot(ax=ax1)
+        # Buildings map
+        buildings = gpd.read_file(os.path.join(CAMPUS_DIR_PATH, 'buildings.geojson'))
+        buildings.plot(ax=ax1, color='darkslateblue')
+
+        # Read and plot cameras location
+        yaml_file = open(os.path.join(FILE_PATH, "..", "..", "etc", 'cameras.yml'))
+        pose_cameras_dict = yaml.load(yaml_file, Loader=yaml.FullLoader)
+
+        cam_lat = []
+        cam_lon = []
+        for pose in pose_cameras_dict.values():
+            cam_lat.append(pose['latitude'])
+            cam_lon.append(pose['longitude'])
+
+        df2 = pd.DataFrame({'Latitude': cam_lat, 'Longitude': cam_lon})
+        geometry2 = gpd.points_from_xy(cam_lon, cam_lat)
+        gdf2 = gpd.GeoDataFrame(df2, geometry=geometry2)
+
+        gdf2.plot(ax=ax1, marker='o', color='y', markersize=20)
+        self.ax = ax1
+        super(GeoDataPlotWidget, self).__init__(self.fig)
 
 
 class AbstractPlotWidget(pg.GraphicsLayoutWidget):
@@ -89,7 +164,6 @@ class AbstractPlotWidget(pg.GraphicsLayoutWidget):
             self.plot_area.setAxisItems({'bottom': axis})
 
 
-
 class GNSS3DPlotWidget(gl.GLViewWidget):
     def __init__(self, file_dir):
         super(GNSSPlotWidget, self).__init__()
@@ -102,7 +176,7 @@ class GNSS3DPlotWidget(gl.GLViewWidget):
 
         self.plot3D('Longitude', data1, 'Latitud', data2, "altitude", data3)
 
-    def plot3D(self,  x_axis_name, x_axis_data, y_axis_name, y_axis_data, z_axis_name, z_axis_data):
+    def plot3D(self, x_axis_name, x_axis_data, y_axis_name, y_axis_data, z_axis_name, z_axis_data):
         self.opts['distance'] = 40
         # self.show()
         # self.setWindowTitle('pyqtgraph example: GLLinePlotItem')
@@ -119,7 +193,8 @@ class GNSS3DPlotWidget(gl.GLViewWidget):
         self.addItem(gz)
         for i in range(len(x_axis_data)):
             # pts = np.vstack([x_axis_data[i], y_axis_data[i], z_axis_data[i]]).transpose()
-            plt = gl.GLLinePlotItem(pos=np.vstack([x_axis_data[i], y_axis_data[i], z_axis_data[i]]).transpose(), antialias=True)
+            plt = gl.GLLinePlotItem(pos=np.vstack([x_axis_data[i], y_axis_data[i], z_axis_data[i]]).transpose(),
+                                    antialias=True)
             self.addItem(plt)
 
 
@@ -129,7 +204,7 @@ class GNSSPlotWidget(AbstractPlotWidget):
         self.df1 = pd.read_csv(os.path.join(file_dir, 'carlaBridge_gnss.csv'),
                                delimiter=';', skiprows=0, low_memory=False)
 
-        long= self.df1['Longitude'].to_numpy()
+        long = self.df1['Longitude'].to_numpy()
         lat = self.df1['Latitude'].to_numpy()
 
         self.plot('Long', lat, 'Lat', long)
@@ -193,7 +268,7 @@ dock_type = {
          },
     "carlaBridge_gnss.csv":
         {"name": "GNSS",
-         "type": GNSSPlotWidget
+         "type": GeoDataPlotWidget
          }
 }
 
@@ -204,20 +279,23 @@ dock_positions = [
     QtCore.Qt.TopDockWidgetArea
 ]
 
+
 class MelexStatistics(QMainWindow):
     def __init__(self):
         super(MelexStatistics, self).__init__()
         self.setWindowTitle("Melex Statistics")
         self.docks = {}
         self._current_dock_pos = 0
+        self.open_button = QPushButton("Open Statistics")
+        self.open_button.clicked.connect(self.open_statistics)
+        self.setCentralWidget(self.open_button)
 
-        # dialog = QtWidgets.QFileDialog(caption="Select result directory", directory=RESULTS_DIR)
-        # dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
-        # dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
-        # dialog.exec_()
-        # for dirpath, dnames, fnames in os.walk(dialog.selectedFiles()[0]):
-        for dirpath, dnames, fnames in os.walk(
-                "/home/robolab/robocomp/components/melex-rodao/files/results/pruebaCampusV4"):
+    def open_statistics(self):
+        dialog = QtWidgets.QFileDialog(caption="Select result directory", directory=RESULTS_DIR)
+        dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
+        dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
+        dialog.exec_()
+        for dirpath, dnames, fnames in os.walk(dialog.selectedFiles()[0]):
             for f in fnames:
                 self.create_dock(dirpath, f)
 
