@@ -9,12 +9,28 @@ LABEL description="This is custom Docker Image for Robocomp in Ubuntu Focal"
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Update Ubuntu Software repository
-RUN sudo apt update && sudo apt install -y libopencv-dev python3-opencv python3-yaml python3-pygame iputils-ping netcat git cmake make g++ gcc glmark2 python3-zeroc-ice
+RUN sudo apt update && sudo apt install -y \
+    cmake \
+    g++ \
+    gcc \
+    git \
+    glmark2 \
+    iputils-ping \
+    libopencv-dev \
+    make \
+    netcat \
+    python3-opencv \
+    python3-pygame \
+    python3-yaml \
+    python3-zeroc-ice \
+    && sudo rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get install -y --no-install-recommends pyside2-tools
+RUN sudo apt update && sudo apt install -y vim
 # get melex-rodao repository
 USER robolab
 RUN sudo ln -s ~ /home/robocomp
-RUN mkdir components
-WORKDIR components
+RUN mkdir -p robocomp/components
+WORKDIR robocomp/components
 ADD https://api.github.com/repos/robocomp/melex-rodao/git/refs/heads/SplitComponent version.json
 RUN git clone -b SplitComponent https://github.com/robocomp/melex-rodao.git
 ENV PATH $PATH:/opt/robocomp/bin/
