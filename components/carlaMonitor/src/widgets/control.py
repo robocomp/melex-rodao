@@ -32,18 +32,18 @@ class ControlWidget(QWidget):
         self.state_panel.addWidget(self.ve_camera_state_light)
         self.state_panel.addWidget(self.gps_state_light)
         self.state_panel.addWidget(self.imu_state_light)
-        self.save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self.save_button, lambda: self.save_button.setChecked(not self.save_button.isChecked()))
-        self.save_button.toggled.connect(self.save_clicked)
+        # self.save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self.save_button, lambda: self.save_button.setChecked(not self.save_button.isChecked()))
+        # self.save_button.toggled.connect(self.save_clicked)
 
     def update_map_position(self, coords):
         self.map_widget.update_map_position(coords[0], coords[1])
 
-    def save_clicked(self, checked):
-        print(f"saving data {checked}")
-        if checked:
-            self.save_button.setText("Saving...")
-        else:
-            self.save_button.setText("Save data")
+    # def save_clicked(self, checked):
+    #     print(f"saving data {checked}")
+    #     if checked:
+    #         self.save_button.setText("Saving...")
+    #     else:
+    #         self.save_button.setText("Save data")
 
 
 

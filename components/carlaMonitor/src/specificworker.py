@@ -85,13 +85,13 @@ class SpecificWorker(GenericWorker):
 
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
-        self.main_widget.save_button.clicked.connect(self.enable_data_saving)
-
-    def enable_data_saving(self, checked):
-        if checked:
-            self.save_signal.connect(self.results.save_data)
-        else:
-            self.save_signal.disconnect(self.results.save_data)
+    #     self.main_widget.save_button.clicked.connect(self.enable_data_saving)
+    #
+    # def enable_data_saving(self, checked):
+    #     if checked:
+    #         self.save_signal.connect(self.results.save_data)
+    #     else:
+    #         self.save_signal.disconnect(self.results.save_data)
 
     def initialize_sensor_timers(self):
         timeout_lambdas = {
