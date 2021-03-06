@@ -434,7 +434,7 @@ FILE_VERSION_FILTER    =
 LAYOUT_FILE            =
 
 #---------------------------------------------------------------------------
-# configuration options related to warning and progress messages
+# configuration options related to warning and auto_increment messages
 #---------------------------------------------------------------------------
 
 # ROBOCOMP
