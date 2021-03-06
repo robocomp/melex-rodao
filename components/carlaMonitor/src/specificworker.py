@@ -204,8 +204,10 @@ class SpecificWorker(GenericWorker):
         else:
             qImg = QImage(camera_data.width, camera_data.height, QImage.Format_ARGB32)
             qImg.fill(qRgb(0, 0, 0))
-
-        camera_widget.setPixmap(QPixmap(qImg))
+        pixmap = QPixmap(qImg)
+        pixmap = pixmap.scaled(camera_widget.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        print(f"resized to {camera_widget.size()} result in {pixmap.size()}")
+        camera_widget.setPixmap(pixmap)
         camera_label.setText(self.pose_cameras_dict[cam_id]['name'])
 
     def get_nearest_cameras(self):
