@@ -16,7 +16,7 @@
   x: 12.1
   y: 65.1
   yaw: -75
-  z: 9.4
+  z: 10
   latitude: 39.4794451943053
   longitude: -6.3425991738366045
 
@@ -45,12 +45,12 @@
 
 5:
   name: 'Magisterio (derecha)'
-  pitch: 0
+  pitch: -15
   roll: 0
-  x: 286.51
-  y: 30.5
+  x: 291.00
+  y: 42.70
   yaw: 80
-  z: 8.6
+  z: 14
   latitude:  39.4797560132987
   longitude: -6.339405446028102
 
@@ -68,12 +68,12 @@
 
 7:
   name: 'VCentenario (Derecha)'
-  pitch: 0
+  pitch: -15
   roll: 0
-  x: -17
-  y: -29.8
+  x: -24.20
+  y: -28.00
   yaw: 45
-  z: 7.6
+  z: 10
   latitude: 39.48029769743266
   longitude: -6.342937854949663
 
