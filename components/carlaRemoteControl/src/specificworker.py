@@ -86,7 +86,7 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         self.clock.tick_busy_loop(60)
-        if self.controller.parse_events(self.clock):
+        if self.controller and self.controller.parse_events(self.clock):
             exit(-1)
 
         if self.controller.car_moved():

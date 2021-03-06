@@ -97,7 +97,7 @@ services:
         - NVIDIA_VISIBLE_DEVICES=all
       volumes:
         - /tmp/.X11-unix:/tmp/.X11-unix
-#        - /home/robolab/robocomp/components/melex-rodao/:/home/robolab/robocomp/components/melex-rodao/
+#        - /home/robolab/robocomp/components/melex-rodao/components/carlaRemoteControl/:/home/robolab/robocomp/components/melex-rodao/components/carlaRemoteControl/
         - ./etc/carlaRemoteControl/:/home/robolab/robocomp/components/melex-rodao/components/carlaRemoteControl/etc/
       depends_on:
         - carlaBridge
