@@ -114,7 +114,11 @@ class AbstractPlotWidget(pg.GraphicsLayoutWidget):
         vb = self.plot_area.vb
         pos = evt[0]  ## using signal proxy turns original arguments into a tuple
         if self.plot_area.sceneBoundingRect().contains(pos):
-            mousePoint = vb.mapSceneToView(pos)
+            try:
+                mousePoint = vb.mapSceneToView(pos)
+            except np.linalg.LinAlgError:
+                print("Plot too small to show values")
+                return
             xpoint = mousePoint.x()
             data_frames_string = ""
             for plot_index, [plot_name, plot_values] in enumerate(self.plots.items()):
@@ -125,6 +129,8 @@ class AbstractPlotWidget(pg.GraphicsLayoutWidget):
                     data_frames_string += f", <span style='color: {next_color}'>{plot_name}={data[1][index]:02.02f}</span>"
                 else:
                     index, value = self.find_nearest(plot_values.xData, xpoint)
+                    if index >= len(plot_values.yData):
+                        index=len(plot_values.yData)-1
                     data_frames_string += f", <span style='color: {next_color}'>{plot_name}={plot_values.yData[index]:02.02f}</span>"
 
             if 'time' in self.x_axis_name.lower():
@@ -162,6 +168,17 @@ class AbstractPlotWidget(pg.GraphicsLayoutWidget):
         if 'time' in x_axis_name.lower():
             axis = pg.DateAxisItem()
             self.plot_area.setAxisItems({'bottom': axis})
+
+    def plot_hist(self, x_axis_name, x_axis_data, min_x_axis=0.0):
+        self.type = 'hist'
+        x_axis_data = x_axis_data[~np.isnan(x_axis_data)]
+        min_data = min(x_axis_data[x_axis_data > min_x_axis])
+        max_data = max(x_axis_data)
+        data_bins = max_data - min_data
+        y, x = np.histogram(x_axis_data, range=[min_data, max_data], bins='auto')
+        self.x_axis_name = x_axis_name
+        self.plots[x_axis_name+"_freq"] = self.plot_area.plot(x, y, stepMode="center", fillLevel=0, fillOutline=True, brush=qt_colors[self._current_color])
+        self._current_color += 1
 
 
 class GNSS3DPlotWidget(gl.GLViewWidget):
@@ -210,6 +227,18 @@ class GNSSPlotWidget(AbstractPlotWidget):
         self.plot('Long', lat, 'Lat', long)
 
 
+class FPSPlotHistogramWidget(AbstractPlotWidget):
+    def __init__(self, file_dir):
+        super(FPSPlotHistogramWidget, self).__init__()
+        df1 = pd.read_csv(os.path.join(file_dir, 'carlaBridge_fps.csv'),
+                               delimiter=';', skiprows=0, low_memory=False)
+
+        data1 = df1['FPS'].to_numpy()
+
+        self.plot_hist("FPS", data1, 5)
+        # self.plot('time', self.df1['Time'], 'fps', self.data1)
+
+
 class FPSPlotWidget(AbstractPlotWidget):
     def __init__(self, file_dir):
         super(FPSPlotWidget, self).__init__()
@@ -220,6 +249,20 @@ class FPSPlotWidget(AbstractPlotWidget):
 
         self.plot('time', self.df1['Time'], 'fps', self.data1)
 
+class ResponseTimePlotHistogramWidget(AbstractPlotWidget):
+    def __init__(self, file_dir):
+        super(ResponseTimePlotHistogramWidget, self).__init__()
+        df1 = pd.read_csv(os.path.join(file_dir, 'responsetime.csv'),
+                               delimiter=';', skiprows=0, low_memory=False)
+
+        data1 = df1['TotalTime'].to_numpy()
+        data2 = df1['CommunicationTime'].to_numpy()
+        data3 = df1['ServerResponseTime'].to_numpy()
+
+        self.plot_hist("TotalTime", data1, 0.0)
+        self.plot_hist("ServerResponseTime", data3, 0.0)
+        self.plot_hist("CommunicationTime", data2, 0.0)
+        # self.plot('time', self.df1['Time'], 'fps', self.data1)
 
 class ResponseTimePlotWidget(AbstractPlotWidget):
     def __init__(self, file_dir, *args):
@@ -256,19 +299,19 @@ class VelocityPlotWidget(AbstractPlotWidget):
 dock_type = {
     "carlaBridge_velocity.csv":
         {"name": "Velocity",
-         "type": VelocityPlotWidget
+         "widgets": VelocityPlotWidget
          },
     "responsetime.csv":
         {"name": "ResponseTime",
-         "type": ResponseTimePlotWidget
+         "widgets": [ResponseTimePlotWidget, ResponseTimePlotHistogramWidget]
          },
     "carlaBridge_fps.csv":
         {"name": "FPS",
-         "type": FPSPlotWidget
+         "widgets": [FPSPlotWidget, FPSPlotHistogramWidget]
          },
     "carlaBridge_gnss.csv":
         {"name": "GNSS",
-         "type": GeoDataPlotWidget
+         "widgets": GeoDataPlotWidget
          }
 }
 
@@ -286,15 +329,29 @@ class MelexStatistics(QMainWindow):
         self.setWindowTitle("Melex Statistics")
         self.docks = {}
         self._current_dock_pos = 0
-        self.open_button = QPushButton("Open Statistics")
-        self.open_button.clicked.connect(self.open_statistics)
-        self.setCentralWidget(self.open_button)
+        exit_action = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
+        exit_action.setShortcut('Ctrl+Q')
+        exit_action.setStatusTip('Exit application')
+        exit_action.triggered.connect(self.close)
+        open_action = QtGui.QAction(QtGui.QIcon('open.png'), '&Open', self)
+        open_action.setShortcut('Ctrl+O')
+        open_action.setStatusTip('Open statistics')
+        open_action.triggered.connect(self.open_statistics)
+
+        self.statusBar()
+
+        self.menubar = self.menuBar()
+        fileMenu = self.menubar.addMenu('&File')
+        fileMenu.addAction(open_action)
+        fileMenu.addAction(exit_action)
+
 
     def open_statistics(self):
         dialog = QtWidgets.QFileDialog(caption="Select result directory", directory=RESULTS_DIR)
         dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
         dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
         dialog.exec_()
+        self.view_menu = self.menubar.addMenu('&View')
         for dirpath, dnames, fnames in os.walk(dialog.selectedFiles()[0]):
             for f in fnames:
                 self.create_dock(dirpath, f)
@@ -302,18 +359,32 @@ class MelexStatistics(QMainWindow):
     def create_dock(self, dirpath, f):
         if f in dock_type:
             current_type = dock_type[f]
-            dock = QtWidgets.QDockWidget(current_type["name"])
-            plot_widget = current_type["type"](dirpath)
-            dock.setWidget(plot_widget)
-            dock.setAllowedAreas(Qt.AllDockWidgetAreas)
+            widgets = current_type["widgets"]
+            if not isinstance(widgets, list):
+                widgets = [widgets]
+            previous_dock = None
+            for w_index, widget in enumerate(widgets):
+                dock_name = current_type["name"]
+                if len(widgets) > 1:
+                    dock_name += f" {w_index}"
+                dock = QtWidgets.QDockWidget(dock_name)
+                view_action = dock.toggleViewAction()
+                view_action.setStatusTip(f'Show/Hide {dock_name}')
+                self.view_menu.addAction(view_action)
+                plot_widget = widget(dirpath)
+                dock.setWidget(plot_widget)
+                dock.setAllowedAreas(Qt.AllDockWidgetAreas)
+                self.docks[f] = dock
+                self.addDockWidget(dock_positions[self._current_dock_pos % len(dock_positions)], dock)
+                if previous_dock:
+                    self.tabifyDockWidget(previous_dock, dock)
+                previous_dock = dock
             self._current_dock_pos += 1
-            self.docks[f] = dock
-            self.addDockWidget(dock_positions[self._current_dock_pos % len(dock_positions)], dock)
 
 
 if __name__ == '__main__':
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
     window = MelexStatistics()
-    window.show()
+    window.showMaximized()
     app.exec_()
