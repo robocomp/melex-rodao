@@ -22,7 +22,7 @@ FILE_PATH = pathlib.Path(__file__).parent.absolute()
 RESULTS_DIR = os.path.join(FILE_PATH, "..", "..", 'files/results/')
 
 web_colors = ["Red", "Yellow", "Cyan", "Blue", "Magenta"]
-qt_colors = ["r", "y", "g", "b", "m"]
+qt_colors = ["r", "y", "c", "b", "m"]
 
 
 def set_color(value):
@@ -121,16 +121,28 @@ class AbstractPlotWidget(pg.GraphicsLayoutWidget):
                 return
             xpoint = mousePoint.x()
             data_frames_string = ""
+            stacked_total_showed = False
             for plot_index, [plot_name, plot_values] in enumerate(self.plots.items()):
                 next_color = web_colors[plot_index % len(web_colors)]
                 if self.type == 'bars':
                     data = plot_values.getData()
                     index, value = self.find_nearest(data[0], xpoint)
                     data_frames_string += f", <span style='color: {next_color}'>{plot_name}={data[1][index]:02.02f}</span>"
+
+                elif self.type == 'stacked_bars':
+                    index, value = self.find_nearest(self.stacked_bars_data['time'], xpoint)
+
+                    if not stacked_total_showed:
+                        data_frames_string += f", <span style='color: blue'>'TotalTime'={self.stacked_bars_data['TotalTime'][index]:02.02f} ms </span> "
+                        stacked_total_showed = True
+
+                    data_frames_string += f", <span style='color: {next_color}'>{plot_name}={self.stacked_bars_data[plot_name][index]:02.02f} ms </span> "
+
+
                 else:
                     index, value = self.find_nearest(plot_values.xData, xpoint)
                     if index >= len(plot_values.yData):
-                        index=len(plot_values.yData)-1
+                        index = len(plot_values.yData) - 1
                     data_frames_string += f", <span style='color: {next_color}'>{plot_name}={plot_values.yData[index]:02.02f}</span>"
 
             if 'time' in self.x_axis_name.lower():
@@ -160,10 +172,23 @@ class AbstractPlotWidget(pg.GraphicsLayoutWidget):
         self.type = 'bars'
         color = qt_colors[self._current_color]
         self.x_axis_name = x_axis_name
-        bg1 = pg.BarGraphItem(x=x_axis_data, height=y_axis_data, width=1, brush=color, pen=color)
+        bg1 = pg.BarGraphItem(x=x_axis_data, height=y_axis_data, width=0.5, brush=color, pen=color)
         # bg1 = pg.BarGraphItem(x=x_axis_data, height=x_axis_data, width=0.5)
         self.plot_area.addItem(bg1)
         self.plots[y_axis_name] = bg1
+        self._current_color += 1
+        if 'time' in x_axis_name.lower():
+            axis = pg.DateAxisItem()
+            self.plot_area.setAxisItems({'bottom': axis})
+
+    def plot_stacked_bars(self, x_axis_name, x_axis_data, y_axis_prev_data, y_axis_name, y_axis_data, y_data_to_show):
+        self.type = 'stacked_bars'
+        color = qt_colors[self._current_color]
+        self.x_axis_name = x_axis_name
+        bg1 = pg.BarGraphItem(x=x_axis_data, y0=y_axis_prev_data, y1=y_axis_data, width=1, brush=color, pen=color)
+        self.plot_area.addItem(bg1)
+        self.plots[y_axis_name] = bg1
+
         self._current_color += 1
         if 'time' in x_axis_name.lower():
             axis = pg.DateAxisItem()
@@ -177,7 +202,8 @@ class AbstractPlotWidget(pg.GraphicsLayoutWidget):
         data_bins = max_data - min_data
         y, x = np.histogram(x_axis_data, range=[min_data, max_data], bins='auto')
         self.x_axis_name = x_axis_name
-        self.plots[x_axis_name+"_freq"] = self.plot_area.plot(x, y, stepMode="center", fillLevel=0, fillOutline=True, brush=qt_colors[self._current_color])
+        self.plots[x_axis_name + "_freq"] = self.plot_area.plot(x, y, stepMode="center", fillLevel=0, fillOutline=True,
+                                                                brush=qt_colors[self._current_color])
         self._current_color += 1
 
 
@@ -231,7 +257,7 @@ class FPSPlotHistogramWidget(AbstractPlotWidget):
     def __init__(self, file_dir):
         super(FPSPlotHistogramWidget, self).__init__()
         df1 = pd.read_csv(os.path.join(file_dir, 'carlaBridge_fps.csv'),
-                               delimiter=';', skiprows=0, low_memory=False)
+                          delimiter=';', skiprows=0, low_memory=False)
 
         data1 = df1['FPS'].to_numpy()
 
@@ -249,20 +275,22 @@ class FPSPlotWidget(AbstractPlotWidget):
 
         self.plot('time', self.df1['Time'], 'fps', self.data1)
 
+
 class ResponseTimePlotHistogramWidget(AbstractPlotWidget):
     def __init__(self, file_dir):
         super(ResponseTimePlotHistogramWidget, self).__init__()
         df1 = pd.read_csv(os.path.join(file_dir, 'responsetime.csv'),
-                               delimiter=';', skiprows=0, low_memory=False)
+                          delimiter=';', skiprows=0, low_memory=False)
 
         data1 = df1['TotalTime'].to_numpy()
         data2 = df1['CommunicationTime'].to_numpy()
         data3 = df1['ServerResponseTime'].to_numpy()
 
         self.plot_hist("TotalTime", data1, 0.0)
-        self.plot_hist("ServerResponseTime", data3, 0.0)
         self.plot_hist("CommunicationTime", data2, 0.0)
+        self.plot_hist("ServerResponseTime", data3, 0.0)
         # self.plot('time', self.df1['Time'], 'fps', self.data1)
+
 
 class ResponseTimePlotWidget(AbstractPlotWidget):
     def __init__(self, file_dir, *args):
@@ -273,13 +301,28 @@ class ResponseTimePlotWidget(AbstractPlotWidget):
         df1[["CommunicationTime", "ServerResponseTime", "TotalTime"]] = df1[
             ["CommunicationTime", "ServerResponseTime", "TotalTime"]].apply(lambda x: x * 1000)
 
-        data1 = df1['TotalTime'].to_numpy()
-        data2 = df1['CommunicationTime'].to_numpy()
-        data3 = df1['ServerResponseTime'].to_numpy()
+        df1['datetime'] = pd.to_datetime(df1['Time'], unit='ns')
+        df2 = df1.groupby(pd.Grouper(key='datetime', freq='2ns')).mean()
 
-        self.plot_bars('time', df1['Time'], 'TotalTime', data1)
-        self.plot_bars('time', df1['Time'], 'CommunicationTime', data2)  # Communication_time
-        self.plot_bars('time', df1['Time'], 'ServerResponseTime', data3)  # Server Response
+        data1_original = df1['TotalTime'].to_numpy()
+        data2_original = df1['CommunicationTime'].to_numpy()
+        data3_original = df1['ServerResponseTime'].to_numpy()
+
+        data2 = df2['CommunicationTime'].to_numpy()
+        data3 = df2['ServerResponseTime'].to_numpy()
+
+        self.plot_stacked_bars('time', df2['Time'], 0, 'ServerResponseTime', data3, data3_original)
+        self.plot_stacked_bars('time', df2['Time'], data3, 'CommunicationTime', data2, data2_original)
+
+        self.stacked_bars_data = {'time': df1['Time'],
+                                  'TotalTime': data1_original,
+                                  'ServerResponseTime': data2_original,
+                                  'CommunicationTime': data3_original
+                                  }
+
+        # self.plot_bars('time', df1['Time'], 'TotalTime', data1)
+        # self.plot_bars('time', df1['Time'], 'CommunicationTime', data2)  # Communication_time
+        # self.plot_bars('time', df1['Time'], 'ServerResponseTime', data3)  # Server Response
 
 
 class VelocityPlotWidget(AbstractPlotWidget):
@@ -344,7 +387,6 @@ class MelexStatistics(QMainWindow):
         fileMenu = self.menubar.addMenu('&File')
         fileMenu.addAction(open_action)
         fileMenu.addAction(exit_action)
-
 
     def open_statistics(self):
         dialog = QtWidgets.QFileDialog(caption="Select result directory", directory=RESULTS_DIR)

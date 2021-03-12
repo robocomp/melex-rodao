@@ -13,6 +13,13 @@ from pyqtgraph import DateAxisItem
 from pyqtgraph.Qt import QtGui, QtCore
 from pyqtgraph.Point import Point
 
+
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
+
+
 # generate layout
 app = QtGui.QApplication([])
 win = pg.GraphicsLayoutWidget(show=True)
@@ -33,33 +40,40 @@ p1.setAutoVisible(y=False)
 
 # create numpy arrays
 dir = '/home/robocomp/robocomp/components/melex-rodao/files/results/pruebaCampusV4'
+# Read last directory
+directory = '/home/robocomp/robocomp/components/melex-rodao/files/results/'
+dir = max([os.path.join(directory, d) for d in os.listdir(directory)], key=os.path.getmtime)
 df1 = pd.read_csv(os.path.join(dir, 'responsetime.csv'),
                   delimiter=';', skiprows=0, low_memory=False)
 
+#To milliseconds
 df1[["CommunicationTime", "ServerResponseTime", "TotalTime"]] = df1[
     ["CommunicationTime", "ServerResponseTime", "TotalTime"]].apply(lambda x: x * 1000)
 
-# print (len(df1))
-# df1 = df1.groupby(['TotalTime']).mean()
-# print (len(df1))
-# df1.to_csv('groupby.csv')
+print(len(df1))
 
-data1 = df1['TotalTime'].to_numpy()
-data2 = df1['CommunicationTime'].to_numpy()
-data3 = df1['ServerResponseTime'].to_numpy()
+df1['datetime'] = pd.to_datetime(df1['Time'], unit='ns')
+df2 = df1.groupby(pd.Grouper(key='datetime', freq='1ns')).mean()
+print(len(df1))
 
-# bg1 = pg.BarGraphItem(x=df1['Time'], height=data1, width=0.1, brush='r')
-# y,x = np.histogram(data1, bins=np.linspace(-3, 8, 40))
+df2.to_csv('groupby.csv')
 
-## Using stepMode="center" causes the plot to draw two lines for each sample.
-## notice that len(x) == len(y)+1
-# p1.plot(x, y, stepMode="center", fillLevel=0, fillOutline=True, brush=(0,0,255,150))
-bg1 = pg.BarGraphItem(x=df1['Time'], height=data1, width=0.3, brush='r', pen='r')
-bg2 = pg.BarGraphItem(x=df1['Time'], height=data2, width=0.3, brush='g',pen='g')
-bg3 = pg.BarGraphItem(x=df1['Time'], height=data3, width=0.3, brush='b',pen='b')
-p1.addItem(bg1)
-p1.addItem(bg3)
+
+data1_original = df1['TotalTime'].to_numpy()
+data2_original = df1['CommunicationTime'].to_numpy()
+data3_original = df1['ServerResponseTime'].to_numpy()
+
+data1 = df2['TotalTime'].to_numpy()
+data2 = df2['CommunicationTime'].to_numpy()
+data3 = df2['ServerResponseTime'].to_numpy()
+
+
+# bg1 = pg.BarGraphItem(x=df1['Time'], height=data1, width=1, brush='r', pen='r')
+bg3 = pg.BarGraphItem(x=df2['Time'], y0=0, y1=data3, width=1, brush='b', pen='b')  # Server
+bg2 = pg.BarGraphItem(x=df2['Time'], y0=data3, height=data2, width=1, brush='g', pen='g')  # Comm
+# p1.addItem(bg1)
 p1.addItem(bg2)
+p1.addItem(bg3)
 
 axis = DateAxisItem()
 p1.setAxisItems({'bottom': axis})
@@ -99,8 +113,9 @@ def mouseMoved(evt):
     if p1.sceneBoundingRect().contains(pos):
         mousePoint = vb.mapSceneToView(pos)
         xpoint = mousePoint.x()
-
+        print(xpoint)
         nearest1 = find_nearest(df1['Time'], xpoint)
+        print(nearest1, '\n')
         index1 = df1.index[df1['Time'] == nearest1].tolist()[0]
 
         datetime_ = datetime.fromtimestamp(mousePoint.x()).strftime("%H:%M:%S")
@@ -109,20 +124,12 @@ def mouseMoved(evt):
             "<span style='font-size: 12pt'>x=%s,   <span style='color: red'>Total=%0.2f ms</span> ,   "
             "<span style='color: green'>Communication=%0.2f ms</span> , <span style='color: blue'>Server=%0.2f "
             "ms</span>  " % (
-                datetime_, data1[index1], data2[index1], data3[index1]))
+                datetime_, data1_original[index1], data2_original[index1], data3_original[index1]))
         vLine.setPos(mousePoint.x())
         hLine.setPos(mousePoint.y())
 
 
 proxy = pg.SignalProxy(p1.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
-
-
-
-def find_nearest(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return array[idx]
-
 
 if __name__ == '__main__':
     import sys
