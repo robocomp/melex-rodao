@@ -1,9 +1,11 @@
 import time
 import RoboCompMelexLogger
 
+from singleton import SingletonMeta
 
-class Logger:
-    def __init__(self, proxy, sender, headers):
+
+class Logger(metaclass=SingletonMeta):
+    def initalize(self, proxy, sender, headers):
         self.melexlogger_proxy = proxy
         self.sender = sender
 
@@ -13,6 +15,8 @@ class Logger:
             loggerns.namespace = namespace
             loggerns.headers = headers
             self.melexlogger_proxy.createNamespace(loggerns)
+        super(Logger, self).__init__()
+        return self
 
     def publish_to_logger(self, namespace, method, data):
         message = RoboCompMelexLogger.LogMessage()

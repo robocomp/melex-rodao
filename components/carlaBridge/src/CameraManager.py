@@ -63,6 +63,7 @@ class CameraManager(object):
         cam_bp_low.set_attribute('sensor_tick', '0.2')
 
         parent = None
+        # TODO: Make relative path to this file
         yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
         pose_cameras = yaml.load(yaml_file)
 

@@ -32,16 +32,8 @@ from PySide2.QtWidgets import QApplication
 from numpy import random
 
 from genericworker import *
+from carlamanager import CarlaManager
 
-carla_egg_path = os.path.join('/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/',
-                              f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
-try:
-    print(f"Adding {glob.glob(carla_egg_path)[0]} to path")
-    sys.path.append(glob.glob(carla_egg_path)[0])
-except IndexError:
-    print(f"Carla API not found in {carla_egg_path}")
-
-import carla
 from IMU import IMUSensor
 from GNSS import GnssSensor
 from CameraManager import CameraManager
@@ -49,12 +41,19 @@ from Logger import Logger
 
 
 class SpecificWorker(GenericWorker):
-    logger_signal = Signal(str, str, str)
-
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         global world, carla_map, blueprint_library
-
+        data_to_save = {
+            'fps': ['Time', 'FPS'],
+            'response': ['Time', 'ServerResponseTime'],
+            'velocity': ['Time', 'Velocity'],
+            'gnss': ['Time', 'Latitude', 'Longitude', 'Altitude'],
+            'imu': ['Time', 'AccelerometerX', 'AccelerometerY', 'AccelerometerZ',
+                    'GyroscopeX', 'GyroscopeY', 'GyroscopeZ', 'Compass']
+        }
+        self.logger = Logger().initalize(self.melexlogger_proxy, 'carlaBridge', data_to_save)
+        self.carla_manager = CarlaManager(self.carlasensors_proxy, self.carcamerargbd_proxy, self.buildingcamerargbd_proxy)
         self.Period = 0
         self.world = None
         self.blueprint_library = None
@@ -68,16 +67,9 @@ class SpecificWorker(GenericWorker):
         self.server_fps = 0
         self._server_clock = pygame.time.Clock()
 
-        data_to_save = {
-            'fps': ['Time', 'FPS'],
-            'response': ['Time', 'ServerResponseTime'],
-            'velocity': ['Time', 'Velocity'],
-            'gnss': ['Time', 'Latitude', 'Longitude', 'Altitude'],
-            'imu': ['Time', 'AccelerometerX', 'AccelerometerY', 'AccelerometerZ',
-                    'GyroscopeX', 'GyroscopeY', 'GyroscopeZ', 'Compass']
-        }
-        self.logger = Logger(self.melexlogger_proxy, 'carlaBridge', data_to_save)
-        self.logger_signal.connect(self.logger.publish_to_logger)
+
+
+        self.carla_manager.logger_signal.connect(self.logger.publish_to_logger)
 
 
 
@@ -88,18 +80,13 @@ class SpecificWorker(GenericWorker):
             self.timer.start(self.Period)
 
             self.save_data_timer = QTimer()
-            self.save_data_timer.timeout.connect(self.save_sensors_data)
+            self.save_data_timer.timeout.connect(self.carla_manager.save_sensors_data)
             self.save_data_timer.start(100)
 
-    def save_sensors_data(self):
-        latitude, longitude, altitude = self.gnss_sensor.get_currentData()
-        data = ';'.join(map(str, [latitude, longitude, altitude]))
-        self.logger_signal.emit('gnss', 'CarlaSensors_updateSensorGNSS', data)
 
     def __del__(self):
         print('SpecificWorker destructor')
-
-        self.destroy()
+        self.carla_manager.destroy()
         cv2.destroyAllWindows()
 
     def setParams(self, params):
@@ -107,93 +94,84 @@ class SpecificWorker(GenericWorker):
             host = params["host"]
             port = int(params["port"])
             map_name = params["map"]
-            self.initialize_world(host, port, map_name)
-            self.restart()
-
         except:
             traceback.print_exc()
             print("Error reading config params")
+        else:
+            self.carla_manager.create_client(host,port)
+            self.carla_manager.initialize_world(map_name)
+            self.carla_manager.restart()
+            return True
+        return False
 
-        return True
 
-    def initialize_world(self, host, port, map_name):
-        client = carla.Client(host, port)
-        print('Client version ', client.get_client_version())
-        print('Server version ', client.get_server_version())
-        client.set_timeout(10.0)
-        init_time = time.time()
-        print('Loading world...')
-        self.world = client.load_world(map_name)
-        print('Done')
-        print(f'Loading world took {round(time.time() - init_time)} seconds')
-        self.blueprint_library = self.world.get_blueprint_library()
-
-    def restart(self):
-
-        try:
-            blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
-        except:
-            blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
-        # Spawn the player.
-        if self.vehicle is not None:
-            spawn_point = self.vehicle.get_transform()
-            spawn_point.location.z += 2.0
-            spawn_point.rotation.roll = 0.0
-            spawn_point.rotation.pitch = 0.0
-            self.destroy()
-            self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
-        while self.vehicle is None:
-            try:
-                spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774, z=2))
-                self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
-            except:
-                spawn_points = self.carla_map.get_spawn_points()
-                spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
-                self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
-
-        ### SENSORS ###
-        self.gnss_sensor = GnssSensor(self.vehicle, self.carlasensors_proxy)
-        self.imu_sensor = IMUSensor(self.vehicle, self.carlasensors_proxy)
-        self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.buildingcamerargbd_proxy, self.carcamerargbd_proxy)
-
-        # Connect to the callback to get server fps
-        self.world.on_tick(self.on_world_tick)
-
-    def on_world_tick(self, timestamp):
-        self._server_clock.tick()
-        self.server_fps = self._server_clock.get_fps()
-        if self.server_fps in [float("-inf"), float("inf")]:
-            self.server_fps = -1
-        print('Server FPS', int(self.server_fps))
-        self.logger_signal.emit('fps', 'on_world_tick', str(int(self.server_fps)))
-
-        if self.car_moved:
-            response_time = time.time() - self.last_time_car_moved
-            self.car_moved = False
-            self.logger_signal.emit('response', 'on_world_tick', str(response_time))
-
-    def destroy(self):
-        sensors = [
-            self.camera_manager.sensorID_dict.values(),
-            self.collision_sensor.sensor,
-            self.imu_sensor.sensor,
-            self.gnss_sensor.sensor]
-        for sensor in sensors:
-            if sensor is not None:
-                sensor.stop()
-                sensor.destroy()
-        if self.vehicle is not None:
-            self.vehicle.destroy()
-
-    def move_car(self, control):
-        self.vehicle.apply_control(control)
-        self.car_moved = True
-        self.last_time_car_moved = time.time()
+    # def restart(self):
+    #
+    #     try:
+    #         blueprint = self.blueprint_library.filter('vehicle.carro.*')[0]
+    #     except:
+    #         blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
+    #     # Spawn the player.
+    #     if self.vehicle is not None:
+    #         spawn_point = self.vehicle.get_transform()
+    #         spawn_point.location.z += 2.0
+    #         spawn_point.rotation.roll = 0.0
+    #         spawn_point.rotation.pitch = 0.0
+    #         self.destroy()
+    #         self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+    #     while self.vehicle is None:
+    #         try:
+    #             spawn_point = carla.Transform(carla.Location(x=-59.35998535, y=-4.86174774, z=2))
+    #             self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
+    #         except:
+    #             spawn_points = self.carla_map.get_spawn_points()
+    #             spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+    #             self.vehicle = self.world.try_spawn_actor(blueprint, spawn_point)
+    #
+    #     ### SENSORS ###
+    #     self.gnss_sensor = GnssSensor(self.vehicle, self.carlasensors_proxy)
+    #     self.imu_sensor = IMUSensor(self.vehicle, self.carlasensors_proxy)
+    #     self.camera_manager = CameraManager(self.blueprint_library, self.vehicle, self.buildingcamerargbd_proxy, self.carcamerargbd_proxy)
+    #
+    #     # Connect to the callback to get server fps
+    #     self.world.on_tick(self.on_world_tick)
+    #
+    # def on_world_tick(self, timestamp):
+    #     self._server_clock.tick()
+    #     self.server_fps = self._server_clock.get_fps()
+    #     if self.server_fps in [float("-inf"), float("inf")]:
+    #         self.server_fps = -1
+    #     print('Server FPS', int(self.server_fps))
+    #     self.logger_signal.emit('fps', 'on_world_tick', str(int(self.server_fps)))
+    #
+    #     if self.vehicle_moved:
+    #         response_time = time.time() - self.last_time_car_moved
+    #         self.vehicle_moved = False
+    #         self.logger_signal.emit('response', 'on_world_tick', str(response_time))
+    #
+    # def destroy(self):
+    #     sensors = [
+    #         self.camera_manager.sensorID_dict.values(),
+    #         self.collision_sensor.sensor,
+    #         self.imu_sensor.sensor,
+    #         self.gnss_sensor.sensor]
+    #     for sensor in sensors:
+    #         if sensor is not None:
+    #             sensor.stop()
+    #             sensor.destroy()
+    #     if self.vehicle is not None:
+    #         self.vehicle.destroy()
+    #
+    # def move_car(self, control):
+    #     self.vehicle.apply_control(control)
+    #     self.vehicle_moved = True
+    #     self.last_time_car_moved = time.time()
 
     @QtCore.Slot()
     def compute(self):
-        vel = self.vehicle.get_velocity()
-        self.logger_signal.emit('velocity', 'compute', str(3.6 * math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)))
+        if self.carla_manager.vehicle:
+            vel = self.carla_manager.vehicle.get_velocity()
+            self.logger.publish_to_logger('velocity', 'compute', str(3.6 * math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)))
 
         return True
 
