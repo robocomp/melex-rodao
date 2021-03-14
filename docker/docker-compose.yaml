@@ -13,8 +13,8 @@ services:
             - NVIDIA_VISIBLE_DEVICES=0
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
-        expose:
-            - 2000-2002
+        ports:
+            - 2000-2002:2000-2002
 
     carlaBridge:
         image: robocomp/robocomp:focal-melex
@@ -129,9 +129,8 @@ services:
     rcnode:
         image: robocomp/robocomp:focal-melex
         entrypoint: sh -c "rcnode"
-        expose:
-            - 9999
-            - 9998
+        ports:
+            - 9998-9999:9998-9999
 
     autoheal:
       restart: always

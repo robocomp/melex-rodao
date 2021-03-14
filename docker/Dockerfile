@@ -22,7 +22,7 @@ RUN sudo apt update && sudo apt install -y \
     python3-geopandas \
     python3-opencv \
     python3-opengl \
-    python3-pandas  \
+    python3-pandas \
     python3-pygame \
     python3-yaml \
     python3-zeroc-ice \
