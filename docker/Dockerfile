@@ -1,5 +1,5 @@
 FROM robocomp/robocomp:focal
-
+ARG branch=SplitComponent
 # LABEL about the custom image
 LABEL maintainer="emartinena@unex.es"
 LABEL version="0.1"
@@ -34,10 +34,12 @@ RUN mkdir -p robocomp/components
 WORKDIR robocomp/components
 # With this ADD the image is regenerated for every change on git
 ADD https://api.github.com/repos/robocomp/melex-rodao/git/refs/heads/SplitComponent version.json
-RUN git clone -b SplitComponent https://github.com/robocomp/melex-rodao.git
+RUN git clone -b $branch https://github.com/robocomp/melex-rodao.git
 RUN cd melex-rodao && mkdir build && cd build && cmake .. && make && sudo PATH=$PATH make install
 COPY --from=carlasim/carla:0.9.11 /home/carla/PythonAPI /home/robolab/CARLA_0.9.11/PythonAPI
 RUN ln -s /home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-0.9.11-py3.7-linux-x86_64.egg /home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/carla-0.9.11-py3.8-linux-x86_64.egg
 WORKDIR melex-rodao/components/
+RUN python3 carlaBridge/test/runtest.py
+
 
 
