@@ -14,17 +14,29 @@ console = Console()
 CARLA_EGG_PATH = '/home/robolab/CARLA_0.9.11/PythonAPI/carla/dist/'
 CARLA_EGG_FILE = os.path.join(CARLA_EGG_PATH,
                               f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
+FILE_PATH = os.path.dirname(os.path.realpath(__file__))
+
 try:
     print(f"Adding {glob.glob(CARLA_EGG_FILE)[0]} to path")
     sys.path.append(glob.glob(CARLA_EGG_FILE)[0])
 except IndexError:
     console.log(f"Carla API not found in {CARLA_EGG_FILE}", style="bold red", log_locals=True)
     console.log(f"Expected \t\t{CARLA_EGG_FILE}")
+    try:
+        CARLA_EGG_FILE = os.path.join(FILE_PATH, '..', '..','..','files',
+                                      f'carla-*{sys.version_info.major}.{sys.version_info.minor}-linux-x86_64.egg')
+        print(f"Adding {glob.glob(CARLA_EGG_FILE)[0]} to path")
+        sys.path.append(glob.glob(CARLA_EGG_FILE)[0])
+    except IndexError:
+        console.log(f"Carla API not found in {CARLA_EGG_FILE}", style="bold red", log_locals=True)
+        console.log(f"Expected \t\t{CARLA_EGG_FILE}")
     for possible_file in os.listdir(CARLA_EGG_PATH):
         console.log(f"Found \t\t\t{CARLA_EGG_PATH}{possible_file}")
     exit(-1)
+else:
+    print(f"Importing {CARLA_EGG_FILE}")
+    import carla
 
-import carla
 
 # from .CameraManager import CameraManager
 from CameraManager import CameraManager
