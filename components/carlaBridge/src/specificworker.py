@@ -55,14 +55,7 @@ class SpecificWorker(GenericWorker):
         self.logger = Logger().initalize(self.melexlogger_proxy, 'carlaBridge', data_to_save)
         self.carla_manager = CarlaManager(self.carlasensors_proxy, self.carcamerargbd_proxy, self.buildingcamerargbd_proxy)
         self.Period = 0
-        self.world = None
-        self.blueprint_library = None
-        self.vehicle = None
-        self.collision_sensor = None
-        self.gnss_sensor = None
-        self.camera_manager = None
-        self.car_moved = False
-        self.last_time_car_moved = time.time()
+
 
         self.server_fps = 0
         self._server_clock = pygame.time.Clock()

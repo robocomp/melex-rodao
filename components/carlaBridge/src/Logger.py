@@ -1,5 +1,5 @@
 import time
-import RoboCompMelexLogger
+from interfaces import RoboCompMelexLogger
 
 from singleton import SingletonMeta
 

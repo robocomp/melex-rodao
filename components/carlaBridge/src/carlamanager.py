@@ -1,8 +1,8 @@
 import glob
 import os
+import random
 import sys
 import time
-from random import random
 
 import pygame
 from PySide2.QtCore import Signal, QObject
@@ -36,20 +36,31 @@ class CarlaManager(QObject):
     logger_signal = Signal(str, str, str)
     def __init__(self, carlasensors_proxy, carcamerargbd_proxy, buildingcamerargbd_proxy):
         super(CarlaManager, self).__init__()
-        self.port = None
-        self.host = None
-        self.client = None
-        self.map_name = None
-        self.world = None
-        self.camera_manager = None
-        self.blueprint_library = None
         self._server_clock = pygame.time.Clock()
-        self._vehicle = None
-        self.carlasensors_proxy = carlasensors_proxy
-        self.carcamerargbd_proxy = carcamerargbd_proxy
-        self.buildingcamerargbd_proxy = buildingcamerargbd_proxy
-        self.vehicle_moved = False
+        self.blueprint_library = None
+        self.camera_manager = None
+        self.car_moved = False
+
+        self.client = None
+        self.collision_sensor = None
+        self.gnss_sensor = None
+        self.imu_sensor = None
+        self.last_time_car_moved = time.time()
         self.logger = Logger()
+        self.map_name = None
+        self.host = None
+        self.port = None
+        self.sensorID_dict = {}
+        self.sensor_attrs = {}
+        self._vehicle = None
+        self.vehicle_moved = False
+        self.world = None
+
+        self.buildingcamerargbd_proxy = buildingcamerargbd_proxy
+        self.buildingcamerargbd_proxy = buildingcamerargbd_proxy
+        self.carcamerargbd_proxy = carcamerargbd_proxy
+        self.carcamerargbd_proxy = carcamerargbd_proxy
+        self.carlasensors_proxy = carlasensors_proxy
 
     @property
     def vehicle(self):
@@ -85,6 +96,7 @@ class CarlaManager(QObject):
             print('Done')
             print(f'Loading world took {round(time.time() - init_time)} seconds')
             self.blueprint_library = self.world.get_blueprint_library()
+            pass
         else:
             console.log("No carla client created. Call create_client first.", style="red")
 
@@ -142,14 +154,15 @@ class CarlaManager(QObject):
 
     def destroy(self):
         sensors = [
-            self.camera_manager.sensorID_dict.values(),
-            self.collision_sensor.sensor,
-            self.imu_sensor.sensor,
-            self.gnss_sensor.sensor]
+            self.collision_sensor,
+            self.imu_sensor,
+            self.gnss_sensor]
+        if self.camera_manager is not None:
+            sensors.append( self.camera_manager.sensorID_dict.values())
         for sensor in sensors:
             if sensor is not None:
-                sensor.stop()
-                sensor.destroy()
+                sensor.sensor.stop()
+                sensor.sensor.destroy()
         if self._vehicle is not None:
             self._vehicle.destroy()
 

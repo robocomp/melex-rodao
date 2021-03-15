@@ -29,6 +29,7 @@ class CameraManager(object):
 
         self.sensor_attrs = {}
         self.sensorID_dict = {}
+        self.world = None
 
         self.cm_queue = SimpleQueue()
 

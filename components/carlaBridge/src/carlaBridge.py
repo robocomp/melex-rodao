@@ -55,48 +55,22 @@
 #
 #
 
-import sys
-import traceback
-import IceStorm
-import time
-import os
-import copy
 import argparse
 # Ctrl+c handling
 import signal
 
+from rich.console import Console
+console = Console()
+
 from PySide2 import QtCore
-
+import interfaces
 from specificworker import *
-
-
-class CommonBehaviorI(RoboCompCommonBehavior.CommonBehavior):
-    def __init__(self, _handler):
-        self.handler = _handler
-    def getFreq(self, current = None):
-        self.handler.getFreq()
-    def setFreq(self, freq, current = None):
-        self.handler.setFreq()
-    def timeAwake(self, current = None):
-        try:
-            return self.handler.timeAwake()
-        except:
-            print('Problem getting timeAwake')
-    def killYourSelf(self, current = None):
-        self.handler.killYourSelf()
-    def getAttrList(self, current = None):
-        try:
-            return self.handler.getAttrList()
-        except:
-            print('Problem getting getAttrList')
-            traceback.print_exc()
-            status = 1
-            return
 
 #SIGNALS handler
 def sigint_handler(*args):
     QtCore.QCoreApplication.quit()
-    
+
+
 if __name__ == '__main__':
     app = QtCore.QCoreApplication(sys.argv)
     parser = argparse.ArgumentParser()
@@ -104,119 +78,16 @@ if __name__ == '__main__':
     parser.add_argument('--startup-check', action='store_true')
 
     args = parser.parse_args()
+    interface_manager = interfaces.InterfaceManager(args.iceconfigfile)
 
-    ic = Ice.initialize(args.iceconfigfile)
-    status = 0
-    mprx = {}
-    parameters = {}
-    for i in ic.getProperties():
-        parameters[str(i)] = str(ic.getProperties().getProperty(i))
-
-    # Topic Manager
-    proxy = ic.getProperties().getProperty("TopicManager.Proxy")
-    obj = ic.stringToProxy(proxy)
-    try:
-        topicManager = IceStorm.TopicManagerPrx.checkedCast(obj)
-    except Ice.ConnectionRefusedException as e:
-        print(colored('Cannot connect to rcnode! This must be running to use pub/sub.', 'red'))
-        exit(1)
-
-    # Create a proxy to publish a BuildingCameraRGBD topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("BuildingCameraRGBD")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("BuildingCameraRGBD")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("BuildingCameraRGBD")
-            except:
-                print('Another client created the BuildingCameraRGBD topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    buildingcamerargbdTopic = RoboCompBuildingCameraRGBD.BuildingCameraRGBDPrx.uncheckedCast(pub)
-    mprx["BuildingCameraRGBDPub"] = buildingcamerargbdTopic
-
-
-    # Create a proxy to publish a CarCameraRGBD topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("CarCameraRGBD")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("CarCameraRGBD")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("CarCameraRGBD")
-            except:
-                print('Another client created the CarCameraRGBD topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    carcamerargbdTopic = RoboCompCCarCameraRGBD.CarCameraRGBDPrx.uncheckedCast(pub)
-    mprx["CarCameraRGBDPub"] = carcamerargbdTopic
-
-
-    # Create a proxy to publish a CarlaSensors topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("CarlaSensors")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("CarlaSensors")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("CarlaSensors")
-            except:
-                print('Another client created the CarlaSensors topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    carlasensorsTopic = RoboCompCarlaSensors.CarlaSensorsPrx.uncheckedCast(pub)
-    mprx["CarlaSensorsPub"] = carlasensorsTopic
-
-
-    # Create a proxy to publish a MelexLogger topic
-    topic = False
-    try:
-        topic = topicManager.retrieve("MelexLogger")
-    except:
-        pass
-    while not topic:
-        try:
-            topic = topicManager.retrieve("MelexLogger")
-        except IceStorm.NoSuchTopic:
-            try:
-                topic = topicManager.create("MelexLogger")
-            except:
-                print('Another client created the MelexLogger topic? ...')
-    pub = topic.getPublisher().ice_oneway()
-    melexloggerTopic = RoboCompMelexLogger.MelexLoggerPrx.uncheckedCast(pub)
-    mprx["MelexLoggerPub"] = melexloggerTopic
-
-    if status == 0:
-        worker = SpecificWorker(mprx, args.startup_check)
-        worker.setParams(parameters)
+    if interface_manager.status == 0:
+        worker = SpecificWorker(interface_manager.get_proxies_map(), args.startup_check)
+        worker.setParams(interface_manager.parameters)
     else:
         print("Error getting required connections, check config file")
         sys.exit(-1)
 
-    adapter = ic.createObjectAdapter('AdminBridge')
-    adapter.add(adminbridgeI.AdminBridgeI(worker), ic.stringToIdentity('adminbridge'))
-    adapter.activate()
-
-    adapter = ic.createObjectAdapter('CarlaVehicleControl')
-    adapter.add(carlavehiclecontrolI.CarlaVehicleControlI(worker), ic.stringToIdentity('carlavehiclecontrol'))
-    adapter.activate()
-
+    interface_manager.set_default_hanlder(worker)
     signal.signal(signal.SIGINT, sigint_handler)
     app.exec_()
-
-    if ic:
-        # try:
-        ic.destroy()
-        # except:
-        #     traceback.print_exc()
-        #     status = 1
+    interface_manager.destroy()

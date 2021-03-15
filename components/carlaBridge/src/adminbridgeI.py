@@ -28,9 +28,9 @@ except:
 if len(ROBOCOMP)<1:
     raise RuntimeError('ROBOCOMP environment variable not set! Exiting.')
 
+FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
-Ice.loadSlice("-I ./src/ --all ./src/AdminBridge.ice")
-
+Ice.loadSlice(f"-I {FILE_PATH} --all {FILE_PATH}/AdminBridge.ice")
 from RoboCompAdminBridge import *
 
 class AdminBridgeI(AdminBridge):
