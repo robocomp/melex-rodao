@@ -301,9 +301,8 @@ class ResponseTimePlotWidget(AbstractPlotWidget):
         df1[["CommunicationTime", "ServerResponseTime", "TotalTime"]] = df1[
             ["CommunicationTime", "ServerResponseTime", "TotalTime"]].apply(lambda x: x * 1000)
 
-        # df1['datetime'] = pd.to_datetime(df1['Time'], unit='ns')
-        df1['datetime'] = df1['Time'].apply(lambda x: datetime.fromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S.%f'))
-        df1['datetime'] = df1['datetime'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
+        df1['datetime'] = pd.to_datetime(df1['Time'], unit='s')
+
         df2 = df1.groupby(pd.Grouper(key='datetime', freq='1s')).mean()
 
         data1_original = df1['TotalTime'].to_numpy()
