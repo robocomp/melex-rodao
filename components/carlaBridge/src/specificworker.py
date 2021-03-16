@@ -30,6 +30,7 @@ import pygame
 from PySide2.QtCore import QTimer, Signal
 from PySide2.QtWidgets import QApplication
 from numpy import random
+from termcolor import colored
 
 from genericworker import *
 
@@ -89,7 +90,7 @@ class SpecificWorker(GenericWorker):
 
             self.save_data_timer = QTimer()
             self.save_data_timer.timeout.connect(self.save_sensors_data)
-            self.save_data_timer.start(100)
+            self.save_data_timer.start(500)
 
     def save_sensors_data(self):
         latitude, longitude, altitude = self.gnss_sensor.get_currentData()
@@ -114,6 +115,10 @@ class SpecificWorker(GenericWorker):
             traceback.print_exc()
             print("Error reading config params")
 
+            if self.world is None:
+                print(colored('Unable to connect to the server. Please run CARLA simulator first \n', 'red'))
+                exit(-1)
+
         return True
 
     def initialize_world(self, host, port, map_name):
@@ -125,7 +130,7 @@ class SpecificWorker(GenericWorker):
         print('Loading world...')
         self.world = client.load_world(map_name)
         print('Done')
-        print(f'Loading world took {round(time.time() - init_time)} seconds')
+        print(f'Loading world took {time.time() - init_time :.2f} seconds')
         self.blueprint_library = self.world.get_blueprint_library()
 
     def restart(self):

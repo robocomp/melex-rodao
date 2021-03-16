@@ -64,7 +64,7 @@ class CameraManager(object):
 
         parent = None
         yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
-        pose_cameras = yaml.load(yaml_file)
+        pose_cameras = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
         for camera_id, pose in pose_cameras.items():
             spawn_point = carla.Transform(carla.Location(x=pose['x'], y=pose['y'], z=pose['z']),
