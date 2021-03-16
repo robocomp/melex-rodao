@@ -52,7 +52,7 @@ class SpecificWorker(GenericWorker):
         self.imu_data_received = False
 
         yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
-        self.pose_cameras_dict = yaml.load(yaml_file)
+        self.pose_cameras_dict = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
         self.car_cameras_dist = {}
 
@@ -206,7 +206,7 @@ class SpecificWorker(GenericWorker):
             qImg.fill(qRgb(0, 0, 0))
         pixmap = QPixmap(qImg)
         pixmap = pixmap.scaled(camera_widget.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        print(f"resized to {camera_widget.size()} result in {pixmap.size()}")
+
         camera_widget.setPixmap(pixmap)
         camera_label.setText(self.pose_cameras_dict[cam_id]['name'])
 

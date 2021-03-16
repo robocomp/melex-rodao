@@ -30,6 +30,7 @@ import pygame
 from PySide2.QtCore import QTimer, Signal
 from PySide2.QtWidgets import QApplication
 from numpy import random
+from termcolor import colored
 
 from genericworker import *
 from carlamanager import CarlaManager
@@ -74,7 +75,7 @@ class SpecificWorker(GenericWorker):
 
             self.save_data_timer = QTimer()
             self.save_data_timer.timeout.connect(self.carla_manager.save_sensors_data)
-            self.save_data_timer.start(100)
+            self.save_data_timer.start(500)
 
 
     def __del__(self):
