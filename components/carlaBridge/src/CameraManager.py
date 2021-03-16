@@ -1,3 +1,4 @@
+import os
 import time
 import weakref
 from multiprocessing import SimpleQueue
@@ -10,6 +11,7 @@ import yaml
 
 mutex = Lock()
 
+FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 # # ==============================================================================
 # # -- CameraManager -------------------------------------------------------------
@@ -30,6 +32,7 @@ class CameraManager(object):
         self.sensor_attrs = {}
         self.sensorID_dict = {}
         self.world = None
+        self.weak_self = None
 
         self.cm_queue = SimpleQueue()
 
@@ -38,6 +41,7 @@ class CameraManager(object):
         for n in range(num_cams):
             self.is_sensor_active[n] = False
 
+    def initialization(self):
         self.world = self._parent.get_world()
         self.weak_self = weakref.ref(self)
 
@@ -51,7 +55,7 @@ class CameraManager(object):
         cam_bp.set_attribute('fov', '110')
         spawn_point_car = carla.Transform(carla.Location(x=0.0, y=-0.25, z=1.0))  # Carrito de golf
         sensor_id = 0
-        self.sensor_attrs[sensor_id] = [spawn_point_car, parent_actor, cam_bp, cc.Raw]
+        self.sensor_attrs[sensor_id] = [spawn_point_car, self._parent, cam_bp, cc.Raw]
         self.create_sensor(sensor_id)
 
         ####################
@@ -64,9 +68,9 @@ class CameraManager(object):
         cam_bp_low.set_attribute('sensor_tick', '0.2')
 
         parent = None
-        # TODO: Make relative path to this file
-        yaml_file = open('/home/robocomp/robocomp/components/melex-rodao/etc/cameras.yml')
-        pose_cameras = yaml.load(yaml_file)
+        cameras_yml_file = os.path.join(FILE_PATH, '..','..','..', 'etc', 'cameras.yml')
+        yaml_file = open(cameras_yml_file)
+        pose_cameras = yaml.load(yaml_file,  Loader=yaml.FullLoader)
 
         for camera_id, pose in pose_cameras.items():
             spawn_point = carla.Transform(carla.Location(x=pose['x'], y=pose['y'], z=pose['z']),
@@ -88,13 +92,12 @@ class CameraManager(object):
         return created
 
     def delete_sensor(self, sensorID):
-        sensor = self.sensorID_dict[sensorID]
-        if sensor is None:
+        if sensorID not in self.sensorID_dict:
             return False
+        sensor = self.sensorID_dict[sensorID]
         sensor.stop()
         deleted = sensor.destroy()
         self.is_sensor_active[sensorID] = False
-
         print(f'Sensor {sensorID} deleted {deleted}')
         return True
 

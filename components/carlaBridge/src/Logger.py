@@ -5,11 +5,11 @@ from singleton import SingletonMeta
 
 
 class Logger(metaclass=SingletonMeta):
-    def initalize(self, proxy, sender, headers):
+    def initialize(self, proxy, sender, namespaces):
         self.melexlogger_proxy = proxy
         self.sender = sender
 
-        for namespace, headers in headers.items():
+        for namespace, headers in namespaces.items():
             loggerns = RoboCompMelexLogger.LogNamespace()
             loggerns.sender = self.sender
             loggerns.namespace = namespace

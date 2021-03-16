@@ -119,8 +119,9 @@ class CarlaManager(QObject):
     def load_vehicle(self, vehicle_name):
         try:
             blueprint = self.blueprint_library.filter(vehicle_name)[0]
-        except:
-            blueprint = random.choice(self.world.get_blueprint_library().filter('vehicle.*'))
+        except RuntimeError as e:
+            choices = self.world.get_blueprint_library().filter('vehicle.*')
+            blueprint = random.choice(choices)
         return blueprint
 
     def restart(self):
